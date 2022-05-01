@@ -19,7 +19,7 @@
 fit <- function(x, input_catalog=NULL, k=0:5, reference_catalog=basilica::COSMIC, lr=0.05, steps_per_iter=500, fixedLimit=0.05, denovoLimit=0.9) {
 
   # fit <- function(catalog, beta_input, k_list=0:5, beta_cosmic, fixedLimit=0.05, denovoLimit=0.9)
-  x <- r_to_py(catalog)
+  x <- r_to_py(x)
   input_catalog <- r_to_py(input_catalog)
   #----------------------------- MUST BE CHANGED -------------------------------
   setwd("/home/azad/Documents/thesis/SigPhylo/PyBaSiLiCa")
@@ -37,7 +37,8 @@ fit <- function(x, input_catalog=NULL, k=0:5, reference_catalog=basilica::COSMIC
   # add groups as one of the arguments later
   # groups: vector of discrete labels with one entry per sample, it defines the groups that will be considered by basilica
   #output <- BaSiLiCa(x, groups, input_catalog, k, reference_catalog, fixedLimit, denovoLimit)
-  output <- BaSiLiCa(x, input_catalog=NULL, k, reference_catalog, lr, steps_per_iter, fixedLimit, denovoLimit):
+  output <- BaSiLiCa(x, input_catalog, k, reference_catalog, lr, steps_per_iter, fixedLimit, denovoLimit)
+
 
   alpha <- output[[1]]
   beta_fixed <- output[[2]]
