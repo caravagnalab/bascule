@@ -1,5 +1,5 @@
 library(reticulate)
-library(ggplot)
+
 
 # constructor
 basilica <- function(x) {
