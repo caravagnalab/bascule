@@ -5,16 +5,32 @@ library(reticulate)
 basilica <- function(x) {
   stopifnot(is.list(x))
 
-  res <- list(
-    exposure = x[[1]],
-    catalog_signatures = x[[2]],
-    denovo_signatures = x[[3]])
+  alpha <- x[[1]]
+  beta_catalog <- x[[2]]
+  beta_denovo <- x[[3]]
 
-  structure(res, class="basilica")
+  res <- list(
+    exposure=alpha,
+    catalog_signatures=beta_catalog,
+    denovo_signatures=beta_denovo)
+
+  return(structure(res, class="basilica"))
 }
 
-show <- function(x) {
-  UseMethod("show")
+
+get_exposure <- function(x) {
+  stopifnot(inherits(x, "basilica"))
+  return(x$exposure)
+}
+
+get_catalog_signatures <- function(x) {
+  stopifnot(inherits(x, "basilica"))
+  return(x$catalog_signatures)
+}
+
+get_denovo_signatures <- function(x) {
+  stopifnot(inherits(x, "basilica"))
+  return(x$denovo_signatures)
 }
 
 
@@ -63,11 +79,6 @@ fit <- function(x, input_catalog=NULL, k=0:5, reference_catalog=basilica::COSMIC
   output <- pyfit(x, input_catalog, k, reference_catalog, lr, steps_per_iter, fixedLimit, denovoLimit)
 
   return(basilica(output))
-}
-
-plot_exposure(x) {
-  print("hello world")
-
 }
 
 
