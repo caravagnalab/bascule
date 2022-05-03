@@ -1,4 +1,5 @@
-
+library(reticulate)
+library(ggplot)
 
 # constructor
 basilica <- function(x) {
@@ -12,6 +13,9 @@ basilica <- function(x) {
   structure(res, class="basilica")
 }
 
+show <- function(x) {
+  UseMethod("show")
+}
 
 
 #' Title
@@ -25,7 +29,7 @@ basilica <- function(x) {
 #' @param fixedLimit threshold to discard the signature based on its value in exposure matrix
 #' @param denovoLimit threshold to consider inferred signature as COSMIC signature
 #'
-#' @return
+#' @return inferred exposure matrix, inferred COSMIC signatures and inferred de novo (not from referencecatalog) signatures
 #' @export
 #'
 #' @examples
@@ -35,7 +39,8 @@ fit <- function(x, input_catalog=NULL, k=0:5, reference_catalog=basilica::COSMIC
   x <- r_to_py(x)
   input_catalog <- r_to_py(input_catalog)
   #----------------------------- MUST BE CHANGED -------------------------------
-  #import("pybasilica")
+  #pybasilica <- import("pybasilica")
+  #output <- pybasilica$pyfit(...)
   setwd("/home/azad/Documents/thesis/SigPhylo/pybasilica/src")
   source_python("basilica.py")
   py_run_string("k = list(map(int, [0, 1, 2, 3, 4, 5]))")
@@ -56,32 +61,15 @@ fit <- function(x, input_catalog=NULL, k=0:5, reference_catalog=basilica::COSMIC
   # groups: vector of discrete labels with one entry per sample, it defines the groups that will be considered by basilica
   #output <- BaSiLiCa(x, groups, input_catalog, k, reference_catalog, fixedLimit, denovoLimit)
   output <- pyfit(x, input_catalog, k, reference_catalog, lr, steps_per_iter, fixedLimit, denovoLimit)
-  print(paste("output class:", class(output)))
 
-  '
-
-  res <- list(exposure = output[[1]],
-              catalog_signatures = output[[2]],
-              denovo_signatures = output[[3]])
-
-  class(res) = "fit"
-  return(res)
-  '
-  return(output)
+  return(basilica(output))
 }
 
+plot_exposure(x) {
+  print("hello world")
 
-#-------------------------------------------------------------------------------
+}
 
-
-library(reticulate)
-library(ggplot)
-'
-#-------------------------------------------------------------------------------
-pybasilica <- import("pybasilica")
-output <- PyBaSiLiCa$BaSiLiCa(M, B_input, k_list, cosmic_df, fixedLimit, denovoLimit)
-#-------------------------------------------------------------------------------
-'
 
 #' Title
 #'
@@ -92,12 +80,7 @@ output <- PyBaSiLiCa$BaSiLiCa(M, B_input, k_list, cosmic_df, fixedLimit, denovoL
 #'
 #' @examples
 readCatalogue <- function(catalogue_path) {
-
-  M <- read.table(catalogue_path,
-                  sep = ",",
-                  header = TRUE,
-                  stringsAsFactors = TRUE,
-                  check.names=FALSE)
+  M <- read.table(catalogue_path, sep = ",", header = TRUE, stringsAsFactors = TRUE, check.names=FALSE)
   return(M)
 }
 
@@ -111,33 +94,9 @@ readCatalogue <- function(catalogue_path) {
 #'
 #' @examples
 readBeta <- function(beta_path) {
-
-  beta <- read.table(beta_path,
-                     sep = ",",
-                     header = TRUE,
-                     stringsAsFactors = TRUE,
-                     check.names=FALSE,
-                     row.names = 1)
+  beta <- read.table(beta_path, sep = ",", header = TRUE, stringsAsFactors = TRUE, check.names=FALSE, row.names = 1)
   return(beta)
 }
-
-
-#' Title
-#'
-#' @param x input mutational counts data (data.frame; rows as samples and columns as 96 mutational categories)
-#' @param groups vector of discrete labels with one entry per sample, it defines the groups that will be considered by basilica
-#' @param input_catalog input signature profiles, NULL by default
-#' @param k vector of possible number of de novo signatures to infer
-#' @param reference_catalog a catalog of reference signatures that basilica will use to compare input and de novo signatures
-#' @param fixedLimit threshold to discard the signature based on its value in exposure matrix
-#' @param denovoLimit threshold to consider inferred signature as COSMIC signature
-#'
-#' @return inferred exposure matrix, inferred COSMIC signatures and inferred non-COSMIC signatures
-#' @export
-#'
-#' @examples
-
-
 
 
 
