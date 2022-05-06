@@ -1,0 +1,25 @@
+Package: basilica
+Type: Package
+Title: basilica
+Version: 0.1.0
+Author: Azad Sadr
+Maintainer: Azad Sadr <azad.sadr.h@gmail.com>
+Description: More about what it does (maybe more than one line)
+    Use four spaces when indenting paragraphs within the Description.
+License: GPL (>= 3)
+Encoding: UTF-8
+LazyData: true
+Config/reticulate:
+  list(
+    packages = list(
+      list(package = "pybasilica", pip = TRUE)
+    )
+  )
+Imports: 
+    data.table,
+    ggplot2,
+    gridExtra,
+    reticulate,
+    tidyr
+RoxygenNote: 7.1.2
+URL: https://github.com/caravagnalab/basilica,
