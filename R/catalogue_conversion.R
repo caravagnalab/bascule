@@ -103,9 +103,6 @@
 
 
 
-counts <- M3
-reference <- BSgenome.Hsapiens.1000genomes.hs37d5
-
 #' Title
 #'
 #' @param counts
