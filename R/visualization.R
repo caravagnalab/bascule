@@ -6,26 +6,16 @@
 #-------------------------------------------------------------------------------
 # plot exposure matrix
 #-------------------------------------------------------------------------------
-
-
-#' plot relative exposure matrix barplot
-#'
-#' @param x basilica object
-#'
-#' @return
-#' @export
-#'
-#' @examples
 plot_exposure <- function(x) {
-  alpha <- get_exposure(x)
-  alpha$Branch <- c(1:nrow(alpha))
+  alpha <- get_exposure(x, long = FALSE)
+  alpha$Sample <- rownames(alpha)
   alpha_long <- tidyr::gather(alpha,
                        key="Signature",
                        value="Exposure",
-                       c(-Branch)
+                       c(-Sample)
   )
 
-  ggplot(data = alpha_long, aes(x=Branch, y=Exposure, fill=Signature)) +
+  ggplot(data = alpha_long, aes(x=Sample, y=Exposure, fill=Signature)) +
     geom_bar(stat = "identity") +
     theme_minimal() +
     ggtitle("Signatures Exposure in Samples") +
@@ -57,7 +47,7 @@ plot_signatures <- function( x, useRowNames = FALSE, xlabels = FALSE, denovoSign
   if (denovoSignature==TRUE) {
     beta <- get_denovo_signatures(x)
   } else {
-    beta <- get_catalog_signatures(x)
+    beta <- get_catalogue_signatures(x)
   }
 
   # set names of the signatures

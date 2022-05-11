@@ -1,5 +1,5 @@
 
-# basilica <a href='militeee.github.io/basilica'><img src='man/figures/logo.png' align="right" height="120" /></a>
+# basilica <img src="man/figures/logo.png" align="right" height="134" />
 
 The package provides an R interface for the Python
 [pybasilica](https://github.com/caravagnalab/pybasilica) package, which
