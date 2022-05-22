@@ -4,8 +4,8 @@ init_object <- function(
     fit,
     x,
     groups,
-    input_catalog=NULL,
-    reference_catalog=basilica::COSMIC,
+    input_catalogue=NULL,
+    reference_catalogue=basilica::COSMIC,
     k,
     lr,
     steps,
@@ -15,10 +15,10 @@ init_object <- function(
 
   obj = list()
 
-  obj$input <- list(x=x, groups=groups, input_catalog=input_catalog)
-  obj$reference_catalog <- reference_catalog
+  obj$input <- list(x=x, groups=groups, input_catalogue=input_catalogue)
+  obj$reference_catalogue <- reference_catalogue
   obj$params <- list(k=k, lr=lr, steps=steps, phi=phi, delta=delta)
-  obj$fit <- list(exposure=fit[[1]], catalog_signatures=fit[[2]], denovo_signatures=fit[[3]])
+  obj$fit <- list(exposure=fit[[1]], catalogue_signatures=fit[[2]], denovo_signatures=fit[[3]])
 
   #structure(res, class="basilica")
   class(obj) <- "basilica"

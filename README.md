@@ -31,7 +31,7 @@ devtools::install_github("caravagnalab/basilica")
 
 #### Copyright and contacts
 
-Giulio Caravagna, Azad Sadr. Cancer Data Science (CDS) Laboratory.
+Azad Sadr, Giulio Caravagna. Cancer Data Science (CDS) Laboratory.
 
 [![](https://img.shields.io/badge/Email-gcaravagn@gmail.com-steelblue.svg)](mailto:gcaravagn@gmail.com)
 [![](https://img.shields.io/badge/CDS%20Lab%20Github-caravagnalab-seagreen.svg)](https://github.com/caravagnalab)

@@ -1,6 +1,4 @@
-#use_condaenv("pybasilica")
-
-#' Title
+#' creates an object of class \code(basilica}.
 #'
 #' @param x input mutational counts data (data.frame; rows as samples and columns as 96 mutational categories)
 #' @param groups vector of discrete labels with one entry per sample, it defines the groups that will be considered by basilica
@@ -12,22 +10,17 @@
 #' @param phi threshold to discard the signature based on its value in exposure matrix
 #' @param delta threshold to consider inferred signature as COSMIC signature
 #'
-#' @return inferred exposure matrix, inferred COSMIC signatures and inferred de novo (not from reference catalog) signatures
+#' @return inferred exposure matrix, inferred signatures from reference catalogue and inferred de novo (not from reference catalogue) signatures
 #'
-#' @importFrom reticulate r_to_py
-#' @import ggplot2
-#' @import tidyr
-#' @import data.table
-#' @import gridExtra
 #' @export
 #'
 #' @examples
 fit <- function(
     x,
     groups=NULL,
-    input_catalog=NULL,
-    reference_catalog=basilica::COSMIC_catalogue,
-    k=1:5,
+    input_catalogue=NULL,
+    reference_catalogue=basilica::COSMIC_catalogue,
+    k=0:5,
     lr=0.05,
     steps=500,
     phi=0.05,
@@ -35,14 +28,14 @@ fit <- function(
     ) {
 
   pybasilica <- reticulate::import("pybasilica")
-  f <- pybasilica$pyfit(x, groups, input_catalog, reference_catalog, k, lr, steps, phi, delta)
+  f <- pybasilica$pyfit(x, groups, input_catalogue, reference_catalogue, k, lr, steps, phi, delta)
 
   obj <- init_object(
     f,
     x,
     groups,
-    input_catalog,
-    reference_catalog,
+    input_catalogue,
+    reference_catalogue,
     k,
     lr,
     steps,

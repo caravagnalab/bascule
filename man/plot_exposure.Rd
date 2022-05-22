@@ -2,7 +2,7 @@
 % Please edit documentation in R/visualization.R
 \name{plot_exposure}
 \alias{plot_exposure}
-\title{plot relative exposure matrix barplot}
+\title{plot exposure matrix}
 \usage{
 plot_exposure(x)
 }
@@ -13,5 +13,5 @@ plot_exposure(x)
 
 }
 \description{
-plot relative exposure matrix barplot
+creates bar plot of relative exposure matrix, where x-axis are samples and y-axis are their contribution.
 }

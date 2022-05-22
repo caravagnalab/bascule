@@ -2,35 +2,42 @@
 % Please edit documentation in R/signatureFinder.R
 \name{fit}
 \alias{fit}
-\title{Title}
+\title{}
 \usage{
 fit(
   x,
-  input_catalog = NULL,
+  groups = NULL,
+  input_catalogue = NULL,
+  reference_catalogue = basilica::COSMIC_catalogue,
   k = 0:5,
-  reference_catalog = basilica::COSMIC,
   lr = 0.05,
-  steps_per_iter = 500,
-  fixedLimit = 0.05,
-  denovoLimit = 0.9
+  steps = 500,
+  phi = 0.05,
+  delta = 0.9
 )
 }
 \arguments{
 \item{x}{input mutational counts data (data.frame; rows as samples and columns as 96 mutational categories)}
 
-\item{input_catalog}{input signature profiles, NULL by default}
+\item{groups}{vector of discrete labels with one entry per sample, it defines the groups that will be considered by basilica}
 
 \item{k}{vector of possible number of de novo signatures to infer}
 
-\item{reference_catalog}{a catalog of reference signatures that basilica will use to compare input and de novo signatures}
+\item{lr}{stochastic variational inference learning rate}
 
-\item{fixedLimit}{threshold to discard the signature based on its value in exposure matrix}
+\item{steps}{number of gradient steps}
 
-\item{denovoLimit}{threshold to consider inferred signature as COSMIC signature}
+\item{phi}{threshold to discard the signature based on its value in exposure matrix}
+
+\item{delta}{threshold to consider inferred signature as COSMIC signature}
+
+\item{input_catalog}{input signature profiles, NULL by default}
+
+\item{reference_catalog}{a catalog of reference signatures that basilica will use to compare input and de novo signatures (COSMIC catalogue by default)}
 }
 \value{
-inferred exposure matrix, inferred COSMIC signatures and inferred de novo (not from referencecatalog) signatures
+inferred exposure matrix, inferred signatures from reference catalogue and inferred de novo (not from reference catalogue) signatures
 }
 \description{
-Title
+
 }

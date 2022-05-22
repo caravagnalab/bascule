@@ -31,7 +31,7 @@ get_exposure <- function(x, long=FALSE) {
 #' @examples
 get_catalogue_signatures <- function(x) {
   stopifnot(inherits(x, "basilica"))
-  return(x$fit$catalog_signatures)
+  return(x$fit$catalogue_signatures)
 }
 
 #' get de novo signatures

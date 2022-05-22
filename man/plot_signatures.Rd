@@ -2,7 +2,7 @@
 % Please edit documentation in R/visualization.R
 \name{plot_signatures}
 \alias{plot_signatures}
-\title{Title}
+\title{plot signatures}
 \usage{
 plot_signatures(
   x,
@@ -18,11 +18,11 @@ plot_signatures(
 
 \item{xlabels}{axis label}
 
-\item{denovoSignature}{plotting inferred signaturese from de-novo or catalog}
+\item{denovoSignature}{if TRUE, plots inferred de-novo signatures, otherwise plots inferred catalogue signatures}
 }
 \value{
 
 }
 \description{
-Title
+plot signatures
 }

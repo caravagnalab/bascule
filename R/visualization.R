@@ -1,11 +1,12 @@
-#library(tidyr)      # tibble() & gather()
-#library(ggplot2)    # ggplot()
-#library(data.table) # data.table()
-#library(gridExtra)  # grid.arrange
-
-#-------------------------------------------------------------------------------
-# plot exposure matrix
-#-------------------------------------------------------------------------------
+#' plot exposure matrix
+#'
+#' @description creates bar plot of relative exposure matrix, where x-axis are samples and y-axis are their contribution.
+#' @param x basilica object
+#'
+#' @return
+#' @export
+#'
+#' @examples
 plot_exposure <- function(x) {
   alpha <- get_exposure(x, long = FALSE)
   alpha$Sample <- rownames(alpha)
@@ -22,24 +23,18 @@ plot_exposure <- function(x) {
     scale_y_continuous(labels=scales::percent)
 }
 
-#-------------------------------------------------------------------------------
-# plot inferred signatures
-#-------------------------------------------------------------------------------
 
-#' Title
+#' plot signatures
 #'
 #' @param x basilica object
 #' @param useRowNames using signature names from data.frame
 #' @param xlabels axis label
-#' @param denovoSignature plotting inferred signaturese from de-novo or catalog
+#' @param denovoSignature if TRUE, plots inferred de-novo signatures, otherwise plots inferred catalogue signatures
 #'
 #' @return
 #' @export
 #'
 #' @import ggplot2
-#' @import tidyr
-#' @import data.table
-#' @import gridExtra
 #'
 #' @examples
 plot_signatures <- function( x, useRowNames = FALSE, xlabels = FALSE, denovoSignature = TRUE ) {
@@ -81,6 +76,39 @@ plot_signatures <- function( x, useRowNames = FALSE, xlabels = FALSE, denovoSign
   # make the final plot
   gridExtra::grid.arrange(grobs=glist,ncol=ceiling(nrow(beta)/3))
 
+}
+
+
+plot_cosine <- function(obj, limit) {
+  reference <- obj$reference_catalogue
+  denovo <- obj$fit$denovo_signatures
+
+  cosine_matrix <- data.frame( matrix( nrow = nrow(reference), ncol = nrow(denovo) ) )
+  colnames(cosine_matrix) <- rownames(denovo)
+  rownames(cosine_matrix) <- rownames(reference)
+
+  for (i in rownames(reference)) {
+    for (j in rownames(denovo)) {
+      c <- cosine_sim(as.numeric(reference[i, ]), as.numeric(denovo[j, ]))
+      cosine_matrix[i, j] <- c
+    }
+  }
+  cosine_matrix <- cosine_matrix %>% dplyr::filter_all(dplyr::any_vars(. > limit))
+  cosine_matrix <- tibble::rownames_to_column(cosine_matrix, var="ref")
+
+  cos_long <- cosine_matrix %>% tidyr::pivot_longer(cols = -c(ref), names_to = 'denovo', values_to = 'cosine')
+
+  p <- ggplot(cos_long, aes(x=ref, y=cosine)) +
+    geom_point() +
+    #facet_wrap(~denovo, ncol = 1) +
+    facet_grid(denovo ~ .) +
+    theme(axis.text.x=element_text(angle=-90, vjust=0.5, hjust=0)) +
+    ggtitle("Similarity between Denovo and Catalogue Signatures") +
+    xlab("Catalogue Signatures") +
+    ylab("Cosine Similarity") +
+    geom_hline(yintercept=c(limit), linetype='dashed', color='red')
+
+  return(p)
 }
 
 
