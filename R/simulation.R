@@ -332,7 +332,7 @@ generate_signatures <- function(reference_catalogue, denovo_catalogue, complexit
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-
+'
 ref_path <- "/home/azad/Documents/thesis/pybasilica/pybasilica/data/cosmic/cosmic_catalogue.csv"
 reference_catalogue <- read.table(ref_path, sep = ",", row.names = 1, header = TRUE, check.names = FALSE)
 
@@ -343,6 +343,7 @@ seed = 123
 a <- reference_denovo(ref_path, num_ref=50, seed=123)
 beta <- generate_signatures(a$ref, a$denovo, complexity="medium", num_samples=5, seed=123)
 alpha <- generate_exposure(signatures=signatures , groups=groups, seed=123)
+'
 
 
 
