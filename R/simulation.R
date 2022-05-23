@@ -3,7 +3,7 @@
 #' @import dplyr
 #'
 #'
-generate_data <- function(ref_path,
+generate_data <- function(ref_catalogue,
                           target_complexity,
                           input_complexity,
                           num_samples) {
@@ -11,7 +11,7 @@ generate_data <- function(ref_path,
   pybasilica <- reticulate::import("pybasilica")
 
   x <- pybasilica$input_generator(
-    cosmic_path = ref_path,
+    full_cosmic_df = ref_catalogue,
     target_complexity = target_complexity,
     input_complexity = input_complexity,
     num_samples = num_samples
@@ -55,7 +55,7 @@ generate_data <- function(ref_path,
 
 #-------------------------------------------------------------------------------
 sim_fit <- function(
-    ref_path,
+    ref_catalogue,
     target_complexity,
     input_complexity,
     num_samples,
@@ -68,7 +68,7 @@ sim_fit <- function(
 ) {
 
   x <- generate_data(
-    ref_path,
+    ref_catalogue,
     target_complexity,
     input_complexity,
     num_samples
@@ -102,7 +102,7 @@ sim_fit <- function(
 }
 
 #-------------------------------------------------------------------------------
-sim_fit_batch <- function(ref_path,
+sim_fit_batch <- function(ref_catalogue,
                           targetX_list,
                           inputX_list,
                           num_samples_list,
@@ -123,7 +123,7 @@ sim_fit_batch <- function(ref_path,
           try(
             {
               b <- sim_fit(
-                ref_path = ref_path,
+                ref_catalogue = ref_catalogue,
                 target_complexity = i,
                 input_complexity = j,
                 num_samples = n,
