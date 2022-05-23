@@ -1,5 +1,5 @@
 
-# constructor
+# class constructor
 init_object <- function(
     fit,
     x,

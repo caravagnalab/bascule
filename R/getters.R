@@ -4,8 +4,8 @@
 #' @param x basilica object
 #' @param long if TRUE return the long format exposure matrix (default=FALSE)
 #'
-#' @return
-#' @export
+#' @return a data.frame where rows are samples and columns are inferred signature profiles
+#' @export get_exposure
 #'
 #' @examples
 get_exposure <- function(x, long=FALSE) {
@@ -25,8 +25,8 @@ get_exposure <- function(x, long=FALSE) {
 #'
 #' @param x basilica object
 #'
-#' @return inferred signatures which are from reference catalogue
-#' @export
+#' @return a data.frame where rows are inferred signatures (included in reference catalogue) and columns are 96 substitution bases.
+#' @export get_catalogue_signatures
 #'
 #' @examples
 get_catalogue_signatures <- function(x) {
@@ -38,8 +38,8 @@ get_catalogue_signatures <- function(x) {
 #'
 #' @param x basilica object
 #'
-#' @return inferred signatures which are not included in reference catalogue
-#' @export
+#' @return a data.frame where rows are inferred signatures (not included in reference catalogue) and columns are 96 substitution bases.
+#' @export get_denovo_signatures
 #'
 #' @examples
 get_denovo_signatures <- function(x) {

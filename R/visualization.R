@@ -1,10 +1,10 @@
 #' plot exposure matrix
 #'
-#' @description creates bar plot of relative exposure matrix, where x-axis are samples and y-axis are their contribution.
+#' @description creates bar plot of relative exposure matrix, where x-axis are samples and y-axis are their relative contribution.
 #' @param x basilica object
 #'
 #' @return
-#' @export
+#' @export plot_exposure
 #'
 #' @examples
 plot_exposure <- function(x) {
@@ -26,13 +26,15 @@ plot_exposure <- function(x) {
 
 #' plot signatures
 #'
+#' @description creates bar plot of inferred signature profiles, where x-axis are 96 substitution bases and y-axis are their relative contribution.
+#'
 #' @param x basilica object
 #' @param useRowNames using signature names from data.frame
 #' @param xlabels axis label
 #' @param denovoSignature if TRUE, plots inferred de-novo signatures, otherwise plots inferred catalogue signatures
 #'
 #' @return
-#' @export
+#' @export plot_signatures
 #'
 #' @import ggplot2
 #'

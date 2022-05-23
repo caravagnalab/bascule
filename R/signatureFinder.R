@@ -1,5 +1,7 @@
 #' creates an object of class \code(basilica}.
 #'
+#' @description fit the model and infer the underlying signatures and their contributions in the mutational catalogue counts.
+#'
 #' @param x input mutational counts data (data.frame; rows as samples and columns as 96 mutational categories)
 #' @param groups vector of discrete labels with one entry per sample, it defines the groups that will be considered by basilica
 #' @param input_catalog input signature profiles, NULL by default
