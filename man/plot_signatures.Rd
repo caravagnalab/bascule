@@ -24,5 +24,5 @@ plot_signatures(
 
 }
 \description{
-plot signatures
+creates bar plot of inferred signature profiles, where x-axis are 96 substitution bases and y-axis are their relative contribution.
 }

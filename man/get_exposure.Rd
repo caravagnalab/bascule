@@ -12,7 +12,7 @@ get_exposure(x, long = FALSE)
 \item{long}{if TRUE return the long format exposure matrix (default=FALSE)}
 }
 \value{
-
+a data.frame where rows are samples and columns are inferred signature profiles
 }
 \description{
 get exposure matrix

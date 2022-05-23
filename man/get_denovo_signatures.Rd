@@ -10,7 +10,7 @@ get_denovo_signatures(x)
 \item{x}{basilica object}
 }
 \value{
-inferred signatures which are not included in reference catalogue
+a data.frame where rows are inferred signatures (not included in reference catalogue) and columns are 96 substitution bases.
 }
 \description{
 get de novo signatures

@@ -2,7 +2,7 @@
 % Please edit documentation in R/signatureFinder.R
 \name{fit}
 \alias{fit}
-\title{}
+\title{fit basilica model.}
 \usage{
 fit(
   x,
@@ -39,5 +39,5 @@ fit(
 inferred exposure matrix, inferred signatures from reference catalogue and inferred de novo (not from reference catalogue) signatures
 }
 \description{
-
+fit the model and infer the underlying signatures and their contributions in the mutational catalogue counts.
 }

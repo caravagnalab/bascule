@@ -13,5 +13,5 @@ plot_exposure(x)
 
 }
 \description{
-creates bar plot of relative exposure matrix, where x-axis are samples and y-axis are their contribution.
+creates bar plot of relative exposure matrix, where x-axis are samples and y-axis are their relative contribution.
 }

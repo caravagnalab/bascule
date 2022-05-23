@@ -1,4 +1,4 @@
-#' creates an object of class \code(basilica}.
+#' fit basilica model.
 #'
 #' @description fit the model and infer the underlying signatures and their contributions in the mutational catalogue counts.
 #'

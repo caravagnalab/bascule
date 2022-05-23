@@ -10,7 +10,7 @@ get_catalogue_signatures(x)
 \item{x}{basilica object}
 }
 \value{
-inferred signatures which are from reference catalogue
+a data.frame where rows are inferred signatures (included in reference catalogue) and columns are 96 substitution bases.
 }
 \description{
 get catalogue signatures
