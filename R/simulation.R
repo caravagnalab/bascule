@@ -102,7 +102,7 @@ sim_fit <- function(
 }
 
 #-------------------------------------------------------------------------------
-sim_fit_batch <- function(ref_catalogue,
+sim_fit_batch <- function(ref_catalogue = COSMIC_catalogue,
                           targetX_list,
                           inputX_list,
                           num_samples_list,
@@ -115,10 +115,14 @@ sim_fit_batch <- function(ref_catalogue,
 
   data <- init_tibble()
 
+  counter <- 1
+
   for (i in targetX_list) {
     for (j in inputX_list) {
       for (n in num_samples_list) {
         for (iter in num_iters) {
+
+          print(paste("iter:", counter))
 
           try(
             {
@@ -163,6 +167,8 @@ sim_fit_batch <- function(ref_catalogue,
               #---------------------------------------------
             }
           )
+
+          counter <- counter + 1
         }
       }
     }
