@@ -19,6 +19,9 @@
     <loc>https://caravagnalab.github.io/basilica/reference/COSMIC_catalogue.html</loc>
   </url>
   <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/fill_tibble.html</loc>
+  </url>
+  <url>
     <loc>https://caravagnalab.github.io/basilica/reference/fit.html</loc>
   </url>
   <url>
@@ -32,6 +35,12 @@
   </url>
   <url>
     <loc>https://caravagnalab.github.io/basilica/reference/index.html</loc>
+  </url>
+  <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/init_tibble.html</loc>
+  </url>
+  <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/parFit.html</loc>
   </url>
   <url>
     <loc>https://caravagnalab.github.io/basilica/reference/plot_exposure.html</loc>
