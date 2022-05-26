@@ -10,6 +10,7 @@ reconstruction_matrix <- function(m, alpha, fixed, denovo) {
 
   mr_matrix <- alpha %*% as.matrix(beta)
   mr <- round(as.data.frame(mr_matrix))
+  return(mr)
 }
 
 #-------------------------------------------------------------------------------
