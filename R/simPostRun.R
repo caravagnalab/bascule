@@ -85,7 +85,7 @@ fill_tibble <- function(x) {
 
 #-------------------------------------------------------------------------------
 
-visData <- function(x) {
+visData <- function(data) {
 
   ACC <- c()
   MAE <- c()
