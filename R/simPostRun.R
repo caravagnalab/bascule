@@ -103,7 +103,8 @@ visData <- function(data) {
   #foreach::getDoParRegistered() # check if it is registered (optional)
   #foreach::getDoParWorkers()  # how many workers are available? (optional)
 
-  results <- foreach::foreach(i = 1:nrow(data)) %dopar% {
+  #results <- foreach::foreach(i = 1:nrow(data)) %dopar% {
+  for (i in 1:nrow(data)) {
 
     m <- data[i, ]$x[[1]]
 
@@ -126,11 +127,13 @@ visData <- function(data) {
     fitness.rate[length(fitness.rate)+1] <- fitness.quality(m, mr, 0.9)
   }
 
-  parallel::stopCluster(cl = my.cluster)
+  #parallel::stopCluster(cl = my.cluster)
 
   df <- data.frame(ACC = ACC, MAE = MAE, MSE = MSE, fitness = fitness.rate, TargetX = data$TargetX, InputX = data$InputX, n.samples = data$Num_Samples)
   return(df)
 }
+
+
 
 
 
