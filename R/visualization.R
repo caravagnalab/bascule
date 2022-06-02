@@ -37,6 +37,7 @@ plot_exposure <- function(x) {
 #' @export plot_signatures
 #'
 #' @import ggplot2
+#' @import data.table
 #'
 #' @examples
 plot_signatures <- function( x, useRowNames = FALSE, xlabels = FALSE, denovoSignature = TRUE ) {

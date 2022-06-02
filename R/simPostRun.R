@@ -87,52 +87,73 @@ fill_tibble <- function(x) {
 
 visData <- function(data) {
 
-  ACC <- c()
+  #ACC <- c()
+  #fitness.rate <- c()
   MAE <- c()
   MSE <- c()
-  fitness.rate <- c()
 
-  data$TargetX <- factor(data$TargetX, levels = c("low", "medium", "high"))
-  data$InputX <- factor(data$InputX, levels = c("low", "medium", "high"))
-  data$Num_Samples <- factor(data$Num_Samples)
+  fRatio <- c()
 
-  n.cores <- parallel::detectCores()
-  my.cluster <- parallel::makeCluster(n.cores)  # create the cluster
+  dRatio <- c()
+  dCosine <- c()
+
+  #data$TargetX <- factor(data$TargetX, levels = c("low", "medium", "high"))
+  #data$InputX <- factor(data$InputX, levels = c("low", "medium", "high"))
+  #data$Num_Samples <- factor(data$Num_Samples)
+
+  #n.cores <- parallel::detectCores()
+  #my.cluster <- parallel::makeCluster(n.cores)  # create the cluster
   #print(my.cluster) # check cluster definition (optional)
-  doParallel::registerDoParallel(cl = my.cluster) # register it to be used by %dopar%
+  #doParallel::registerDoParallel(cl = my.cluster) # register it to be used by %dopar%
   #foreach::getDoParRegistered() # check if it is registered (optional)
   #foreach::getDoParWorkers()  # how many workers are available? (optional)
-
   #results <- foreach::foreach(i = 1:nrow(data)) %dopar% {
+
   for (i in 1:nrow(data)) {
 
     m <- data[i, ]$x[[1]]
 
     input_catalogue <- data[i, ]$Input_Catalogue[[1]]
 
-    #exp_exposure <- data[i, ]$Exp_Exposure[[1]]
+    exp_exposure <- data[i, ]$Exp_Exposure[[1]]
     inf_exposure <- data[i, ]$Inf_Exposure[[1]]
 
     exp_fixed <- data[i, ]$Exp_Fixed[[1]]
     inf_fixed <- data[i, ]$Inf_Fixed[[1]]
 
-    #exp_denovo <- data[i, ]$Exp_Denovo[[1]]
+    exp_denovo <- data[i, ]$Exp_Denovo[[1]]
     inf_denovo <- data[i, ]$Inf_Denovo[[1]]
 
     mr <- reconstruction_matrix(m, inf_exposure, inf_fixed, inf_denovo)
 
-    ACC[length(ACC)+1] <- fixed.quality(input_catalogue, exp_fixed, inf_fixed)
+    #ACC[length(ACC)+1] <- fixed.quality(input_catalogue, exp_fixed, inf_fixed)
     MAE[length(MAE)+1] <- compute.mae(m, mr)
     MSE[length(MSE)+1] <- compute.mse(m, mr)
-    fitness.rate[length(fitness.rate)+1] <- fitness.quality(m, mr, 0.9)
+    #fitness.rate[length(fitness.rate)+1] <- fitness.quality(m, mr, 0.9)
+
+    fRatio[length(fRatio)+1] <- length(intersect(rownames(exp_fixed), rownames(inf_fixed))) / length(rownames(exp_fixed))
+
+    r <- basilica:::denovo.quality(exp_denovo, inf_denovo)
+    #print(paste(r[[2]], class(r[[2]])))
+    dRatio[length(dRatio)+1] <- r[[2]]
+    dCosine[length(dCosine)+1] <- r[[3]]
   }
 
   #parallel::stopCluster(cl = my.cluster)
 
-  df <- data.frame(ACC = ACC, MAE = MAE, MSE = MSE, fitness = fitness.rate, TargetX = data$TargetX, InputX = data$InputX, n.samples = data$Num_Samples)
+  df <- data.frame(
+    MAE = MAE,
+    MSE = MSE,
+    fRatio = fRatio,
+    dRatio = dRatio,
+    dCosine = dCosine,
+    TargetX = data$TargetX,
+    InputX = data$InputX,
+    n.samples = data$Num_Samples
+    )
+
   return(df)
 }
-
 
 
 
