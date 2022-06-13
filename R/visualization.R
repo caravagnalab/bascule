@@ -40,7 +40,7 @@ plot_exposure <- function(x) {
 #' @import data.table
 #'
 #' @examples
-plot_signatures <- function( x, useRowNames = FALSE, xlabels = FALSE, denovoSignature = TRUE ) {
+plot_signatures <- function( x, useRowNames = TRUE, xlabels = FALSE, denovoSignature = TRUE ) {
 
   if (denovoSignature==TRUE) {
     beta <- get_denovo_signatures(x)

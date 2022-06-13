@@ -9,13 +9,13 @@
 #'
 #' @examples
 get_exposure <- function(x, long=FALSE) {
-  stopifnot(inherits(x, "basilica"))
+  #stopifnot(inherits(x, "basilica"))
 
   alpha <- x$fit$exposure
 
   if (long) {
-    alpha$Sample <- rownames(alpha)
-    alpha <- tidyr::gather(alpha, key="Signature", value="Exposure", c(-Sample))
+    alpha$samples <- rownames(alpha)
+    alpha <- tidyr::gather(alpha, key="Signature", value="Exposure", c(-samples))
   }
 
   return(alpha)
@@ -30,7 +30,7 @@ get_exposure <- function(x, long=FALSE) {
 #'
 #' @examples
 get_catalogue_signatures <- function(x) {
-  stopifnot(inherits(x, "basilica"))
+  #stopifnot(inherits(x, "basilica"))
   return(x$fit$catalogue_signatures)
 }
 
@@ -43,7 +43,7 @@ get_catalogue_signatures <- function(x) {
 #'
 #' @examples
 get_denovo_signatures <- function(x) {
-  stopifnot(inherits(x, "basilica"))
+  #stopifnot(inherits(x, "basilica"))
   return(x$fit$denovo_signatures)
 }
 

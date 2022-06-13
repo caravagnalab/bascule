@@ -1,6 +1,6 @@
 
 
-fit <- function(
+pyfit <- function(
     x,
     k_list,
     lr,
@@ -12,88 +12,79 @@ fit <- function(
   py <- reticulate::import("pybasilica")
   obj <- py$fit(x=x, k_list=k_list, lr=lr, n_steps=n_steps, groups=groups, beta_fixed=input_catalogue)
 
+
   # save python object data in a list
   data <- list()
 
-  data$m <- x$x           # data.frame
-  data$n_samples <- x$n_samples   # integer
-  data$beta_fixed <- x$beta_fixed  # data.frame
-  data$k_fixed <- x$k_fixed     # integer
-  data$groups <- x$groups      # for now NULL
-
-  data$alpha <- x$alpha       # data.frame
-  data$beta_denovo <- x$beta_denovo # data.frame
-  data$k_denovo <- x$k_denovo    # integer
-
-  data$n_steps <- x$n_steps     # integer
-  data$lr <- x$lr          # numeric
-  data$losses <- x$losses      # numeric
-  data$bic <- x$bic         # numeric
-
-  #x$model
-  #x$guide
+  data$input <- list(x=x, groups=groups, input_catalogue=input_catalogue)
+  data$params <- list(lr=lr, steps=n_steps)
+  data$fit <- list(exposure=obj$alpha, denovo_signatures=obj$beta_denovo, bic=obj$bic, losses=obj$losses)
 
   return(data)
 }
 
 #-------------------------------------------------------------------------------
 
-tryCatch(
-  {
-    1 + 1
-    print("Everything was fine.")
-  },
+filter_fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
 
-  errore = function(e) {
-    print("There was an error message.")
-  },
-
-  warning = function(w) {
-    print("There was a warning message.")
-  },
-
-  finally = {
-    print("finally Executed")
+  if (!is.data.frame(M)) {
+    warning("invalid count matrix (M) !")
   }
-)
-
-
-filter_fixed <- function(M, alpha, beta_fixed, phi) {
+  if (!is.data.frame(alpha)) {
+    warning("invalid exposure matrix (alpha) !")
+  }
+  if (!is.numeric(phi)) {
+    warning("invalid parameter phi !")
+  }
 
   if (is.null(beta_fixed)) {
-    return(NULL)
+    col_names <- colnames(M)
+    df = data.frame(matrix(nrow=0, ncol = length(col_names)))
+    colnames(df) = col_names
+  }
+  else if (is.data.frame(beta_fixed)) {
+    theta <- matrix(rowSums(M), nrow = 1)
+    #print(theta)
+    alpha0 <- theta %*% as.matrix(alpha)
+    #print(alpha0)
+    contribution <- colSums(alpha0) / sum(alpha0)
+    #print(contribution)
+    dropped <- which(contribution < phi)
+    #print(dropped)
+    if (sum(dropped)==0) {
+      df <- beta_fixed
+      #print('nothing to drop')
+    } else {
+      df <- beta_fixed[-c(dropped), ]
+      #print(paste('dropped', length(dropped), 'signatures'))
+    }
+  }
+  else {
+    warning("invalid fixed signatures (beta_fixed) !")
   }
 
-  if (is.data.frame(M)) {
-    warning("invalid M!")
-  }
-  if (is.data.frame(alpha)) {
-    warning("invalid alpha!")
-  }
-  if (is.numeric(phi)) {
-    warning("invalid phi!")
-  }
-
-  theta <- matrix(rowSums(M), nrow = 1)
-  total_mut <- sum(theta)
-
-  alpha <- theta %*% as.matrix(alpha[rownames(beta_fixed)])
-  sig_cont <- colSums(alpha)
-  selected <- which(sig_cont > phi * total_mut)
-  beta_fixed <- beta_fixed[selected, ]
-
-  return(beta_fixed)
+  return(df)
 }
 
 #-------------------------------------------------------------------------------
 
-filter_denovo <- function(beta_denovo, reference_catalogue, delta) {
-  if (is.data.frame(reference_catalogue) & is.numeric(delta)) {
+filter_denovo <- function(beta_denovo=NULL, reference_catalogue, delta=0.9) {
 
-    if (is.null(beta_denovo)) {
-      return(NULL)
-    }
+  if (!is.data.frame(reference_catalogue)) {
+    warning("Invalid reference catalogue!")
+  }
 
+  if (!is.numeric(delta)) {
+    warning("Invalid delta argument!")
+  }
+
+  if (is.null(beta_denovo)) {
+    col_names <- colnames(reference_catalogue)
+    df = data.frame(matrix(nrow=0, ncol = length(col_names)))
+    colnames(df) = col_names
+    return(df)
+  }
+  else if (is.data.frame(beta_denovo)) {
     df <- data.frame(matrix(0, nrow(beta_denovo), nrow(reference_catalogue)))
     rownames(df) <- rownames(beta_denovo)
     colnames(df) <- rownames(reference_catalogue)
@@ -106,30 +97,31 @@ filter_denovo <- function(beta_denovo, reference_catalogue, delta) {
         df[i,j] <- score
       }
     }
-    match_list <- c()
-    while (TRUE) {
-      max = which(df == max(df), arr.ind = TRUE)
-      if (df[max] < delta) {
-        break
-      }
-      row_ind <- as.numeric(max)[1]
-      col_ind <- as.numeric(max)[2]
+  }
 
-      match_list[length(match_list) + 1] <- colnames(df[col_ind])
-
-      df <- df[-c(row_ind), -c(col_ind)]
-      if (!is.data.frame(beta_denovo)) {
-        break
-      }
+  match_list <- c()
+  while (TRUE) {
+    max = which(df == max(df), arr.ind = TRUE)
+    if (df[max] < delta) {
+      break
     }
+    row_index <- as.numeric(max)[1]
+    col_index <- as.numeric(max)[2]
+    match_list[length(match_list) + 1] <- colnames(df[col_index])
 
-    if (length(match_list) == 0) {
-      return(NULL)
-    } else {
-      return(reference_catalogue[match_list, ])
+    df <- df[-c(row_index), -c(col_index)]
+    if (nrow(df)==0) {
+      break
     }
   }
-  else {
-    warning('invalid beta_fixed, reference_catalogue or delta argument')
+
+  if (length(match_list) == 0) {
+    col_names <- colnames(reference_catalogue)
+    df = data.frame(matrix(nrow=0, ncol = length(col_names)))
+    colnames(df) = col_names
+    return(df)
+  } else {
+    return(reference_catalogue[match_list, ])
   }
 }
+
