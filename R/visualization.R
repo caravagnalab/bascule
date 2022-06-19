@@ -84,7 +84,7 @@ plot_signatures <- function( x, useRowNames = TRUE, xlabels = FALSE, denovoSigna
 
 plot_cosine <- function(obj, limit) {
   reference <- obj$reference_catalogue
-  denovo <- obj$fit$denovo_signatures
+  denovo <- obj$denovo_signatures
 
   cosine_matrix <- data.frame( matrix( nrow = nrow(reference), ncol = nrow(denovo) ) )
   colnames(cosine_matrix) <- rownames(denovo)

@@ -11,7 +11,7 @@
 get_exposure <- function(x, long=FALSE) {
   #stopifnot(inherits(x, "basilica"))
 
-  alpha <- x$fit$exposure
+  alpha <- x$exposure
 
   if (long) {
     alpha$samples <- rownames(alpha)
@@ -31,7 +31,7 @@ get_exposure <- function(x, long=FALSE) {
 #' @examples
 get_catalogue_signatures <- function(x) {
   #stopifnot(inherits(x, "basilica"))
-  return(x$fit$catalogue_signatures)
+  return(x$catalogue_signatures)
 }
 
 #' get de novo signatures
@@ -44,6 +44,6 @@ get_catalogue_signatures <- function(x) {
 #' @examples
 get_denovo_signatures <- function(x) {
   #stopifnot(inherits(x, "basilica"))
-  return(x$fit$denovo_signatures)
+  return(x$denovo_signatures)
 }
 

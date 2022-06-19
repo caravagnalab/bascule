@@ -4,12 +4,7 @@
 \alias{plot_signatures}
 \title{plot signatures}
 \usage{
-plot_signatures(
-  x,
-  useRowNames = FALSE,
-  xlabels = FALSE,
-  denovoSignature = TRUE
-)
+plot_signatures(x, useRowNames = TRUE, xlabels = FALSE, denovoSignature = TRUE)
 }
 \arguments{
 \item{x}{basilica object}

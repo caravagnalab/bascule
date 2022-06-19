@@ -1,4 +1,244 @@
 
+get.one.sample <- function(
+    synthetic,
+    k,
+    lr,
+    steps,
+    phi,
+    delta
+    ) {
+
+  x <- synthetic$x[[1]]
+  ref <- synthetic$ref_cat[[1]]
+  input <- synthetic$input_cat[[1]]
+
+  obj <- basilica:::fit(
+    x=x,
+    reference_catalogue=ref,
+    k=k,
+    lr=lr,
+    steps=steps,
+    phi=phi,
+    delta=delta,
+    groups=NULL,
+    input_catalogue=input
+  )
+
+  obj$exposure <- list(obj$exposure)
+  obj$denovo_signatures <- list(obj$denovo_signatures)
+  obj$catalogue_signatures <- list(obj$catalogue_signatures)
+
+  results <- c(synthetic, obj)
+
+  return(results)
+}
+
+
+# plot exposure---------------------------------------------------------------
+
+plot.alpha <- function(exp_alpha, inf_alpha) {
+  #exp_alpha <- x$exp_exposure[[1]]
+  rownames(exp_alpha) <- rownames(inf_alpha)  # just to be consistent, should be fixed later
+  exp_alpha$sample <- rownames(exp_alpha)
+  exp_alpha_long <- tidyr::gather(exp_alpha, key="signature", value="exposure", c(-sample))
+  exp_alpha_long$type <- rep('expected', each=nrow(exp_alpha_long))
+
+  #inf_alpha <- x$exposure[[1]]
+  inf_alpha$sample <- rownames(inf_alpha)
+  inf_alpha_long <- tidyr::gather(inf_alpha, key="signature", value="exposure", c(-sample))
+  inf_alpha_long$type <- rep('inferred', each=nrow(inf_alpha_long))
+
+  alpha <- rbind(exp_alpha_long, inf_alpha_long)
+
+  plt <- ggplot(data = alpha, aes(x=sample, y=exposure, fill=signature)) +
+    geom_bar(stat = "identity") +
+    facet_grid(type ~ .) +
+    theme_minimal() +
+    ggtitle("Signatures exposure (Expected vs. Inferred)")
+  #scale_y_continuous(labels=scales::percent)
+
+  #glist <-
+  #glist[[1]] <- plt
+
+  return(list(plt))
+}
+
+
+# plot signatures --------------------------------------------------------------
+
+plot.beta <- function(beta) {
+
+  if (is.null(beta)) {
+    p <- ggplot() +
+      theme_void() +
+      geom_text(aes(0,0,label='N/A')) +
+      xlab(NULL) #optional, but safer in case another theme is applied later
+  } else {
+    # separate context and alteration
+    x <- data.table::as.data.table(reshape2::melt(as.matrix(beta),varnames=c("signature","cat")))
+    x[, Context := paste0(substr(cat,1,1), ".", substr(cat, 7, 7)) ]
+    x[, alt := paste0(substr(cat,3,3),">",substr(cat,5,5)) ]
+
+    # make the ggplot2 object
+    glist <- list()
+    for(i in 1:nrow(beta)) {
+
+      plt <- ggplot(x[signature==rownames(beta)[i]]) +
+        geom_bar(aes(x=Context,y=value,fill=alt),stat="identity",position="identity") +
+        facet_wrap(~alt,nrow=1,scales="free_x") +
+        theme(axis.text.x=element_text(angle=90,hjust=1),panel.background=element_blank(),axis.line=element_line(colour="black")) +
+        ggtitle(rownames(beta)[i]) + theme(legend.position="none") + ylab("Frequency of mutations")
+
+      #if(!xlabels) {
+      plt <- plt + theme(axis.text.x=element_blank(),axis.ticks.x=element_blank())
+      #}
+
+      glist[[i]] <- plt
+    }
+
+    # make the final plot
+    #gridExtra::grid.arrange(grobs=glist,ncol=ceiling(nrow(beta)/3))
+
+    p <- ggpubr::ggarrange(plotlist=glist, ncol = 1)
+
+  }
+
+  return(list(p))
+}
+
+# plot signatures cosine matrix --------------------------------------------------------------
+
+
+plot.beta.cosine <- function(exp_denovo, inf_denovo) {
+  # expected vs inferred signatures cosine similarity matrix
+  cos <- cosine_matrix(inf_denovo, exp_denovo)
+  cos1 <- tibble::rownames_to_column(cos, var = 'inferred_denovo')
+  cos_long <- tidyr::gather(cos1, key="expected_denovo", value="cosine_similarity", c(-inferred_denovo))
+  # plot data
+  cplot <- ggplot(cos_long, aes(expected_denovo, inferred_denovo)) +
+    geom_tile(aes(fill = cosine_similarity)) +
+    geom_text(aes(label = round(cosine_similarity, 3))) +
+    scale_fill_gradient(low = "white", high = "darkgreen")
+
+  return(list(cplot))
+}
+
+#-------------------------------------------------------------------------------
+
+multi.plot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+  if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+# ------------------------------------------------------------------------------
+
+final.plot <- function(exp_alpha, inf_alpha, exp_denovo, inf_denovo) {
+
+  alpha <- basilica:::plot.alpha(exp_alpha, inf_alpha)
+  beta.cosine <- plot.beta.cosine(exp_denovo, inf_denovo)
+  p1 <- list(ggpubr::ggarrange(plotlist=c(alpha, beta.cosine), ncol = 2))
+
+  exp.beta <- plot.beta(exp_denovo)
+  inf.beta <- plot.beta(inf_denovo)
+  p2 <- list(ggpubr::ggarrange(plotlist=c(exp.beta, inf.beta), ncol = 2))
+  p <- c(p1, p2)
+
+  return(basilica:::multi.plot(plotlist = p))
+}
+
+
+#-------------------------------------------------------------------------------
+
+#' @import dplyr
+fill_tibble <- function(x) {
+
+  data <- tibble::tibble(
+    x = list(),
+    Input_Catalogue = list(),
+    Ref_Catalogue = list(),
+
+    Exp_Exposure = list(),
+    Exp_Fixed = list(),
+    Exp_Denovo = list(),
+
+    Inf_Exposure = list(),
+    Inf_Fixed = list(),
+    Inf_Denovo = list(),
+
+    TargetX = character(),
+    InputX = character(),
+    Num_Samples = numeric(),
+    IterNum = numeric(),
+
+    K = list(),
+    Lr = numeric(),
+    Steps = numeric(),
+    Phi = numeric(),
+    Delta = numeric()
+  )
+
+  for (row in x) {
+    data <- data %>% tibble::add_row(
+      x = list(row$x),
+      Input_Catalogue = list(row$input_catalogue),
+      Ref_Catalogue = list(row$ref_catalogue),
+
+      Exp_Exposure = list(row$exp_exposure),
+      Exp_Fixed = list(row$exp_fixed),
+      Exp_Denovo = list(row$exp_denovo),
+
+      Inf_Exposure = list(row$inf_exposure),
+      Inf_Fixed = list(row$inf_fixed),
+      Inf_Denovo = list(row$inf_denovo),
+
+      TargetX = row$targetX,
+      InputX = row$inputX,
+      Num_Samples = row$num_samples,
+      IterNum = row$iter,
+
+      K = list(row$k),
+      Lr = row$lr,
+      Steps = row$steps,
+      Phi = row$phi,
+      Delta = row$delta
+    )
+  }
+  return(data)
+}
+
+#-------------------------------------------------------------------------------
+
 visData <- function(x) {
 
   df <- tibble::tibble(
@@ -162,72 +402,6 @@ denovo.quality <- function(exp, inf) {
 }
 
 #-------------------------------------------------------------------------------
-
-
-init_tibble <- function() {
-
-  obj <- tibble::tibble(
-    x = list(),
-    Input_Catalogue = list(),
-    Ref_Catalogue = list(),
-
-    Exp_Exposure = list(),
-    Exp_Fixed = list(),
-    Exp_Denovo = list(),
-
-    Inf_Exposure = list(),
-    Inf_Fixed = list(),
-    Inf_Denovo = list(),
-
-    TargetX = character(),
-    InputX = character(),
-    Num_Samples = numeric(),
-    IterNum = numeric(),
-
-    K = list(),
-    Lr = numeric(),
-    Steps = numeric(),
-    Phi = numeric(),
-    Delta = numeric()
-  )
-
-  return(obj)
-}
-
-#-------------------------------------------------------------------------------
-
-fill_tibble <- function(x) {
-
-  data <- init_tibble()
-  for (row in x) {
-    data <- data %>% tibble::add_row(
-      x = list(row$x),
-      Input_Catalogue = list(row$input_catalogue),
-      Ref_Catalogue = list(row$ref_catalogue),
-
-      Exp_Exposure = list(row$exp_exposure),
-      Exp_Fixed = list(row$exp_fixed),
-      Exp_Denovo = list(row$exp_denovo),
-
-      Inf_Exposure = list(row$inf_exposure),
-      Inf_Fixed = list(row$inf_fixed),
-      Inf_Denovo = list(row$inf_denovo),
-
-      TargetX = row$targetX,
-      InputX = row$inputX,
-      Num_Samples = row$num_samples,
-      IterNum = row$iter,
-
-      K = list(row$k),
-      Lr = row$lr,
-      Steps = row$steps,
-      Phi = row$phi,
-      Delta = row$delta
-    )
-  }
-  return(data)
-}
-
 
 
 

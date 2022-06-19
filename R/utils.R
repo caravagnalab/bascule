@@ -1,4 +1,5 @@
 
+#------------------------------------------------------------------ [QC: PASSED]
 
 pyfit <- function(
     x,
@@ -16,9 +17,15 @@ pyfit <- function(
   # save python object data in a list
   data <- list()
 
-  data$input <- list(x=x, groups=groups, input_catalogue=input_catalogue)
-  data$params <- list(lr=lr, steps=n_steps)
-  data$fit <- list(exposure=obj$alpha, denovo_signatures=obj$beta_denovo, bic=obj$bic, losses=obj$losses)
+  #data$x <- x
+  #data$groups <- groups
+  #data$input_catalogue <- input_catalogue
+  #data$lr <- lr
+  #data$steps <- n_steps
+  data$exposure <- obj$alpha
+  data$denovo_signatures=obj$beta_denovo
+  data$bic=obj$bic
+  data$losses=obj$losses
 
   return(data)
 }
@@ -68,6 +75,31 @@ filter_fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
 
 #-------------------------------------------------------------------------------
 
+
+cosine_matrix <- function(a, b) {
+  # a and b are data.frame
+
+  df <- data.frame(matrix(0, nrow(a), nrow(b)))
+  rownames(df) <- rownames(a)
+  colnames(df) <- rownames(b)
+
+  for (i in 1:nrow(a)) {
+    denovo <- a[i, ]
+    for (j in 1:nrow(b)) {
+      ref <- b[j, ]
+
+      score <- cosine_sim(denovo, ref)
+      df[i,j] <- score
+    }
+  }
+
+  return(df)
+
+}
+
+#-------------------------------------------------------------------------------
+
+
 filter_denovo <- function(beta_denovo=NULL, reference_catalogue, delta=0.9) {
 
   if (!is.data.frame(reference_catalogue)) {
@@ -85,32 +117,21 @@ filter_denovo <- function(beta_denovo=NULL, reference_catalogue, delta=0.9) {
     return(df)
   }
   else if (is.data.frame(beta_denovo)) {
-    df <- data.frame(matrix(0, nrow(beta_denovo), nrow(reference_catalogue)))
-    rownames(df) <- rownames(beta_denovo)
-    colnames(df) <- rownames(reference_catalogue)
-
-    for (i in 1:nrow(beta_denovo)) {
-      denovo <- beta_denovo[i, ]
-      for (j in 1:nrow(reference_catalogue)) {
-        ref <- reference_catalogue[j, ]
-        score <- cosine_sim(denovo, ref)
-        df[i,j] <- score
-      }
-    }
+    cos_matrix <- cosine_matrix(beta_denovo, reference_catalogue)
   }
 
   match_list <- c()
   while (TRUE) {
-    max = which(df == max(df), arr.ind = TRUE)
-    if (df[max] < delta) {
+    max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
+    if (cos_matrix[max] < delta) {
       break
     }
     row_index <- as.numeric(max)[1]
     col_index <- as.numeric(max)[2]
-    match_list[length(match_list) + 1] <- colnames(df[col_index])
+    match_list[length(match_list) + 1] <- colnames(cos_matrix[col_index])
 
-    df <- df[-c(row_index), -c(col_index)]
-    if (nrow(df)==0) {
+    cos_matrix <- cos_matrix[-c(row_index), -c(col_index)]
+    if (nrow(cos_matrix)==0) {
       break
     }
   }

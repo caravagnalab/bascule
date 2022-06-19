@@ -32,7 +32,7 @@ fit <- function(
   counter <- 1
   while (TRUE) {
 
-    obj <- pyfit(
+    obj <- basilica:::pyfit(
       x=x,
       k_list=k,
       lr=lr,
@@ -41,18 +41,17 @@ fit <- function(
       input_catalogue=input_catalogue
       )
 
-
-    a <- filter_fixed(x, obj$fit$exposure, input_catalogue, phi)
-
-    b <- filter_denovo(obj$fit$denovo_signatures, reference_catalogue, delta)
-
     if (is.null(input_catalogue)) {
-      c <- 0
-    } else {
-      c <- nrow(input_catalogue)
+      col_names <- colnames(x)
+      input_catalogue = data.frame(matrix(nrow=0, ncol = length(col_names)))
+      colnames(input_catalogue) = col_names
     }
 
-    if (nrow(a)==c & nrow(b)==0) {
+    a <- basilica:::filter_fixed(x, obj$exposure, input_catalogue, phi)
+
+    b <- basilica:::filter_denovo(obj$denovo_signatures, reference_catalogue, delta)
+
+    if (nrow(a)==nrow(input_catalogue) & nrow(b)==0) {
       break
     }
 
@@ -65,8 +64,14 @@ fit <- function(
     counter <- counter + 1
   }
 
-  obj$fit$catalogue_signatures <- input_catalogue
-  obj$reference_catalogue <- reference_catalogue
+  if (nrow(input_catalogue)==0) {
+    obj$catalogue_signatures <- NULL
+  } else {
+    obj$catalogue_signatures <- input_catalogue
+  }
+  #obj$reference_catalogue <- reference_catalogue
+  #obj$phi <- phi
+  #obj$delta <- delta
 
   return(obj)
 }
