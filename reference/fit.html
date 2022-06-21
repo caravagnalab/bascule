@@ -38,7 +38,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>fit basilica model.</h1>
-      <small class="dont-index">Source: <a href="https://github.com/caravagnalab/basilica/blob/HEAD/R/signatureFinder.R" class="external-link"><code>R/signatureFinder.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/caravagnalab/basilica/blob/HEAD/R/basilica.R" class="external-link"><code>R/basilica.R</code></a></small>
       <div class="d-none name"><code>fit.Rd</code></div>
     </div>
 
@@ -50,14 +50,14 @@
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">fit</span><span class="op">(</span>
   <span class="va">x</span>,
+  <span class="va">reference_catalogue</span>,
+  <span class="va">k</span>,
+  <span class="va">lr</span>,
+  <span class="va">steps</span>,
+  <span class="va">phi</span>,
+  <span class="va">delta</span>,
   groups <span class="op">=</span> <span class="cn">NULL</span>,
-  input_catalogue <span class="op">=</span> <span class="cn">NULL</span>,
-  reference_catalogue <span class="op">=</span> <span class="fu">basilica</span><span class="fu">::</span><span class="va"><a href="COSMIC_catalogue.html">COSMIC_catalogue</a></span>,
-  k <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">5</span>,
-  lr <span class="op">=</span> <span class="fl">0.05</span>,
-  steps <span class="op">=</span> <span class="fl">500</span>,
-  phi <span class="op">=</span> <span class="fl">0.05</span>,
-  delta <span class="op">=</span> <span class="fl">0.9</span>
+  input_catalogue <span class="op">=</span> <span class="cn">NULL</span>
 <span class="op">)</span></code></pre></div>
     </div>
 
@@ -65,26 +65,45 @@
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
     <dl><dt>x</dt>
 <dd><p>input mutational counts data (data.frame; rows as samples and columns as 96 mutational categories)</p></dd>
-<dt>groups</dt>
-<dd><p>vector of discrete labels with one entry per sample, it defines the groups that will be considered by basilica</p></dd>
+
+
+<dt>reference_catalogue</dt>
+<dd><p>a catalog of reference signatures that basilica will use to compare input and de novo signatures (COSMIC catalogue by default)</p></dd>
+
+
 <dt>k</dt>
 <dd><p>vector of possible number of de novo signatures to infer</p></dd>
+
+
 <dt>lr</dt>
 <dd><p>stochastic variational inference learning rate</p></dd>
+
+
 <dt>steps</dt>
 <dd><p>number of gradient steps</p></dd>
+
+
 <dt>phi</dt>
 <dd><p>threshold to discard the signature based on its value in exposure matrix</p></dd>
+
+
 <dt>delta</dt>
 <dd><p>threshold to consider inferred signature as COSMIC signature</p></dd>
-<dt>input_catalog</dt>
+
+
+<dt>groups</dt>
+<dd><p>vector of discrete labels with one entry per sample, it defines the groups that will be considered by basilica</p></dd>
+
+
+<dt>input_catalogue</dt>
 <dd><p>input signature profiles, NULL by default</p></dd>
-<dt>reference_catalog</dt>
-<dd><p>a catalog of reference signatures that basilica will use to compare input and de novo signatures (COSMIC catalogue by default)</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>inferred exposure matrix, inferred signatures from reference catalogue and inferred de novo (not from reference catalogue) signatures</p>
+    
+
+<p>inferred exposure matrix, inferred signatures from reference catalogue and inferred de novo (not from reference catalogue) signatures</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
@@ -96,7 +115,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
     </footer></div>

@@ -1,8 +1,8 @@
 pandoc: 2.7.3
-pkgdown: 2.0.3
+pkgdown: 2.0.4
 pkgdown_sha: ~
 articles: {}
-last_built: 2022-05-26T09:52Z
+last_built: 2022-06-21T14:40Z
 urls:
   reference: https://caravagnalab.github.io/basilica/reference
   article: https://caravagnalab.github.io/basilica/articles
