@@ -33,8 +33,35 @@ get.one.sample <- function(
   return(results)
 }
 
+get.all.samples <- function(
+    synthetic,
+    k,
+    lr,
+    steps,
+    phi,
+    delta) {
 
-# plot exposure---------------------------------------------------------------
+  column_names <- c('x', 'input_cat', 'ref_cat', 'exp_exposure', 'exp_fixed', 'exp_denovo', 'targetX', 'inputX', 'exposure', 'denovo_signatures', 'bic', 'losses', 'catalogue_signatures')
+  df <- setNames(data.frame(matrix(ncol = length(column_names), nrow = 0)), column_names)
+
+  for (i in 1:nrow(synthetic)) {
+    syn <- synthetic[i, ]
+    output <- get.one.sample(
+      syn,
+      k,
+      lr,
+      steps,
+      phi,
+      delta
+    )
+    df <- rbind(df, output)
+  }
+
+  return(df)
+}
+
+
+# plot exposure-----------------------------------------------------------------
 
 plot.alpha <- function(exp_alpha, inf_alpha) {
   #exp_alpha <- x$exp_exposure[[1]]
@@ -90,7 +117,7 @@ plot.beta <- function(beta) {
         ggtitle(rownames(beta)[i]) + theme(legend.position="none") + ylab("Frequency of mutations")
 
       #if(!xlabels) {
-      plt <- plt + theme(axis.text.x=element_blank(),axis.ticks.x=element_blank())
+      plt <- plt + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank())
       #}
 
       glist[[i]] <- plt
@@ -100,25 +127,35 @@ plot.beta <- function(beta) {
     #gridExtra::grid.arrange(grobs=glist,ncol=ceiling(nrow(beta)/3))
 
     p <- ggpubr::ggarrange(plotlist=glist, ncol = 1)
-
   }
 
   return(list(p))
 }
 
-# plot signatures cosine matrix --------------------------------------------------------------
+# plot signatures cosine matrix ------------------------------------------------
 
 
 plot.beta.cosine <- function(exp_denovo, inf_denovo) {
-  # expected vs inferred signatures cosine similarity matrix
-  cos <- cosine_matrix(inf_denovo, exp_denovo)
-  cos1 <- tibble::rownames_to_column(cos, var = 'inferred_denovo')
-  cos_long <- tidyr::gather(cos1, key="expected_denovo", value="cosine_similarity", c(-inferred_denovo))
-  # plot data
-  cplot <- ggplot(cos_long, aes(expected_denovo, inferred_denovo)) +
-    geom_tile(aes(fill = cosine_similarity)) +
-    geom_text(aes(label = round(cosine_similarity, 3))) +
-    scale_fill_gradient(low = "white", high = "darkgreen")
+
+  if (is.null(exp_denovo) | is.null(inf_denovo)) {
+    cplot <- ggplot() +
+      theme_void() +
+      geom_text(aes(0,0,label='N/A')) +
+      xlab(NULL) #optional, but safer in case another theme is applied later
+  } else {
+    # expected vs inferred signatures cosine similarity matrix
+    cos <- cosine_matrix(inf_denovo, exp_denovo)
+    cos1 <- tibble::rownames_to_column(cos, var = 'inferred_denovo')
+    cos_long <- tidyr::gather(cos1, key="expected_denovo", value="cosine_similarity", c(-inferred_denovo))
+    # plot data
+    cplot <- ggplot(cos_long, aes(expected_denovo, inferred_denovo)) +
+      geom_tile(aes(fill = cosine_similarity)) +
+      geom_text(aes(label = round(cosine_similarity, 3))) +
+      scale_fill_gradient(low = "white", high = "darkgreen") +
+      ggtitle("Cosine similarity matrix (expected vs. inferred)") +
+      xlab("Expected") +
+      ylab("Inferred")
+  }
 
   return(list(cplot))
 }
@@ -170,7 +207,9 @@ final.plot <- function(exp_alpha, inf_alpha, exp_denovo, inf_denovo) {
   p1 <- list(ggpubr::ggarrange(plotlist=c(alpha, beta.cosine), ncol = 2))
 
   exp.beta <- plot.beta(exp_denovo)
+  #ggpubr::annotate_figure(exp.beta, top = ggpubr::text_grob("Expected Signatures", color = "red", face = "bold", size = 14))
   inf.beta <- plot.beta(inf_denovo)
+  #ggpubr::annotate_figure(inf.beta, top = ggpubr::text_grob("Inferred Signatures", color = "red", face = "bold", size = 14))
   p2 <- list(ggpubr::ggarrange(plotlist=c(exp.beta, inf.beta), ncol = 2))
   p <- c(p1, p2)
 

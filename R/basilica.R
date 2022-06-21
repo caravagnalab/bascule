@@ -73,6 +73,14 @@ fit <- function(
   #obj$phi <- phi
   #obj$delta <- delta
 
+  # output
+  #-------------------------------------:
+  # exposure              --> data.frame
+  # denovo_signatures     --> data.frame
+  # bic                   --> numeric
+  # losses                --> numeric
+  # catalogue_signatures  --> data.frame
+
   return(obj)
 }
 

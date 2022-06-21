@@ -27,6 +27,13 @@ pyfit <- function(
   data$bic=obj$bic
   data$losses=obj$losses
 
+  # output
+  # ---------------------------------:
+  # exposure          --> data.frame
+  # denovo_signatures --> data.frame
+  # bic               --> numeric
+  # losses            --> numeric
+
   return(data)
 }
 
