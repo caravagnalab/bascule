@@ -11,12 +11,10 @@ knitr::opts_chunk$set(
 )
 ```
 
-# basilica <img src="man/figures/logo.png" align="right" height="134" />
+# basilica <a href="https://caravagnalab.github.io/basilica/"><img src="man/figures/logo.png" align="right" height="139" /></a>
 
+Basilica is a hierarchical Bayesian model to fit single-nucleotide substitution signatures from multiple groups of patients, leveraging a pre-existing catalogue of known signatures such as COSMIC. Basilica searches for known signatures from the input catalogue as well as for new signatures that outside the catalogue, accounting for hidden structure in the input data (e.g., distinct tumour types). The model uses non-negative matrix factorisation and variational inference implemented in the [pybasilica](https://github.com/caravagnalab/pybasilica) Python package. 
 
-The package provides an R interface for the Python
-[pybasilica](https://github.com/caravagnalab/pybasilica) package, which implements
-.....
 
 #### Citation
 
