@@ -1,4 +1,80 @@
 
+
+#----------------------------------------------------------------------QC:PASSED
+# split reference catalogue to 2 sub catalogue:
+# reference catalogue (SBS1 included) + denovo catalogue
+split_reference <- function(ref_path, num_ref, seed) {
+
+  reference <- read.table(ref_path, sep = ",", row.names = 1, header = TRUE, check.names = FALSE)
+  SBS1 <- reference['SBS1', ]
+  reference <- reference[!(rownames(reference) %in% c("SBS1")), ] # exclude SBS1
+
+  set.seed(seed = seed)
+  shuffled_reference = reference[sample(1:nrow(reference)), ]
+
+  ref <- shuffled_reference[1:(num_ref-1), ]
+  ref <- ref[order(rownames(ref)), ]
+  ref <- rbind(SBS1, ref) # include SBS1
+
+  denovo <- shuffled_reference[num_ref:nrow(shuffled_reference), ]
+  denovo <- denovo[order(rownames(denovo)), ]
+
+  obj <- list(ref=ref, denovo=denovo)
+  return(obj)
+}
+
+#----------------------------------------------------------------------QC:PASSED
+
+generate_exposure <- function(signatures, groups, seed) {
+
+  if ('SBS1' %in% signatures) {
+    stop('SBS1 already included! no need to pass it to model in signatures args')
+  }
+
+  set.seed(seed = seed)
+  df_list <- list()
+
+  for (group in unique(groups)) {
+
+    sigNums <- sample(1:length(signatures), 1)
+    sigNames <- c('SBS1', sample(signatures, sigNums))
+    num_samples <- length(groups[groups==group])
+
+    #print(paste("group", group, "has", sigNums+1, "signatures, and", num_samples, "samples"))
+
+    x <- matrix( runif(num_samples * (sigNums+1), 0, 1), ncol = sigNums+1 )
+    alpha <- x / rowSums(x)
+    alpha <- as.data.frame(alpha)
+    colnames(alpha) <- sigNames
+    alpha$group <- rep(group, num_samples)
+    #print(alpha)
+
+    df_list[length(df_list)+1] <- list(alpha)
+  }
+
+  data <- Reduce(function(x, y) merge(x, y, all=TRUE), df_list) # merge all different group exposure matrices
+
+  # sort columns
+  column_names <- colnames(data)
+  column_names <- column_names[order(column_names)]
+  column_names <- append(setdiff(column_names, "group"), "group")
+  #column_names[length(column_names)+1] <- "group"
+  data <- data[, column_names]
+
+  data[is.na(data)] <- 0    # convert 'NA' to zero
+  data[order(data$group), ] # sort rows by group column
+
+  return(data)
+}
+
+#-------------------------------------------------------------------------------
+
+
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
 get.one.sample <- function(
     synthetic,
     k,
