@@ -7,14 +7,14 @@ split_reference <- function(ref_path, num_ref, seed) {
 
   reference <- read.table(ref_path, sep = ",", row.names = 1, header = TRUE, check.names = FALSE)
   SBS1 <- reference['SBS1', ]
-  reference <- reference[!(rownames(reference) %in% c("SBS1")), ] # exclude SBS1
+  reference <- reference[!(rownames(reference) %in% c("SBS1")), ] # excludes SBS1
 
   set.seed(seed = seed)
   shuffled_reference = reference[sample(1:nrow(reference)), ]
 
   ref <- shuffled_reference[1:(num_ref-1), ]
   ref <- ref[order(rownames(ref)), ]
-  ref <- rbind(SBS1, ref) # include SBS1
+  ref <- rbind(SBS1, ref) # includes SBS1
 
   denovo <- shuffled_reference[num_ref:nrow(shuffled_reference), ]
   denovo <- denovo[order(rownames(denovo)), ]
@@ -24,7 +24,8 @@ split_reference <- function(ref_path, num_ref, seed) {
 }
 
 #----------------------------------------------------------------------QC:PASSED
-
+# generate signatures which includes:
+# fixed signatures (SBS1 included) + denovo signatures
 generate_signatures <- function(reference_catalogue, denovo_catalogue, complexity, seed) {
 
   set.seed(seed = seed)
@@ -46,7 +47,7 @@ generate_signatures <- function(reference_catalogue, denovo_catalogue, complexit
   }
 
   SBS1 <- reference_catalogue['SBS1', ]
-  reference <- reference_catalogue[!(rownames(reference_catalogue) %in% c("SBS1")), ] # exclude SBS1
+  reference <- reference_catalogue[!(rownames(reference_catalogue) %in% c("SBS1")), ] # excludes SBS1
 
   cosine_reference <- cosine_matrix(reference, reference)
   shuffled_reference = reference[sample(1:nrow(reference)), ]
@@ -65,7 +66,7 @@ generate_signatures <- function(reference_catalogue, denovo_catalogue, complexit
     cos_vec_ref <- cosine_reference[first_ref, ]
     p_ref <- 1 - (cos_vec_ref/sum(cos_vec_ref))
     index_list_ref <- rcat(fixed_num-2, as.numeric(p_ref))
-    fixed_df <- rbind(SBS1, reference[first_ref, ], reference[index_list_ref, ])
+    fixed_df <- rbind(SBS1, reference[first_ref, ], reference[index_list_ref, ])  # includes SBS1
     #fixed_list <- sample(in_reference_list, fixed_num)
     #fixed_df <- reference_catalogue[fixed_list, ]
   }
@@ -90,7 +91,6 @@ generate_signatures <- function(reference_catalogue, denovo_catalogue, complexit
     denovo_df <- NULL
   }
 
-
   if (is.null(denovo_df)) {
     beta <- fixed_df
   }
@@ -106,16 +106,28 @@ generate_signatures <- function(reference_catalogue, denovo_catalogue, complexit
 generate_exposure <- function(signatures, groups, seed) {
 
   if ('SBS1' %in% signatures) {
-    stop('SBS1 already included! no need to pass it to model in signatures args')
+    print('SBS1 included!')
+  } else {
+    print('SBS1 not included! we will add it')
   }
 
   set.seed(seed = seed)
   df_list <- list()
 
+  signatures <- signatures[! signatures %in% c('SBS1')] # excludes SBS1
+
   for (group in unique(groups)) {
 
-    sigNums <- sample(1:length(signatures), 1)
-    sigNames <- c('SBS1', sample(signatures, sigNums))
+    if (length(unique(groups))==1) {
+      sigNums <- length(signatures)
+      sigNames <- c('SBS1', signatures)
+    } else {
+      sigNums <- sample(1:length(signatures), 1)
+      sigNames <- c('SBS1', sample(signatures, sigNums))
+    }
+    #sigNums <- sample(1:length(signatures), 1)
+    #sigNames <- c('SBS1', sample(signatures, sigNums))
+
     num_samples <- length(groups[groups==group])
 
     #print(paste("group", group, "has", sigNums+1, "signatures, and", num_samples, "samples"))
