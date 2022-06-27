@@ -25,6 +25,84 @@ split_reference <- function(ref_path, num_ref, seed) {
 
 #----------------------------------------------------------------------QC:PASSED
 
+generate_signatures <- function(reference_catalogue, denovo_catalogue, complexity, seed) {
+
+  set.seed(seed = seed)
+
+  if (complexity=='low') {
+    fixed_num <- sample(3:5, 1)
+    denovo_num <- sample(0:2, 1)
+  }
+  else if (complexity=='medium') {
+    fixed_num <- sample(1:2, 1)
+    denovo_num <- sample(3:5, 1)
+  }
+  else if (complexity=='high') {
+    fixed_num <- sample(3:5, 1)
+    denovo_num <- sample(3:5, 1)
+  }
+  else {
+    stop("wrong complexity argument!")
+  }
+
+  SBS1 <- reference_catalogue['SBS1', ]
+  reference <- reference_catalogue[!(rownames(reference_catalogue) %in% c("SBS1")), ] # exclude SBS1
+
+  cosine_reference <- cosine_matrix(reference, reference)
+  shuffled_reference = reference[sample(1:nrow(reference)), ]
+
+  shuffled_denovo = denovo_catalogue[sample(1:nrow(denovo_catalogue)), ]
+  cosine_denovo <- cosine_matrix(denovo_catalogue, denovo_catalogue)
+
+  #mutation_features <- colnames(reference_catalogue)
+  #reference_list <- rownames(reference_catalogue)
+  #reference_list <- rownames(denovo_catalogue)
+
+
+  # catalogue signatures -------------------------------------------------------
+  if (fixed_num > 1) {
+    first_ref <- rownames(shuffled_reference[1, ])
+    cos_vec_ref <- cosine_reference[first_ref, ]
+    p_ref <- 1 - (cos_vec_ref/sum(cos_vec_ref))
+    index_list_ref <- rcat(fixed_num-2, as.numeric(p_ref))
+    fixed_df <- rbind(SBS1, reference[first_ref, ], reference[index_list_ref, ])
+    #fixed_list <- sample(in_reference_list, fixed_num)
+    #fixed_df <- reference_catalogue[fixed_list, ]
+  }
+  else {
+    fixed_df <- SBS1
+  }
+
+  # denovo signatures ----------------------------------------------------------
+  if (denovo_num > 0) {
+
+    first_denovo <- rownames(shuffled_denovo[1, ])
+    cos_vec_denovo <- cosine_denovo[first_denovo, ]
+    p_denovo <- 1 - (cos_vec_denovo/sum(cos_vec_denovo))
+    index_list_denovo <- rcat(denovo_num-1, as.numeric(p_denovo))
+    denovo_df <- rbind(denovo_catalogue[first_denovo, ], denovo_catalogue[index_list_denovo, ])
+    rownames(denovo_df) <- paste0(rownames(denovo_df), "_D")
+    #denovo_list <- sample(out_reference_list, denovo_num)
+    #denovo_df <- denovo_catalogue[denovo_list, ]
+
+  }
+  else {
+    denovo_df <- NULL
+  }
+
+
+  if (is.null(denovo_df)) {
+    beta <- fixed_df
+  }
+  else {
+    beta <- rbind(fixed_df, denovo_df)
+  }
+
+  return(beta)
+}
+
+#----------------------------------------------------------------------QC:PASSED
+
 generate_exposure <- function(signatures, groups, seed) {
 
   if ('SBS1' %in% signatures) {
