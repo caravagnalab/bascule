@@ -23,7 +23,7 @@ split_reference <- function(ref_path, num_ref, seed) {
   return(obj)
 }
 
-#-------------------------------------------------------------------------------
+#----------------------------------------------------------------------QC:PASSED
 
 similarity_tables <- function(reference, denovo) {
   ref <- reference[!(rownames(reference) %in% c("SBS1")), ] # excludes SBS1
@@ -180,9 +180,49 @@ generate_exposure <- function(signatures, groups, seed) {
   return(data)
 }
 
+#----------------------------------------------------------------------QC:PASSED
+
+generate_theta <- function(min, max, num_samples, seed) {
+  set.seed(seed = seed)
+  theta = sample(min:max, num_samples)
+  return(theta)
+}
+
 #-------------------------------------------------------------------------------
 
+generate_counts <- function(alpha, beta, theta) {
 
+  alpha <- alpha[, order(colnames(alpha))]
+  beta <- beta[order(rownames(beta)), ]
+  num_samples <- nrow(alpha)
+
+  M <- matrix(rep(0, num_samples*96) , ncol = 96)
+
+  # iterate over samples
+  for (sample in 1:num_samples) {
+
+    p <- as.numeric(alpha[sample, ]) # select sample i
+
+    # iterate over number of mutations in sample i
+    for (j in 1:theta[sample]) {
+
+      # sample signature profile index from categorical data
+      signature_idx <- rcat(1, p)
+      signature <- beta[signature_idx, ]
+
+      # sample mutation feature index for corresponding signature from categorical data
+      mutation_idx <- rcat(1, as.numeric(signature))
+
+      # add +1 to the mutation feature in position j in branch i
+      M[sample, mutation_idx] <- M[sample, mutation_idx] + 1
+
+    }
+  }
+  M <- as.data.frame(M)
+  colnames(M) <- colnames(beta)
+  rownames(M) <- rownames(alpha)
+  return(M)
+}
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
