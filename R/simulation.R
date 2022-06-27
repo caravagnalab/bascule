@@ -26,7 +26,14 @@ split_reference <- function(ref_path, num_ref, seed) {
 #----------------------------------------------------------------------QC:PASSED
 # generate signatures which includes:
 # fixed signatures (SBS1 included) + denovo signatures
-generate_signatures <- function(reference_catalogue, denovo_catalogue, complexity, seed) {
+generate_signatures <- function(
+    reference_catalogue,
+    cosine_reference, # cosine similarity matrix of reference signatures (SBS1 excluded)
+    denovo_catalogue,
+    cosine_denovo, # cosine similarity matrix of denovo signatures
+    complexity,
+    seed
+    ) {
 
   set.seed(seed = seed)
 
@@ -49,11 +56,15 @@ generate_signatures <- function(reference_catalogue, denovo_catalogue, complexit
   SBS1 <- reference_catalogue['SBS1', ]
   reference <- reference_catalogue[!(rownames(reference_catalogue) %in% c("SBS1")), ] # excludes SBS1
 
-  cosine_reference <- cosine_matrix(reference, reference)
+  # shuffle the reference signatures
   shuffled_reference = reference[sample(1:nrow(reference)), ]
+  # cosine similarity matrix of reference signatures
+  #cosine_reference <- cosine_matrix(reference, reference)
 
+  # shuffle the denovo signatures
   shuffled_denovo = denovo_catalogue[sample(1:nrow(denovo_catalogue)), ]
-  cosine_denovo <- cosine_matrix(denovo_catalogue, denovo_catalogue)
+  # cosine similarity matrix of denovo signatures
+  #cosine_denovo <- cosine_matrix(denovo_catalogue, denovo_catalogue)
 
   #mutation_features <- colnames(reference_catalogue)
   #reference_list <- rownames(reference_catalogue)
@@ -142,7 +153,8 @@ generate_exposure <- function(signatures, groups, seed) {
     df_list[length(df_list)+1] <- list(alpha)
   }
 
-  data <- Reduce(function(x, y) merge(x, y, all=TRUE), df_list) # merge all different group exposure matrices
+  # merge all different group exposure matrices
+  data <- Reduce(function(x, y) merge(x, y, all=TRUE), df_list)
 
   # sort columns
   column_names <- colnames(data)
