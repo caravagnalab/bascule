@@ -23,6 +23,17 @@ split_reference <- function(ref_path, num_ref, seed) {
   return(obj)
 }
 
+#-------------------------------------------------------------------------------
+
+similarity_tables <- function(reference, denovo) {
+  ref <- reference[!(rownames(reference) %in% c("SBS1")), ] # excludes SBS1
+  cosine_reference <- cosine_matrix(ref, ref)
+  cosine_denovo <- cosine_matrix(denovo, denovo)
+
+  obj <- list(cosine_reference=cosine_reference, cosine_denovo=cosine_denovo)
+  return(obj)
+}
+
 #----------------------------------------------------------------------QC:PASSED
 # generate signatures which includes:
 # fixed signatures (SBS1 included) + denovo signatures
