@@ -3,13 +3,16 @@
 #----------------------------------------------------------------------QC:PASSED
 # split reference catalogue to 2 sub catalogue:
 # reference catalogue (SBS1 included) + denovo catalogue
-split_reference <- function(ref_path, num_ref, seed) {
+split_reference <- function(ref_path, num_ref, seed=NULL) {
+
+  if (!is.null(seed)) {
+    set.seed(seed = seed)
+  }
 
   reference <- read.table(ref_path, sep = ",", row.names = 1, header = TRUE, check.names = FALSE)
   SBS1 <- reference['SBS1', ]
   reference <- reference[!(rownames(reference) %in% c("SBS1")), ] # excludes SBS1
 
-  set.seed(seed = seed)
   shuffled_reference = reference[sample(1:nrow(reference)), ]
 
   ref <- shuffled_reference[1:(num_ref-1), ]
@@ -26,9 +29,9 @@ split_reference <- function(ref_path, num_ref, seed) {
 #----------------------------------------------------------------------QC:PASSED
 
 similarity_tables <- function(reference, denovo) {
-  ref <- reference[!(rownames(reference) %in% c("SBS1")), ] # excludes SBS1
-  cosine_reference <- cosine_matrix(ref, ref)
-  cosine_denovo <- cosine_matrix(denovo, denovo)
+  #ref <- reference[!(rownames(reference) %in% c("SBS1")), ] # excludes SBS1
+  cosine_reference <- basilica::cosine_matrix(reference, reference)
+  cosine_denovo <- basilica::cosine_matrix(denovo, denovo)
 
   obj <- list(cosine_reference=cosine_reference, cosine_denovo=cosine_denovo)
   return(obj)
@@ -43,10 +46,13 @@ generate_signatures <- function(
     denovo_catalogue,
     cosine_denovo, # cosine similarity matrix of denovo signatures
     complexity,
-    seed
+    limit,
+    seed=NULL
     ) {
 
-  set.seed(seed = seed)
+  if (!is.null(seed)) {
+    set.seed(seed = seed)
+  }
 
   if (complexity=='low') {
     fixed_num <- sample(3:5, 1)
@@ -67,65 +73,125 @@ generate_signatures <- function(
   SBS1 <- reference_catalogue['SBS1', ]
   reference <- reference_catalogue[!(rownames(reference_catalogue) %in% c("SBS1")), ] # excludes SBS1
 
-  # shuffle the reference signatures
-  shuffled_reference = reference[sample(1:nrow(reference)), ]
-  # cosine similarity matrix of reference signatures
-  #cosine_reference <- cosine_matrix(reference, reference)
-
-  # shuffle the denovo signatures
-  shuffled_denovo = denovo_catalogue[sample(1:nrow(denovo_catalogue)), ]
-  # cosine similarity matrix of denovo signatures
-  #cosine_denovo <- cosine_matrix(denovo_catalogue, denovo_catalogue)
-
-  #mutation_features <- colnames(reference_catalogue)
-  #reference_list <- rownames(reference_catalogue)
-  #reference_list <- rownames(denovo_catalogue)
-
-
   # catalogue signatures -------------------------------------------------------
   if (fixed_num > 1) {
-    first_ref <- rownames(shuffled_reference[1, ])
-    cos_vec_ref <- cosine_reference[first_ref, ]
-    p_ref <- 1 - (cos_vec_ref/sum(cos_vec_ref))
-    index_list_ref <- rcat(fixed_num-2, as.numeric(p_ref))
-    fixed_df <- rbind(SBS1, reference[first_ref, ], reference[index_list_ref, ])  # includes SBS1
-    #fixed_list <- sample(in_reference_list, fixed_num)
-    #fixed_df <- reference_catalogue[fixed_list, ]
+
+    while (TRUE) {
+      shuffled_reference = reference[sample(1:nrow(reference)), ]
+      signatures <- rownames(shuffled_reference[1:(fixed_num-1), ])
+      cos_matrix <- cosine_reference[c("SBS1", signatures), c("SBS1", signatures)]
+      for (i in 1:nrow(cos_matrix)) {
+        cos_matrix[i, i] <- 0
+      }
+      max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
+      #print(paste("fixed cos_matrix[max]", cos_matrix[max][1]))
+      if (cos_matrix[max][1] < limit) {
+        fixed_df <- rbind(SBS1, reference[signatures, ])
+        break
+      }
+    }
   }
   else {
     fixed_df <- SBS1
   }
 
   # denovo signatures ----------------------------------------------------------
-  if (denovo_num > 0) {
+  if (denovo_num > 1) {
 
-    first_denovo <- rownames(shuffled_denovo[1, ])
-    cos_vec_denovo <- cosine_denovo[first_denovo, ]
-    p_denovo <- 1 - (cos_vec_denovo/sum(cos_vec_denovo))
-    index_list_denovo <- rcat(denovo_num-1, as.numeric(p_denovo))
-    denovo_df <- rbind(denovo_catalogue[first_denovo, ], denovo_catalogue[index_list_denovo, ])
+    while (TRUE) {
+      shuffled_denovo = denovo_catalogue[sample(1:nrow(denovo_catalogue)), ]
+      signatures <- rownames(shuffled_denovo[1:denovo_num, ])
+      cos_matrix <- cosine_denovo[signatures, signatures]
+      for (i in 1:nrow(cos_matrix)) {
+        cos_matrix[i, i] <- 0
+      }
+      max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
+      #print(paste("denovo cos_matrix[max]", cos_matrix[max][1]))
+      if (cos_matrix[max][1] < limit) {
+        denovo_df <- denovo_catalogue[signatures, ]
+        rownames(denovo_df) <- paste0(rownames(denovo_df), "_D")
+        break
+      }
+    }
+
+  }
+  else if (denovo_num==1) {
+    shuffled_denovo = denovo_catalogue[sample(1:nrow(denovo_catalogue)), ]
+    denovo_df <- shuffled_denovo[1, ]
     rownames(denovo_df) <- paste0(rownames(denovo_df), "_D")
-    #denovo_list <- sample(out_reference_list, denovo_num)
-    #denovo_df <- denovo_catalogue[denovo_list, ]
-
   }
   else {
     denovo_df <- NULL
   }
 
-  if (is.null(denovo_df)) {
-    beta <- fixed_df
-  }
-  else {
-    beta <- rbind(fixed_df, denovo_df)
+  #if (is.null(denovo_df)) {
+  #  beta <- fixed_df
+  #}
+  #else {
+  #  beta <- rbind(fixed_df, denovo_df)
+  #}
+
+  obj <- list(fixed = fixed_df, denovo = denovo_df)
+  return(obj)
+}
+
+#-------------------------------------------------------------------------------
+
+generate_input <- function(
+    reference_catalogue,
+    beta_fixed,
+    complexity,
+    seed=NULL
+    ) {
+
+  if (!is.null(seed)) {
+    set.seed(seed = seed)
   }
 
-  return(beta)
+  k_fixed <- nrow(beta_fixed)
+
+  if (complexity=='low') {
+    n_overlap <- sample(1:k_fixed, 1)
+    n_extra <- 0
+  }
+  else if (complexity=='medium') {
+    n_overlap <- sample(1:k_fixed, 1)
+    n_extra <- sample(1:k_fixed, 1)
+  }
+  else if (complexity=='high') {
+    n_overlap <- 0
+    n_extra <- sample(1:(k_fixed), 1)
+  }
+  else {
+    stop("wrong complexity argument!")
+  }
+
+  extra_ref <- reference_catalogue[setdiff(rownames(reference_catalogue), rownames(beta_fixed)), ]
+
+  if (n_overlap > 0) {
+    overlap <- sample(rownames(beta_fixed))[1:n_overlap]
+    #shuffled_fixed = beta_fixed[sample(1:nrow(beta_fixed)), ]
+    #overlap <- shuffled_fixed[1:n_overlap, ]
+  } else {
+    overlap <- NULL
+  }
+
+  if (n_extra > 0) {
+    extra <- sample(rownames(extra_ref))[1:n_extra]
+    #shuffled_extra = extra_ref[sample(1:nrow(extra_ref)), ]
+    #extra <- shuffled_extra[1:n_overlap, ]
+  } else {
+    extra <- NULL
+  }
+
+  df <- reference_catalogue[c(overlap, extra), ]
+
+  return(df)
 }
 
 #----------------------------------------------------------------------QC:PASSED
 
-generate_exposure <- function(signatures, groups, seed) {
+generate_exposure <- function(signatures, groups, seed=NULL) {
 
   if ('SBS1' %in% signatures) {
     print('SBS1 included!')
@@ -133,7 +199,10 @@ generate_exposure <- function(signatures, groups, seed) {
     print('SBS1 not included! we will add it')
   }
 
-  set.seed(seed = seed)
+  if (!is.null(seed)) {
+    set.seed(seed = seed)
+  }
+
   df_list <- list()
 
   signatures <- signatures[! signatures %in% c('SBS1')] # excludes SBS1
@@ -182,18 +251,31 @@ generate_exposure <- function(signatures, groups, seed) {
 
 #----------------------------------------------------------------------QC:PASSED
 
-generate_theta <- function(min, max, num_samples, seed) {
-  set.seed(seed = seed)
+generate_theta <- function(min, max, num_samples, seed=NULL) {
+
+  if (!is.null(seed)) {
+    set.seed(seed = seed)
+  }
   theta = sample(min:max, num_samples)
   return(theta)
 }
 
 #-------------------------------------------------------------------------------
 
-generate_counts <- function(alpha, beta, theta) {
+generate_counts <- function(alpha, beta, theta, seed=NULL) {
 
+  if (!is.null(seed)) {
+    set.seed(seed = seed)
+  }
+
+  alpha <- subset(alpha, select = -c(group))
   alpha <- alpha[, order(colnames(alpha))]
   beta <- beta[order(rownames(beta)), ]
+  if (!identical(colnames(alpha), rownames(beta))) {
+    print(colnames(alpha))
+    print(rownames(beta))
+    stop("alpha and beta are NOT valid!")
+  }
   num_samples <- nrow(alpha)
 
   M <- matrix(rep(0, num_samples*96) , ncol = 96)
@@ -207,11 +289,11 @@ generate_counts <- function(alpha, beta, theta) {
     for (j in 1:theta[sample]) {
 
       # sample signature profile index from categorical data
-      signature_idx <- rcat(1, p)
+      signature_idx <- extraDistr::rcat(1, p)
       signature <- beta[signature_idx, ]
 
       # sample mutation feature index for corresponding signature from categorical data
-      mutation_idx <- rcat(1, as.numeric(signature))
+      mutation_idx <- extraDistr::rcat(1, as.numeric(signature))
 
       # add +1 to the mutation feature in position j in branch i
       M[sample, mutation_idx] <- M[sample, mutation_idx] + 1
@@ -222,6 +304,74 @@ generate_counts <- function(alpha, beta, theta) {
   colnames(M) <- colnames(beta)
   rownames(M) <- rownames(alpha)
   return(M)
+}
+
+#-------------------------------------------------------------------------------
+
+generate_synthetic <- function(
+    reference_catalogue,
+    denovo_catalogue,
+    cosine_reference,
+    cosine_denovo,
+    targetX,
+    inputX,
+    limit,
+    groups,
+    min,
+    max,
+    seed=NULL
+    ) {
+
+  if (!is.null(seed)) {
+    set.seed(seed = seed)
+  }
+
+  a <- generate_signatures(
+    reference_catalogue,
+    cosine_reference, # cosine similarity matrix of reference signatures (SBS1 excluded)
+    denovo_catalogue,
+    cosine_denovo, # cosine similarity matrix of denovo signatures
+    complexity=targetX,
+    limit,
+    seed
+  )
+
+  beta <- rbind(a$fixed, a$denovo)
+
+  input <- generate_input(
+    reference_catalogue,
+    a$fixed,
+    complexity=inputX,
+    seed
+  )
+
+  signatures <- rownames(beta)
+  alpha <- generate_exposure(signatures, groups, seed)
+
+  num_samples <- length(groups)
+  theta <- generate_theta(min, max, num_samples, seed)
+
+  # generate cunt matrix
+  #MM <- generate_counts(alpha, beta, theta)
+  alpha <- subset(alpha, select = -c(group))  # just removing group column
+  M <- round(as.matrix(alpha*theta) %*% as.matrix(beta), digits = 0)
+  rownames(M) <- rownames(alpha)
+  colnames(M) <- colnames(beta)
+
+  #c('x', 'input_cat', 'ref_cat', 'exp_exposure', 'exp_fixed', 'exp_denovo', 'targetX', 'inputX')
+  obj <- tibble::tibble(
+    x = list(M),
+    input_cat = list(input),
+    ref_cat = list(reference_catalogue),
+    exp_exposure = list(alpha),
+    exp_fixed = list(a$fixed),
+    exp_denovo = list(a$denovo),
+    targetX = targetX,
+    inputX = inputX,
+  )
+
+  #obj <- list(m=M, alpha=alpha, beta=beta, theta=theta)
+  return(obj)
 }
 
 #-------------------------------------------------------------------------------

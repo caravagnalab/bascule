@@ -31,6 +31,7 @@ fit <- function(
 
   counter <- 1
   while (TRUE) {
+    print(paste("counter:", counter))
 
     obj <- basilica:::pyfit(
       x=x,
@@ -51,6 +52,14 @@ fit <- function(
 
     b <- basilica:::filter_denovo(obj$denovo_signatures, reference_catalogue, delta)
 
+    #TEST
+    print(paste("input_catalogue    :", list(rownames(input_catalogue))))
+    print(paste("exposure           :", list(colnames(obj$exposure))))
+    print(paste("denovo signatures  :", list(rownames(obj$denovo_signatures))))
+    print(paste("filter fixed       :", list(rownames(a))))
+    print(paste("filte denovo       :", list(rownames(b))))
+    #TEST
+
     if (nrow(a)==nrow(input_catalogue) & nrow(b)==0) {
       break
     }
@@ -59,6 +68,7 @@ fit <- function(
       input_catalogue <- NULL
     } else {
       input_catalogue <- rbind(a, b)
+      print('rbind')
     }
 
     counter <- counter + 1
