@@ -26,7 +26,9 @@ fit <- function(
     phi,
     delta,
     groups=NULL,
-    input_catalogue=NULL
+    input_catalogue=NULL,
+    lambda_rate=NULL,
+    sigma=FALSE
     ) {
 
   counter <- 1
@@ -39,7 +41,9 @@ fit <- function(
       lr=lr,
       n_steps=steps,
       groups=groups,
-      input_catalogue=input_catalogue
+      input_catalogue=input_catalogue,
+      lambda_rate=lambda_rate,
+      sigma=sigma
       )
 
     if (is.null(input_catalogue)) {
