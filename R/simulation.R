@@ -462,13 +462,15 @@ get.one.sample <- function(
 
   obj <- tibble::add_column(
     synthetic,
-    exposure = list(obj$exposure),
-    denovo_signatures = list(obj$denovo_signatures),
-    catalogue_signatures = list(obj$catalogue_signatures)
+    inf_exposure = list(obj$exposure),
+    inf_denovo = list(obj$denovo_signatures),
+    inf_fixed = list(obj$catalogue_signatures)
     )
 
   return(obj)
 }
+
+#-------------------------------------------------------------------------------
 
 get.all.samples <- function(
     synthetic,
@@ -478,9 +480,7 @@ get.all.samples <- function(
     phi,
     delta) {
 
-  column_names <- c('x', 'input_cat', 'ref_cat', 'exp_exposure', 'exp_fixed', 'exp_denovo', 'targetX', 'inputX', 'exposure', 'denovo_signatures', 'bic', 'losses', 'catalogue_signatures')
-  df <- setNames(data.frame(matrix(ncol = length(column_names), nrow = 0)), column_names)
-
+  df <- NULL
   for (i in 1:nrow(synthetic)) {
     syn <- synthetic[i, ]
     output <- get.one.sample(
@@ -718,78 +718,72 @@ fill_tibble <- function(x) {
 visData <- function(x) {
 
   df <- tibble::tibble(
-    TargetX = character(),
-    InputX = character(),
-    N_Samples = numeric(),
-    Fixed_TP = numeric(),
-    Fixed_FP = numeric(),
-    Fixed_TN = numeric(),
-    Fixed_FN = numeric(),
-    Fixed_TPR = numeric(),
-    Fixed_Prec = numeric(),
-    Fixed_Rec = numeric(),
-    Fixed_Acc = numeric(),
-    Denovo_Ratio = numeric(),
-    Fitness = numeric(),
-    MAE = numeric(),
-    MSE = numeric()
+    targetX = character(),
+    inputX = character(),
+    num_samples = numeric(),
+
+    fixed_acc = numeric(),
+    denovo_ratio = numeric(),
+    denovo_sim = numeric(),
+    mae = numeric(),
   )
 
   for (i in 1:nrow(x)) {
-    input_catalogue <- x[i, ]$Input_Catalogue[[1]]
-    inferred_alpha <- x[i, ]$Inf_Exposure[[1]]
-    inferred_fixed <- x[i, ]$Inf_Fixed[[1]]
-    inferred_denovo <- x[i, ]$Inf_Denovo[[1]]
-    expected_fixed <- x[i, ]$Exp_Fixed[[1]]
-    expected_denovo <- x[i, ]$Exp_Denovo[[1]]
+
+    print(paste('row:', i))
+
+    input_cat <- x[i, ]$input_cat[[1]]
+
+    exp_exposure <- x[i, ]$exp_exposure[[1]]
+    exp_fixed <- x[i, ]$exp_fixed[[1]]
+    exp_denovo <- x[i, ]$exp_denovo[[1]]
+
+    inf_exposure <- x[i, ]$inf_exposure[[1]]
+    inf_fixed <- x[i, ]$inf_fixed[[1]]
+    inf_denovo <- x[i, ]$inf_denovo[[1]]
+
     m <- x[i, ]$x[[1]]
-    mr <- reconstruction_matrix(m, inferred_alpha, inferred_fixed, inferred_denovo)
+    mr <- reconstruction_matrix(m, inf_exposure, inf_fixed, inf_denovo)
 
     # fixed signatures
-    if (is.null(input_catalogue)) {inp <- c()} else {inp <- rownames(input_catalogue)}
-    if (is.null(expected_fixed)) {exp <- c()} else {exp <- rownames(expected_fixed)}
-    if (is.null(inferred_fixed)) {inf <- c()} else {inf <- rownames(inferred_fixed)}
+    if (is.null(input_cat)) {inp <- c()} else {inp <- rownames(input_cat)}
+    if (is.null(exp_fixed)) {exp <- c()} else {exp <- rownames(exp_fixed)}
+    if (is.null(inf_fixed)) {inf <- c()} else {inf <- rownames(inf_fixed)}
     fixed_TP <- length(intersect(inf, exp))
     fixed_FP <- length(setdiff(inf, exp))
     fixed_TN <- length(setdiff(setdiff(inp, exp), inf))
     fixed_FN <- length(setdiff(exp, inf))
-    if (length(exp)==0) {fixed_TPR <- fixed_TP+1} else {fixed_TPR <- fixed_TP / length(exp)}
-    fixed_Prec <- fixed_TP / (fixed_TP + fixed_FP)
-    fixed_Rec <- fixed_TP / (fixed_TP + fixed_FN)
-    fixed_Acc <- (fixed_TP + fixed_TN) / (fixed_TP + fixed_TN + fixed_FP + fixed_FN)
+    #if (length(exp)==0) {fixed_TPR <- fixed_TP+1} else {fixed_TPR <- fixed_TP / length(exp)}
+    #fixed_prec <- fixed_TP / (fixed_TP + fixed_FP)
+    #fixed_rec <- fixed_TP / (fixed_TP + fixed_FN)
+    fixed_acc <- (fixed_TP + fixed_TN) / (fixed_TP + fixed_TN + fixed_FP + fixed_FN)
 
     # denovo signatures
-    if (is.null(expected_denovo)) {n_exp_denovo <- 0} else {n_exp_denovo <- nrow(expected_denovo)}
-    if (is.null(inferred_denovo)) {n_inf_denovo <- 0} else {n_inf_denovo <- nrow(inferred_denovo)}
-    denovo_Ratio <- (n_inf_denovo + 1) / (n_exp_denovo + 1)
+    if (is.null(exp_denovo)) {n_exp_denovo <- 0} else {n_exp_denovo <- nrow(exp_denovo)}
+    if (is.null(inf_denovo)) {n_inf_denovo <- 0} else {n_inf_denovo <- nrow(inf_denovo)}
+    denovo_ratio <- (n_inf_denovo + 1) / (n_exp_denovo + 1)
+    denovo_sim <- denovo.sim(exp = exp_denovo, inf = inf_denovo)
 
     # goodness of fitness
-    fitness <- fitness.quality(m, mr)
+    #fitness <- fitness.quality(m, mr)
     mae <- compute.mae(m, mr)
-    mse <- compute.mse(m, mr)
+    #mse <- compute.mse(m, mr)
 
-
+    # fill visualization tibble
     df <- df %>% tibble::add_row(
-      TargetX = x[i, ]$TargetX,
-      InputX = x[i, ]$InputX,
-      N_Samples = x[i, ]$Num_Samples,
-      Fixed_TP = fixed_TP,
-      Fixed_FP = fixed_FP,
-      Fixed_TN = fixed_TN,
-      Fixed_FN = fixed_FN,
-      Fixed_TPR = fixed_TPR,
-      Fixed_Prec = fixed_Prec,
-      Fixed_Rec = fixed_Rec,
-      Fixed_Acc = fixed_Acc,
-      Denovo_Ratio = denovo_Ratio,
-      Fitness = fitness,
-      MAE = mae,
-      MSE = mse
+      targetX =  x[i, ]$targetX,
+      inputX = x[i, ]$inputX,
+      num_samples = nrow(x[i, ]$exp_exposure[[1]]),
+
+      fixed_acc = fixed_acc,
+      denovo_ratio = denovo_ratio,
+      denovo_sim = denovo_sim,
+      mae = mae,
     )
   }
 
-  df$TargetX <- factor(df$TargetX, levels = c("low", "medium", "high"))
-  df$InputX <- factor(df$InputX, levels = c("low", "medium", "high"))
+  #df$targetX <- factor(df$TargetX, levels = c("low", "medium", "high"))
+  #df$inputX <- factor(df$InputX, levels = c("low", "medium", "high"))
 
   return(df)
 }
@@ -835,10 +829,10 @@ compute.mse <- function(m , mr) {
 
 #-------------------------------------------------------------------------------
 
-denovo.quality <- function(exp, inf) {
+denovo.sim <- function(exp, inf) {
 
   if (length(exp)==0 | length(inf)==0) {
-    return(list(matrix=0, ratio=0, cosine=0))
+    return(NULL)
   } else {
     df <- data.frame(matrix(nrow = nrow(inf), ncol = nrow(exp)))
     colnames(df) <- rownames(exp)
@@ -854,27 +848,25 @@ denovo.quality <- function(exp, inf) {
         target_name <- rownames(target)
         score <- cosine_sim(inferred, target)
         df[inferred_name, target_name] <- score
-        '
-        if (score > maxScore) {
-          maxScore <- score
-          bestMatch <- target_name
-        }
-        '
       }
     }
-    '
-    match_list <- colnames(df)[max.col(df, ties.method = "first")]
-    s <- 0
-    for (i in 1:length(match_list)) {
-      s <- s + df[rownames(df)[i], match_list[i]]
+
+    #------------------------------
+    similarity <- 0
+    for (i in 1:min(nrow(inf), nrow(exp))) {
+      max = which(df == max(df), arr.ind = TRUE)
+      similarity <- similarity + df[max]
+
+      row_index <- as.numeric(max)[1]
+      col_index <- as.numeric(max)[2]
+
+      df <- df[-c(row_index), -c(col_index)]
     }
-    cosine_score <- (s / length(match_list))
-    '
+    #-------------------------------
+
   }
 
-  a <- nrow(inf) / nrow(exp)
-  b <- mean(apply(df, 1, max))
-  return(list(matrix=df, ratio=a, cosine=b))
+  return(similarity / nrow(inf))
 }
 
 #-------------------------------------------------------------------------------
