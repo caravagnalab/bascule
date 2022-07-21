@@ -13,7 +13,9 @@ fit(
   phi,
   delta,
   groups = NULL,
-  input_catalogue = NULL
+  input_catalogue = NULL,
+  lambda_rate = NULL,
+  sigma = FALSE
 )
 }
 \arguments{

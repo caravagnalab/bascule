@@ -72,6 +72,12 @@ filter_fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
       #print('nothing to drop')
     } else {
       df <- beta_fixed[-c(dropped), ]
+      #dropped <- setdiff(rownames(beta_fixed[c(dropped), ]), chache)
+      #if (length(dropped)==0) {
+      #  df <- beta_fixed
+      #} else {
+      #  df <- beta_fixed[row.names(beta_fixed) != dropped, , drop = FALSE]
+      #}
       #print(paste('dropped', length(dropped), 'signatures'))
     }
   }
@@ -84,8 +90,7 @@ filter_fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
 
 #-------------------------------------------------------------------------------
 
-
-cosine_matrix <- function(a, b) {
+cosine.matrix <- function(a, b) {
   # a and b are data.frame
 
   df <- data.frame(matrix(0, nrow(a), nrow(b)))
@@ -97,25 +102,23 @@ cosine_matrix <- function(a, b) {
     for (j in 1:nrow(b)) {
       ref <- b[j, ]
 
-      score <- cosine_sim(denovo, ref)
+      score <- cosine.vector(denovo, ref)
       df[i,j] <- score
     }
   }
 
   return(df)
-
 }
 
 #-------------------------------------------------------------------------------
 
-cosine_sim <- function(a, b) {
+cosine.vector <- function(a, b) {
   numerator <- sum(a * b)
   denominator <- sqrt(sum(a^2)) * sqrt(sum(b^2))
   return(numerator / denominator)
 }
 
 #-------------------------------------------------------------------------------
-
 
 filter_denovo <- function(beta_denovo=NULL, reference_catalogue, delta=0.9) {
 
@@ -134,7 +137,7 @@ filter_denovo <- function(beta_denovo=NULL, reference_catalogue, delta=0.9) {
     return(df)
   }
   else if (is.data.frame(beta_denovo)) {
-    cos_matrix <- cosine_matrix(beta_denovo, reference_catalogue)
+    cos_matrix <- cosine.matrix(beta_denovo, reference_catalogue)
   }
 
   match_list <- c()

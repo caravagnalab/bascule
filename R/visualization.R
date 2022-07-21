@@ -82,8 +82,9 @@ plot_signatures <- function( x, useRowNames = TRUE, xlabels = FALSE, denovoSigna
 }
 
 
-plot_cosine <- function(obj, limit) {
-  reference <- obj$reference_catalogue
+plot.cosine <- function(obj, reference_catalogue, limit) {
+  #reference <- obj$reference_catalogue
+  reference <- reference_catalogue
   denovo <- obj$denovo_signatures
 
   cosine_matrix <- data.frame( matrix( nrow = nrow(reference), ncol = nrow(denovo) ) )
@@ -92,7 +93,7 @@ plot_cosine <- function(obj, limit) {
 
   for (i in rownames(reference)) {
     for (j in rownames(denovo)) {
-      c <- cosine_sim(as.numeric(reference[i, ]), as.numeric(denovo[j, ]))
+      c <- cosine.vector(as.numeric(reference[i, ]), as.numeric(denovo[j, ]))
       cosine_matrix[i, j] <- c
     }
   }

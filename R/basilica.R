@@ -33,7 +33,7 @@ fit <- function(
 
   counter <- 1
   while (TRUE) {
-    print(paste("counter:", counter))
+    #print(paste("counter:", counter))
 
     obj <- basilica:::pyfit(
       x=x,
@@ -57,12 +57,19 @@ fit <- function(
     b <- basilica:::filter_denovo(obj$denovo_signatures, reference_catalogue, delta)
 
     #TEST
-    print(paste("input_catalogue    :", list(rownames(input_catalogue))))
-    print(paste("exposure           :", list(colnames(obj$exposure))))
-    print(paste("denovo signatures  :", list(rownames(obj$denovo_signatures))))
-    print(paste("filter fixed       :", list(rownames(a))))
-    print(paste("filte denovo       :", list(rownames(b))))
+    #print(paste("input_catalogue    :", list(rownames(input_catalogue))))
+    #print(paste("exposure           :", list(colnames(obj$exposure))))
+    #print(paste("denovo signatures  :", list(rownames(obj$denovo_signatures))))
+    #print(paste("filter fixed       :", list(rownames(a))))
+    #print(paste("filte denovo       :", list(rownames(b))))
     #TEST
+
+    #if (length(setdiff(rownames(input_catalogue), rownames(a))) > 0) {
+    #  if (setdiff(rownames(input_catalogue), rownames(a)) == rownames(b)) {
+    #    b <- NULL
+    #    break
+    #  }
+    #}
 
     if (nrow(a)==nrow(input_catalogue) & nrow(b)==0) {
       break
@@ -72,10 +79,13 @@ fit <- function(
       input_catalogue <- NULL
     } else {
       input_catalogue <- rbind(a, b)
-      print('rbind')
     }
 
     counter <- counter + 1
+    if (counter>4) {
+      print('limit reached!')
+      break
+    }
   }
 
   if (nrow(input_catalogue)==0) {
@@ -97,16 +107,5 @@ fit <- function(
 
   return(obj)
 }
-
-
-
-
-
-
-
-
-
-
-
 
 

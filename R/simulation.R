@@ -32,15 +32,19 @@ split_reference <- function(ref_path, ratio, seed=NULL) {
   return(obj)
 }
 
-#----------------------------------------------------------------------QC:PASSED
+#-------------------------------------------------------------------------------
 
-similarity_tables <- function(reference, denovo) {
-  #ref <- reference[!(rownames(reference) %in% c("SBS1")), ] # excludes SBS1
-  cosine_reference <- basilica::cosine_matrix(reference, reference)
-  cosine_denovo <- basilica::cosine_matrix(denovo, denovo)
+generate_theta <- function(range, num_samples, seed=NULL) {
 
-  obj <- list(cosine_reference=cosine_reference, cosine_denovo=cosine_denovo)
-  return(obj)
+  if (!(is.integer(range))) {
+    stop("not valid range argument in generate_theta function!")
+  }
+
+  if (!is.null(seed)) {
+    set.seed(seed = seed)
+  }
+  theta = sample(range, num_samples)
+  return(theta)
 }
 
 #----------------------------------------------------------------------QC:PASSED
@@ -254,21 +258,6 @@ generate_exposure <- function(beta, groups, seed=NULL) {
   return(data)
 }
 
-#----------------------------------------------------------------------QC:PASSED
-
-generate_theta <- function(range, num_samples, seed=NULL) {
-
-  if (!(is.integer(range))) {
-    stop("not valid range argument in generate_theta function!")
-  }
-
-  if (!is.null(seed)) {
-    set.seed(seed = seed)
-  }
-  theta = sample(range, num_samples)
-  return(theta)
-}
-
 #--------------------------------------- may be not needed (should be discussed)
 
 generate_counts <- function(alpha, beta, theta, seed=NULL) {
@@ -317,7 +306,7 @@ generate_counts <- function(alpha, beta, theta, seed=NULL) {
 
 #-------------------------------------------------------------------------------
 
-generate.one.synthetic <- function(
+generate.data <- function(
     reference_catalogue,
     denovo_catalogue,
     reference_cosine,
@@ -326,7 +315,7 @@ generate.one.synthetic <- function(
     inputX,
     limit,
     groups,
-    range,
+    mut_range,
     seed=NULL
     ) {
 
@@ -356,7 +345,7 @@ generate.one.synthetic <- function(
   alpha <- generate_exposure(beta=beta, groups=groups, seed=seed) # include group column
 
   num_samples <- length(groups)
-  theta <- generate_theta(range=range, num_samples=num_samples, seed=seed)
+  theta <- generate_theta(range=mut_range, num_samples=num_samples, seed=seed)
 
   # generate count matrix
   # M <- generate_counts(alpha, beta, theta)
@@ -383,7 +372,7 @@ generate.one.synthetic <- function(
 
 #-------------------------------------------------------------------------------
 
-generate.full.synthetic <- function(
+generate.cohort <- function(
     ref_path,
     ratio,
     num_iter,
@@ -391,7 +380,7 @@ generate.full.synthetic <- function(
     inputX,
     limit,
     groups,
-    range,
+    mut_range,
     seed=NULL
 ) {
 
@@ -399,27 +388,26 @@ generate.full.synthetic <- function(
     set.seed(seed = seed)
   }
 
-  a <- basilica::split_reference(ref_path = ref_path, ratio = ratio, seed = seed)
+  a <- basilica:::split_reference(ref_path = ref_path, ratio = ratio, seed = seed)
   ref_cat <- a$ref
   denovo_cat <- a$denovo
 
-  c <- basilica::similarity_tables(ref_cat, denovo_cat)
-  ref_cosine <- c$cosine_reference
-  denovo_cosine <- c$cosine_denovo
+  ref_cosine <- basilica:::cosine.matrix(ref_cat, ref_cat)
+  denovo_cosine <- basilica:::cosine.matrix(denovo_cat, denovo_cat)
 
   data <- NULL
   for (i in 1:num_iter) {
-    xx <- basilica::generate.one.synthetic(
+    xx <- basilica:::generate.data(
       reference_catalogue = ref_cat,
       denovo_catalogue = denovo_cat,
-      reference_cosine=ref_cosine,
-      denovo_cosine=denovo_cosine,
-      targetX=targetX,
-      inputX=inputX,
-      limit=limit,
-      groups=groups,
-      range=range,
-      seed=seed
+      reference_cosine = ref_cosine,
+      denovo_cosine = denovo_cosine,
+      targetX = targetX,
+      inputX = inputX,
+      limit = limit,
+      groups = groups,
+      mut_range = mut_range,
+      seed = seed
     )
     data <- rbind(data, xx)
   }
@@ -427,23 +415,23 @@ generate.full.synthetic <- function(
 }
 
 #-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
 
-get.one.sample <- function(
-    synthetic,
+run.data <- function(
+    data,
     k,
     lr,
     steps,
     phi,
-    delta
+    delta,
+    lambda_rate = NULL,
+    sigma = FALSE
     ) {
 
-  x <- synthetic$x[[1]]
-  ref <- synthetic$ref_cat[[1]]
-  input <- synthetic$input_cat[[1]]
+  x <- data$x[[1]]
+  ref <- data$ref_cat[[1]]
+  input <- data$input_cat[[1]]
 
-  obj <- basilica:::fit(
+  obj <- basilica::fit(
     x=x,
     reference_catalogue=ref,
     k=k,
@@ -452,7 +440,9 @@ get.one.sample <- function(
     phi=phi,
     delta=delta,
     groups=NULL,
-    input_catalogue=input
+    input_catalogue=input,
+    lambda_rate = lambda_rate,
+    sigma = sigma
   )
 
   #obj$exposure <- list(obj$exposure)
@@ -461,7 +451,7 @@ get.one.sample <- function(
   #results <- c(synthetic, obj)
 
   obj <- tibble::add_column(
-    synthetic,
+    data,
     inf_exposure = list(obj$exposure),
     inf_denovo = list(obj$denovo_signatures),
     inf_fixed = list(obj$catalogue_signatures)
@@ -472,24 +462,30 @@ get.one.sample <- function(
 
 #-------------------------------------------------------------------------------
 
-get.all.samples <- function(
-    synthetic,
+run.cohort <- function(
+    data,
     k,
     lr,
     steps,
     phi,
-    delta) {
+    delta,
+    lambda_rate = NULL,
+    sigma = FALSE
+    ) {
 
   df <- NULL
-  for (i in 1:nrow(synthetic)) {
-    syn <- synthetic[i, ]
-    output <- get.one.sample(
+  for (i in 1:nrow(data)) {
+    print(paste('row:', i))
+    syn <- data[i, ]
+    output <- run.data(
       syn,
       k,
       lr,
       steps,
       phi,
-      delta
+      delta,
+      lambda_rate = lambda_rate,
+      sigma = sigma
     )
     df <- rbind(df, output)
   }
@@ -497,6 +493,176 @@ get.all.samples <- function(
   return(df)
 }
 
+#===============================================================================
+#=========================== EVALUATION ========================================
+#===============================================================================
+
+fixed.accuracy <- function(reference, expected_fixed, inferred_fixed) {
+  ref_list <- rownames(reference)
+  if (is.null(expected_fixed)) {exp_list <- c()} else {exp_list <- rownames(expected_fixed)}
+  if (is.null(inferred_fixed)) {inf_list <- c()} else {inf_list <- rownames(inferred_fixed)}
+
+  TP <- length(intersect(inf_list, exp_list))
+  FP <- length(setdiff(inf_list, exp_list))
+  TN <- length( setdiff( setdiff(ref_list, exp_list), inf_list) )
+  FN <- length(setdiff(exp_list, inf_list))
+
+  accuracy <- (TP + TN) / (TP + TN + FP + FN)
+  return(accuracy)
+}
+
+#-------------------------------------------------------------------------------
+
+reconstruct.count <- function(m, alpha, beta) {
+  # all args are data.frame
+  theta <- diag(rowSums(m))               # matrix
+  alpha <- theta %*% as.matrix(alpha)     # matrix
+  #beta <- as.matrix(rbind(fixed, denovo))# matrix
+  beta <- as.matrix(beta)                 # matrix
+
+  mr_matrix <- alpha %*% as.matrix(beta)
+  mr <- round(as.data.frame(mr_matrix))
+  return(mr)
+}
+
+#-------------------------------------------------------------------------------
+
+compute.mae <- function(m , mr) {
+  mae <- sum(abs(m - mr)) / (dim(m)[1] * dim(m)[2])
+  return(mae)
+}
+
+#-------------------------------------------------------------------------------
+
+compute.mse <- function(m , mr) {
+  mse <- sum((m - mr)^2) / (dim(m)[1] * dim(m)[2])
+  return(mse)
+}
+
+#-------------------------------------------------------------------------------
+
+denovo.similarity <- function(exp, inf) {
+
+  if (length(exp)==0 | length(inf)==0) {
+    return(NULL)
+  } else {
+    df <- data.frame(matrix(nrow = nrow(inf), ncol = nrow(exp)))
+    colnames(df) <- rownames(exp)
+    rownames(df) <- rownames(inf)
+
+    for (i in 1:nrow(inf)) {
+      inferred <- inf[i,]
+      inferred_name <- rownames(inferred)
+      #maxScore <- 0
+      #bestMatch <- NULL
+      for (j in 1:nrow(exp)) {
+        target <- exp[j, ]
+        target_name <- rownames(target)
+        score <- cosine.vector(inferred, target)
+        df[inferred_name, target_name] <- score
+      }
+    }
+
+    #------------------------------
+    sim_list <- list()
+    similarity <- 0
+    for (i in 1:min(nrow(inf), nrow(exp))) {
+
+      max = which(df == max(df), arr.ind = TRUE)
+      similarity <- similarity + df[max]
+
+      row <- row.names(df[max[,1],])
+      column <- names(df[max[,2]])
+
+      sim_list[row] <- column
+
+      df[row, column] <- 0
+
+      #row_index <- as.numeric(max)[1]
+      #col_index <- as.numeric(max)[2]
+
+      #if (!is.na(col_index) & !is.na(col_index)) {
+      #  df <- df[-c(row_index), -c(col_index)]
+      #}
+    }
+
+  return( list( sim_avg=(similarity / nrow(inf)), sim_table=sim_list ) )
+  }
+}
+
+#-------------------------------------------------------------------------------
+
+denovo.ratio <- function(expected_denovo, inferred_denovo) {
+
+  if (is.null(expected_denovo)) {n_exp <- 0} else {n_exp <- nrow(expected_denovo)}
+  if (is.null(inferred_denovo)) {n_inf <- 0} else {n_inf <- nrow(inferred_denovo)}
+
+  denovo_ratio <- (n_inf + 1) / (n_exp + 1)
+
+  return(denovo_ratio)
+}
+
+#-------------------------------------------------------------------------------
+
+#' @import dplyr
+evaluate.data <- function(data) {
+
+  df <- tibble::tibble(
+    targetX = character(),
+    inputX = character(),
+    num_samples = numeric(),
+
+    mae = numeric(),
+    fixed_acc = numeric(),
+    denovo_ratio = numeric(),
+    denovo_sim = numeric(),
+    denovo_match = list(),
+  )
+
+  m <- data$x[[1]]
+  inf_exposure <- data$inf_exposure[[1]]
+
+  inf_fixed <- data$inf_fixed[[1]]
+  inf_denovo <- data$inf_denovo[[1]]
+  exp_fixed <- data$exp_fixed[[1]]
+  exp_denovo <- data$exp_denovo[[1]]
+  inf_beta <- rbind(inf_fixed, inf_denovo)
+  mr <- reconstruct.count(m=m, alpha=inf_exposure, beta=inf_beta)
+  ref <- data$ref_cat[[1]]
+
+  mae <- compute.mae(m=m , mr=mr)
+  acc <- fixed.accuracy(reference=ref, expected_fixed=exp_fixed, inferred_fixed=inf_fixed)
+  ratio <- denovo.ratio(expected_denovo=exp_denovo, inferred_denovo=inf_denovo)
+  sim <- denovo.similarity(exp=exp_denovo, inf=inf_denovo)
+
+  # fill visualization tibble
+  df <- df %>% tibble::add_row(
+    targetX =  data$targetX,
+    inputX = data$inputX,
+    num_samples = nrow(data$exp_exposure[[1]]),
+
+    mae = mae,
+    fixed_acc = acc,
+    denovo_ratio = ratio,
+    denovo_sim = sim$sim_avg,
+    denovo_match = list(sim$sim_table)
+  )
+  return(df)
+}
+
+#-------------------------------------------------------------------------------
+
+evaluate.cohort <- function(x) {
+  res <- NULL
+  for (i in 1:nrow(x)) {
+    res <- rbind(res, evaluate.data(data = x[i, ]))
+  }
+  return(res)
+}
+
+#===============================================================================
+#=========================== VISUALIZATION =====================================
+#===============================================================================
 
 # plot exposure-----------------------------------------------------------------
 
@@ -652,227 +818,5 @@ final.plot <- function(exp_alpha, inf_alpha, exp_denovo, inf_denovo) {
 
   return(basilica:::multi.plot(plotlist = p))
 }
-
-
-#-------------------------------------------------------------------------------
-
-#' @import dplyr
-fill_tibble <- function(x) {
-
-  data <- tibble::tibble(
-    x = list(),
-    Input_Catalogue = list(),
-    Ref_Catalogue = list(),
-
-    Exp_Exposure = list(),
-    Exp_Fixed = list(),
-    Exp_Denovo = list(),
-
-    Inf_Exposure = list(),
-    Inf_Fixed = list(),
-    Inf_Denovo = list(),
-
-    TargetX = character(),
-    InputX = character(),
-    Num_Samples = numeric(),
-    IterNum = numeric(),
-
-    K = list(),
-    Lr = numeric(),
-    Steps = numeric(),
-    Phi = numeric(),
-    Delta = numeric()
-  )
-
-  for (row in x) {
-    data <- data %>% tibble::add_row(
-      x = list(row$x),
-      Input_Catalogue = list(row$input_catalogue),
-      Ref_Catalogue = list(row$ref_catalogue),
-
-      Exp_Exposure = list(row$exp_exposure),
-      Exp_Fixed = list(row$exp_fixed),
-      Exp_Denovo = list(row$exp_denovo),
-
-      Inf_Exposure = list(row$inf_exposure),
-      Inf_Fixed = list(row$inf_fixed),
-      Inf_Denovo = list(row$inf_denovo),
-
-      TargetX = row$targetX,
-      InputX = row$inputX,
-      Num_Samples = row$num_samples,
-      IterNum = row$iter,
-
-      K = list(row$k),
-      Lr = row$lr,
-      Steps = row$steps,
-      Phi = row$phi,
-      Delta = row$delta
-    )
-  }
-  return(data)
-}
-
-#-------------------------------------------------------------------------------
-
-visData <- function(x) {
-
-  df <- tibble::tibble(
-    targetX = character(),
-    inputX = character(),
-    num_samples = numeric(),
-
-    fixed_acc = numeric(),
-    denovo_ratio = numeric(),
-    denovo_sim = numeric(),
-    mae = numeric(),
-  )
-
-  for (i in 1:nrow(x)) {
-
-    print(paste('row:', i))
-
-    input_cat <- x[i, ]$input_cat[[1]]
-
-    exp_exposure <- x[i, ]$exp_exposure[[1]]
-    exp_fixed <- x[i, ]$exp_fixed[[1]]
-    exp_denovo <- x[i, ]$exp_denovo[[1]]
-
-    inf_exposure <- x[i, ]$inf_exposure[[1]]
-    inf_fixed <- x[i, ]$inf_fixed[[1]]
-    inf_denovo <- x[i, ]$inf_denovo[[1]]
-
-    m <- x[i, ]$x[[1]]
-    mr <- reconstruction_matrix(m, inf_exposure, inf_fixed, inf_denovo)
-
-    # fixed signatures
-    if (is.null(input_cat)) {inp <- c()} else {inp <- rownames(input_cat)}
-    if (is.null(exp_fixed)) {exp <- c()} else {exp <- rownames(exp_fixed)}
-    if (is.null(inf_fixed)) {inf <- c()} else {inf <- rownames(inf_fixed)}
-    fixed_TP <- length(intersect(inf, exp))
-    fixed_FP <- length(setdiff(inf, exp))
-    fixed_TN <- length(setdiff(setdiff(inp, exp), inf))
-    fixed_FN <- length(setdiff(exp, inf))
-    #if (length(exp)==0) {fixed_TPR <- fixed_TP+1} else {fixed_TPR <- fixed_TP / length(exp)}
-    #fixed_prec <- fixed_TP / (fixed_TP + fixed_FP)
-    #fixed_rec <- fixed_TP / (fixed_TP + fixed_FN)
-    fixed_acc <- (fixed_TP + fixed_TN) / (fixed_TP + fixed_TN + fixed_FP + fixed_FN)
-
-    # denovo signatures
-    if (is.null(exp_denovo)) {n_exp_denovo <- 0} else {n_exp_denovo <- nrow(exp_denovo)}
-    if (is.null(inf_denovo)) {n_inf_denovo <- 0} else {n_inf_denovo <- nrow(inf_denovo)}
-    denovo_ratio <- (n_inf_denovo + 1) / (n_exp_denovo + 1)
-    denovo_sim <- denovo.sim(exp = exp_denovo, inf = inf_denovo)
-
-    # goodness of fitness
-    #fitness <- fitness.quality(m, mr)
-    mae <- compute.mae(m, mr)
-    #mse <- compute.mse(m, mr)
-
-    # fill visualization tibble
-    df <- df %>% tibble::add_row(
-      targetX =  x[i, ]$targetX,
-      inputX = x[i, ]$inputX,
-      num_samples = nrow(x[i, ]$exp_exposure[[1]]),
-
-      fixed_acc = fixed_acc,
-      denovo_ratio = denovo_ratio,
-      denovo_sim = denovo_sim,
-      mae = mae,
-    )
-  }
-
-  #df$targetX <- factor(df$TargetX, levels = c("low", "medium", "high"))
-  #df$inputX <- factor(df$InputX, levels = c("low", "medium", "high"))
-
-  return(df)
-}
-
-
-#-------------------------------------------------------------------------------
-
-reconstruction_matrix <- function(m, alpha, fixed, denovo) {
-  # all args are data.frame
-  theta <- diag(rowSums(m)) # matrix
-  alpha <- theta %*% as.matrix(alpha) # matrix
-  beta <- as.matrix(rbind(fixed, denovo)) # matrix
-
-  mr_matrix <- alpha %*% as.matrix(beta)
-  mr <- round(as.data.frame(mr_matrix))
-  return(mr)
-}
-
-#-------------------------------------------------------------------------------
-
-fitness.quality <- function(m, mr) {
-  total <- 0
-  for (i in 1:nrow(m)) {
-    cos <- cosine_sim(m[i,], mr[i, ])
-    total <- total + cos
-  }
-  return(total / nrow(m))
-}
-
-#-------------------------------------------------------------------------------
-
-compute.mae <- function(m , mr) {
-  mae <- sum(abs(m - mr)) / (dim(m)[1] * dim(m)[2])
-  return(mae)
-}
-
-#-------------------------------------------------------------------------------
-
-compute.mse <- function(m , mr) {
-  mse <- sum((m - mr)^2) / (dim(m)[1] * dim(m)[2])
-  return(mse)
-}
-
-#-------------------------------------------------------------------------------
-
-denovo.sim <- function(exp, inf) {
-
-  if (length(exp)==0 | length(inf)==0) {
-    return(NULL)
-  } else {
-    df <- data.frame(matrix(nrow = nrow(inf), ncol = nrow(exp)))
-    colnames(df) <- rownames(exp)
-    rownames(df) <- rownames(inf)
-
-    for (i in 1:nrow(inf)) {
-      inferred <- inf[i,]
-      inferred_name <- rownames(inferred)
-      maxScore <- 0
-      bestMatch <- NULL
-      for (j in 1:nrow(exp)) {
-        target <- exp[j, ]
-        target_name <- rownames(target)
-        score <- cosine_sim(inferred, target)
-        df[inferred_name, target_name] <- score
-      }
-    }
-
-    #------------------------------
-    similarity <- 0
-    for (i in 1:min(nrow(inf), nrow(exp))) {
-      max = which(df == max(df), arr.ind = TRUE)
-      similarity <- similarity + df[max]
-
-      row_index <- as.numeric(max)[1]
-      col_index <- as.numeric(max)[2]
-
-      df <- df[-c(row_index), -c(col_index)]
-    }
-    #-------------------------------
-
-  }
-
-  return(similarity / nrow(inf))
-}
-
-#-------------------------------------------------------------------------------
-
-
-
-
 
 
