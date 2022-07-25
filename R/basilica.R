@@ -52,9 +52,9 @@ fit <- function(
       colnames(input_catalogue) = col_names
     }
 
-    a <- basilica:::filter_fixed(x, obj$exposure, input_catalogue, phi)
+    a <- basilica:::filter.fixed(x, obj$exposure, input_catalogue, phi)
 
-    b <- basilica:::filter_denovo(obj$denovo_signatures, reference_catalogue, delta)
+    b <- basilica:::filter.denovo(obj$denovo_signatures, reference_catalogue, delta)
 
     #TEST
     #print(paste("input_catalogue    :", list(rownames(input_catalogue))))

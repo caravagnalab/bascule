@@ -41,7 +41,7 @@ pyfit <- function(
 
 #-------------------------------------------------------------------------------
 
-filter_fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
+filter.fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
 
   if (!is.data.frame(M)) {
     warning("invalid count matrix (M) !")
@@ -120,7 +120,7 @@ cosine.vector <- function(a, b) {
 
 #-------------------------------------------------------------------------------
 
-filter_denovo <- function(beta_denovo=NULL, reference_catalogue, delta=0.9) {
+filter.denovo <- function(beta_denovo=NULL, reference_catalogue, delta=0.9) {
 
   if (!is.data.frame(reference_catalogue)) {
     warning("Invalid reference catalogue!")

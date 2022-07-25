@@ -3,7 +3,7 @@
 #----------------------------------------------------------------------QC:PASSED
 # split reference catalogue to 2 sub catalogue:
 # reference catalogue (SBS1 included) + denovo catalogue
-split_reference <- function(ref_path, ratio, seed=NULL) {
+split.reference <- function(reference_path, ratio, seed=NULL) {
 
   if (!is.null(seed)) {
     set.seed(seed = seed)
@@ -13,10 +13,8 @@ split_reference <- function(ref_path, ratio, seed=NULL) {
   reference <- read.table(ref_path, sep = ",", row.names = 1, header = TRUE, check.names = FALSE)
   num_ref <- round(ratio * nrow(reference))
 
-  # save SBS1
-  SBS1 <- reference['SBS1', ]
-  # excludes SBS1 from reference catalogue
-  reference <- reference[!(rownames(reference) %in% c("SBS1")), ]
+  SBS1 <- reference['SBS1', ]   # save SBS1 (data.frame)
+  reference <- reference[!(rownames(reference) %in% c("SBS1")), ] # excludes SBS1
 
   # suffle the reference catalogue
   shuffled_reference = reference[sample(1:nrow(reference)), ]
@@ -28,35 +26,40 @@ split_reference <- function(ref_path, ratio, seed=NULL) {
   denovo <- shuffled_reference[num_ref:nrow(shuffled_reference), ]
   denovo <- denovo[order(rownames(denovo)), ]
 
-  obj <- list(ref=ref, denovo=denovo)
+  obj <- list(reference=ref, denovo=denovo)
   return(obj)
 }
 
-#-------------------------------------------------------------------------------
+#----------------------------------------------------------------------QC:PASSED
 
-generate_theta <- function(range, num_samples, seed=NULL) {
+generate.theta <- function(mut_range, num_samples, seed=NULL) {
 
-  if (!(is.integer(range))) {
+  if (!(is.integer(mut_range))) {
     stop("not valid range argument in generate_theta function!")
   }
 
   if (!is.null(seed)) {
     set.seed(seed = seed)
   }
-  theta = sample(range, num_samples)
+
+  theta = sample(mut_range, num_samples)  # integer
   return(theta)
 }
 
 #----------------------------------------------------------------------QC:PASSED
 # generate signatures which includes:
-# fixed signatures (SBS1 included) + denovo signatures
-generate_signatures <- function(
+#   * fixed signatures (SBS1 included)
+#   * denovo signatures
+# similarity between catalogue signatures are less than threshold
+# similarity between denovo signatures are less than threshold
+# but similarity between catalogue and denovo signatures are not taken to the account (future work)
+generate.signatures <- function(
     reference_catalogue,
     denovo_catalogue,
     reference_cosine, # cosine similarity matrix of reference signatures (SBS1 excluded)
-    denovo_cosine, # cosine similarity matrix of denovo signatures
+    denovo_cosine,    # cosine similarity matrix of denovo signatures
     complexity,
-    limit,
+    similarity_limit,
     seed=NULL
     ) {
 
@@ -64,26 +67,34 @@ generate_signatures <- function(
     set.seed(seed = seed)
   }
 
-  if (complexity=='low') {
-    fixed_num <- sample(3:5, 1)
-    denovo_num <- sample(0:2, 1)
-  }
-  else if (complexity=='medium') {
-    fixed_num <- sample(1:2, 1)
-    denovo_num <- sample(3:5, 1)
-  }
-  else if (complexity=='high') {
-    fixed_num <- sample(3:5, 1)
-    denovo_num <- sample(3:5, 1)
-  }
-  else {
+  if (is.numeric(complexity) & length(complexity)==2) {
+    fixed_num <- complexity[1]
+    denovo_num <- complexity[2]
+  } else if (is.character(complexity)) {
+    if (complexity=='low') {
+      fixed_num <- sample(3:5, 1)
+      denovo_num <- sample(0:2, 1)
+    }
+    else if (complexity=='medium') {
+      fixed_num <- sample(1:2, 1)
+      denovo_num <- sample(3:5, 1)
+    }
+    else if (complexity=='high') {
+      fixed_num <- sample(3:5, 1)
+      denovo_num <- sample(3:5, 1)
+    }
+    else {
+      stop("complexity argument should be selected from {'low', 'medium', 'high'}")
+    }
+  } else {
     stop("wrong complexity argument!")
   }
 
-  SBS1 <- reference_catalogue['SBS1', ]
+  SBS1 <- reference_catalogue['SBS1', ] # save SBS1 (data.frame)
   reference <- reference_catalogue[!(rownames(reference_catalogue) %in% c("SBS1")), ] # excludes SBS1
 
   # catalogue signatures -------------------------------------------------------
+
   if (fixed_num > 1) {
 
     while (TRUE) {
@@ -94,8 +105,7 @@ generate_signatures <- function(
         cos_matrix[i, i] <- 0
       }
       max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
-      #print(paste("fixed cos_matrix[max]", cos_matrix[max][1]))
-      if (cos_matrix[max][1] < limit) {
+      if (cos_matrix[max][1] < similarity_limit) {
         fixed_df <- rbind(SBS1, reference[signatures, ])
         break
       }
@@ -106,6 +116,7 @@ generate_signatures <- function(
   }
 
   # denovo signatures ----------------------------------------------------------
+
   if (denovo_num > 1) {
 
     while (TRUE) {
@@ -116,14 +127,12 @@ generate_signatures <- function(
         cos_matrix[i, i] <- 0
       }
       max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
-      #print(paste("denovo cos_matrix[max]", cos_matrix[max][1]))
-      if (cos_matrix[max][1] < limit) {
+      if (cos_matrix[max][1] < similarity_limit) {
         denovo_df <- denovo_catalogue[signatures, ]
         rownames(denovo_df) <- paste0(rownames(denovo_df), "_D")
         break
       }
     }
-
   }
   else if (denovo_num==1) {
     shuffled_denovo = denovo_catalogue[sample(1:nrow(denovo_catalogue)), ]
@@ -134,20 +143,13 @@ generate_signatures <- function(
     denovo_df <- NULL
   }
 
-  #if (is.null(denovo_df)) {
-  #  beta <- fixed_df
-  #}
-  #else {
-  #  beta <- rbind(fixed_df, denovo_df)
-  #}
-
   obj <- list(fixed = fixed_df, denovo = denovo_df)
   return(obj)
 }
 
 #----------------------------------------------------------------------QC:PASSED
 
-generate_input <- function(
+generate.input <- function(
     reference_catalogue,
     beta_fixed,
     complexity,
@@ -160,19 +162,29 @@ generate_input <- function(
 
   k_fixed <- nrow(beta_fixed)
 
-  if (complexity=='low') {
-    n_overlap <- sample(1:k_fixed, 1)
-    n_extra <- 0
-  }
-  else if (complexity=='medium') {
-    n_overlap <- sample(1:k_fixed, 1)
-    n_extra <- sample(1:k_fixed, 1)
-  }
-  else if (complexity=='high') {
-    n_overlap <- 0
-    n_extra <- sample(1:(k_fixed), 1)
-  }
-  else {
+  if (is.numeric(complexity) & length(complexity)==2) {
+    n_overlap <- complexity[1]
+    n_extra <- complexity[2]
+    if (n_overlap > k_fixed) {
+      stop("overlap signatures are more than fixed signatures!")
+    }
+  } else if (is.character(complexity)) {
+    if (complexity=='low') {
+      n_overlap <- sample(1:k_fixed, 1)
+      n_extra <- 0
+    }
+    else if (complexity=='medium') {
+      n_overlap <- sample(1:k_fixed, 1)
+      n_extra <- sample(1:k_fixed, 1)
+    }
+    else if (complexity=='high') {
+      n_overlap <- 0
+      n_extra <- sample(1:(k_fixed), 1)
+    }
+    else {
+      stop("complexity argument should be selected from {'low', 'medium', 'high'}")
+    }
+  } else {
     stop("wrong complexity argument!")
   }
 
@@ -180,16 +192,12 @@ generate_input <- function(
 
   if (n_overlap > 0) {
     overlap <- sample(rownames(beta_fixed))[1:n_overlap]
-    #shuffled_fixed = beta_fixed[sample(1:nrow(beta_fixed)), ]
-    #overlap <- shuffled_fixed[1:n_overlap, ]
   } else {
     overlap <- NULL
   }
 
   if (n_extra > 0) {
     extra <- sample(rownames(extra_ref))[1:n_extra]
-    #shuffled_extra = extra_ref[sample(1:nrow(extra_ref)), ]
-    #extra <- shuffled_extra[1:n_overlap, ]
   } else {
     extra <- NULL
   }
@@ -201,7 +209,7 @@ generate_input <- function(
 
 #----------------------------------------------------------------------QC:PASSED
 
-generate_exposure <- function(beta, groups, seed=NULL) {
+generate.exposure <- function(beta, groups, seed=NULL) {
 
   signatures <- rownames(beta)
   if (!('SBS1' %in% signatures)) {
@@ -210,6 +218,10 @@ generate_exposure <- function(beta, groups, seed=NULL) {
 
   if (!is.null(seed)) {
     set.seed(seed = seed)
+  }
+
+  if (length(signatures) < 2) {
+    stop("not valid! there are not enough signatures!")
   }
 
   df_list <- list()
@@ -258,15 +270,18 @@ generate_exposure <- function(beta, groups, seed=NULL) {
   return(data)
 }
 
-#--------------------------------------- may be not needed (should be discussed)
-
-generate_counts <- function(alpha, beta, theta, seed=NULL) {
+#----------------------------------------------------------------------QC:PASSED
+# may use theta*alpha*beta or generate.counts (should be discussed to )
+generate.counts <- function(alpha, beta, theta, seed=NULL) {
 
   if (!is.null(seed)) {
     set.seed(seed = seed)
   }
 
-  alpha <- subset(alpha, select = -c(group))
+  if (!is.null(alpha$group)) {
+    alpha <- subset(alpha, select = -c(group))
+  }
+
   alpha <- alpha[, order(colnames(alpha))]
   beta <- beta[order(rownames(beta)), ]
   if (!identical(colnames(alpha), rownames(beta))) {
@@ -274,6 +289,7 @@ generate_counts <- function(alpha, beta, theta, seed=NULL) {
     print(rownames(beta))
     stop("alpha and beta are NOT valid!")
   }
+
   num_samples <- nrow(alpha)
 
   M <- matrix(rep(0, num_samples*96) , ncol = 96)
@@ -304,7 +320,7 @@ generate_counts <- function(alpha, beta, theta, seed=NULL) {
   return(M)
 }
 
-#-------------------------------------------------------------------------------
+#----------------------------------------------------------------------QC:PASSED
 
 generate.data <- function(
     reference_catalogue,
@@ -313,7 +329,7 @@ generate.data <- function(
     denovo_cosine,
     targetX,
     inputX,
-    limit,
+    similarity_limit,
     groups,
     mut_range,
     seed=NULL
@@ -323,98 +339,67 @@ generate.data <- function(
     set.seed(seed = seed)
   }
 
-  b <- generate_signatures(
+  # SIGNATURES --------------------------------
+  signatures <- generate.signatures(
     reference_catalogue = reference_catalogue,
-    denovo_catalogue = denovo_catalogue,
-    reference_cosine = reference_cosine, # cosine similarity matrix of reference signatures (SBS1 excluded)
-    denovo_cosine = denovo_cosine, # cosine similarity matrix of denovo signatures
+    denovo_catalogue  = denovo_catalogue,
+    reference_cosine = reference_cosine,
+    denovo_cosine = denovo_cosine,
     complexity = targetX,
-    limit = limit,
+    similarity_limit = similarity_limit,
+    seed = seed
+  )
+  beta <- rbind(signatures$fixed, signatures$denovo)
+
+  # INPUT ------------------------------------
+  input <- generate.input(
+    reference_catalogue = reference_catalogue,
+    beta_fixed = signatures$fixed,
+    complexity = inputX,
     seed = seed
   )
 
-  beta <- rbind(b$fixed, b$denovo)
+  # EXPOSURE ---------------------------------
+  alpha <- generate.exposure(beta=beta, groups=groups, seed=seed) # include group column
 
-  input <- generate_input(
-    reference_catalogue=reference_catalogue,
-    beta_fixed=b$fixed,
-    complexity=inputX,
-    seed=seed
-  )
-
-  alpha <- generate_exposure(beta=beta, groups=groups, seed=seed) # include group column
-
+  # THETA ------------------------------------
   num_samples <- length(groups)
-  theta <- generate_theta(range=mut_range, num_samples=num_samples, seed=seed)
+  theta <- generate.theta(mut_range=mut_range, num_samples=num_samples, seed=seed)
 
-  # generate count matrix
-  # M <- generate_counts(alpha, beta, theta)
-  alpha <- subset(alpha, select = -c(group))  # removing group column
+  # COUNT MATRIX -----------------------------
+  #m <- generate.counts(alpha=alpha, beta=beta, theta=theta, seed=seed)
+
+  # removing group column
+  if (!is.null(alpha$group)) {
+    alpha <- subset(alpha, select = -c(group))
+  }
   M <- as.data.frame(round(as.matrix(alpha*theta) %*% as.matrix(beta), digits = 0))
   rownames(M) <- rownames(alpha)
   colnames(M) <- colnames(beta)
 
-  #c('x', 'input_cat', 'ref_cat', 'exp_exposure', 'exp_fixed', 'exp_denovo', 'targetX', 'inputX')
+  # MODIFY COMPLEXITY VALUES -----------------
+  if (is.numeric(targetX)) {
+    targetX <- paste(targetX, collapse = "|")
+  }
+  if (is.numeric(inputX)) {
+    inputX <- paste(inputX, collapse = "|")
+  }
+
+  # CREATE TIBBLE ----------------------------
   obj <- tibble::tibble(
     x = list(M),
     input_cat = list(input),
     ref_cat = list(reference_catalogue),
     exp_exposure = list(alpha),
-    exp_fixed = list(b$fixed),
-    exp_denovo = list(b$denovo),
+    exp_fixed = list(signatures$fixed),
+    exp_denovo = list(signatures$denovo),
     targetX = targetX,
     inputX = inputX,
   )
-
-  #obj <- list(m=M, alpha=alpha, beta=beta, theta=theta)
   return(obj)
 }
 
-#-------------------------------------------------------------------------------
-
-generate.cohort <- function(
-    ref_path,
-    ratio,
-    num_iter,
-    targetX,
-    inputX,
-    limit,
-    groups,
-    mut_range,
-    seed=NULL
-) {
-
-  if (!is.null(seed)) {
-    set.seed(seed = seed)
-  }
-
-  a <- basilica:::split_reference(ref_path = ref_path, ratio = ratio, seed = seed)
-  ref_cat <- a$ref
-  denovo_cat <- a$denovo
-
-  ref_cosine <- basilica:::cosine.matrix(ref_cat, ref_cat)
-  denovo_cosine <- basilica:::cosine.matrix(denovo_cat, denovo_cat)
-
-  data <- NULL
-  for (i in 1:num_iter) {
-    xx <- basilica:::generate.data(
-      reference_catalogue = ref_cat,
-      denovo_catalogue = denovo_cat,
-      reference_cosine = ref_cosine,
-      denovo_cosine = denovo_cosine,
-      targetX = targetX,
-      inputX = inputX,
-      limit = limit,
-      groups = groups,
-      mut_range = mut_range,
-      seed = seed
-    )
-    data <- rbind(data, xx)
-  }
-  return(data)
-}
-
-#-------------------------------------------------------------------------------
+#----------------------------------------------------------------------QC:PASSED
 
 run.data <- function(
     data,
@@ -424,139 +409,215 @@ run.data <- function(
     phi,
     delta,
     lambda_rate = NULL,
-    sigma = FALSE
-    ) {
+    sigma = FALSE,
+    input=TRUE
+) {
 
   x <- data$x[[1]]
-  ref <- data$ref_cat[[1]]
-  input <- data$input_cat[[1]]
+  reference <- data$ref_cat[[1]]
+  if (input) {
+    input <- data$input_cat[[1]]
+  } else {
+    input = NULL
+  }
 
   obj <- basilica::fit(
     x=x,
-    reference_catalogue=ref,
-    k=k,
-    lr=lr,
-    steps=steps,
-    phi=phi,
-    delta=delta,
-    groups=NULL,
-    input_catalogue=input,
+    reference_catalogue = reference,
+    k = k,
+    lr = lr,
+    steps = steps,
+    phi = phi,
+    delta = delta,
+    groups = NULL,
+    input_catalogue = input,
     lambda_rate = lambda_rate,
     sigma = sigma
   )
-
-  #obj$exposure <- list(obj$exposure)
-  #obj$denovo_signatures <- list(obj$denovo_signatures)
-  #obj$catalogue_signatures <- list(obj$catalogue_signatures)
-  #results <- c(synthetic, obj)
 
   obj <- tibble::add_column(
     data,
     inf_exposure = list(obj$exposure),
     inf_denovo = list(obj$denovo_signatures),
-    inf_fixed = list(obj$catalogue_signatures)
-    )
+    inf_fixed = list(obj$catalogue_signatures),
+    bic = obj$bic,
+    losses = list(obj$losses),
+  )
 
   return(obj)
 }
 
-#-------------------------------------------------------------------------------
+#----------------------------------------------------------------------QC:PASSED
+
+generate.cohort <- function(
+    reference_path,
+    ratio,
+    targetX,
+    inputX,
+    similarity_limit,
+    groups,
+    mut_range,
+    seed = NULL,
+    num_data
+    ) {
+
+  reference_denovo <- basilica:::split.reference(reference_path=reference_path, ratio=ratio, seed=seed)
+
+  reference_catalogue <- reference_denovo$reference
+  denovo_catalogue <- reference_denovo$denovo
+
+  reference_cosine <- basilica:::cosine.matrix(reference_catalogue, reference_catalogue)
+  denovo_cosine <- basilica:::cosine.matrix(denovo_catalogue, denovo_catalogue)
+
+  data <- NULL
+
+  if (is.null(seed)) {
+    for (i in 1:num_data) {
+      xx <- basilica:::generate.data(
+        reference_catalogue = reference_catalogue,
+        denovo_catalogue = denovo_catalogue,
+        reference_cosine = reference_cosine,
+        denovo_cosine = denovo_cosine,
+        targetX = targetX,
+        inputX = inputX,
+        similarity_limit = similarity_limit,
+        groups = groups,
+        mut_range = mut_range,
+        seed = seed
+      )
+      data <- rbind(data, xx)
+    }
+  } else {
+    for (i in 1:num_data) {
+      xx <- basilica:::generate.data(
+        reference_catalogue = reference_catalogue,
+        denovo_catalogue = denovo_catalogue,
+        reference_cosine = reference_cosine,
+        denovo_cosine = denovo_cosine,
+        targetX = targetX,
+        inputX = inputX,
+        similarity_limit = similarity_limit,
+        groups = groups,
+        mut_range = mut_range,
+        seed = seed
+      )
+      data <- rbind(data, xx)
+      seed <- seed + 1
+    }
+  }
+
+  return(data)
+}
+
+#----------------------------------------------------------------------QC:PASSED
 
 run.cohort <- function(
-    data,
+    cohort,
     k,
     lr,
     steps,
     phi,
     delta,
     lambda_rate = NULL,
-    sigma = FALSE
+    sigma = FALSE,
+    input=TRUE
     ) {
 
-  df <- NULL
-  for (i in 1:nrow(data)) {
-    print(paste('row:', i))
-    syn <- data[i, ]
-    output <- run.data(
-      syn,
-      k,
-      lr,
-      steps,
-      phi,
-      delta,
+  results <- NULL
+  for (i in 1:nrow(cohort)) {
+    xx <- basilica:::run.data(
+      data = cohort[i, ],
+      k = k,
+      lr = lr,
+      steps = steps,
+      phi = phi,
+      delta = delta,
       lambda_rate = lambda_rate,
-      sigma = sigma
+      sigma = sigma,
+      input = input
     )
-    df <- rbind(df, output)
+    results <- rbind(results, xx)
   }
-
-  return(df)
+  return(results)
 }
 
 #===============================================================================
 #=========================== EVALUATION ========================================
 #===============================================================================
 
-fixed.accuracy <- function(reference, expected_fixed, inferred_fixed) {
+
+#----------------------------------------------------------------------QC:PASSED
+
+fixed.accuracy <- function(reference, input, expected_fixed, inferred_fixed) {
   ref_list <- rownames(reference)
   if (is.null(expected_fixed)) {exp_list <- c()} else {exp_list <- rownames(expected_fixed)}
   if (is.null(inferred_fixed)) {inf_list <- c()} else {inf_list <- rownames(inferred_fixed)}
+  if (is.null(input)) {input_list <- c()} else {input_list <- rownames(input)}
 
   TP <- length(intersect(inf_list, exp_list))
   FP <- length(setdiff(inf_list, exp_list))
-  TN <- length( setdiff( setdiff(ref_list, exp_list), inf_list) )
+  #TN <- length( setdiff( setdiff(ref_list, exp_list), inf_list) )
+  TN <- length( setdiff(setdiff(input_list, exp_list), inf_list)  )
   FN <- length(setdiff(exp_list, inf_list))
 
-  accuracy <- (TP + TN) / (TP + TN + FP + FN)
+  accuracy <- list(TP=TP, FP=FP, TN=TN, FN=FN)
+
+  #accuracy <- (TP + TN) / (TP + TN + FP + FN)
   return(accuracy)
 }
 
-#-------------------------------------------------------------------------------
+#----------------------------------------------------------------------QC:PASSED
 
 reconstruct.count <- function(m, alpha, beta) {
   # all args are data.frame
   theta <- diag(rowSums(m))               # matrix
   alpha <- theta %*% as.matrix(alpha)     # matrix
-  #beta <- as.matrix(rbind(fixed, denovo))# matrix
   beta <- as.matrix(beta)                 # matrix
 
-  mr_matrix <- alpha %*% as.matrix(beta)
+  # TEST
+  print('alpha:')
+  print(dim(alpha))
+  print('beta:')
+  print(dim(beta))
+  print('------------------------------------------------')
+  # TEST
+
+  mr_matrix <- alpha %*% beta
   mr <- round(as.data.frame(mr_matrix))
+  rownames(mr) <- rownames(m)
   return(mr)
 }
 
-#-------------------------------------------------------------------------------
+#----------------------------------------------------------------------QC:PASSED
 
 compute.mae <- function(m , mr) {
   mae <- sum(abs(m - mr)) / (dim(m)[1] * dim(m)[2])
   return(mae)
 }
 
-#-------------------------------------------------------------------------------
+#----------------------------------------------------------------------QC:PASSED
 
 compute.mse <- function(m , mr) {
   mse <- sum((m - mr)^2) / (dim(m)[1] * dim(m)[2])
   return(mse)
 }
 
-#-------------------------------------------------------------------------------
+#----------------------------------------------------------------------QC:PASSED
 
-denovo.similarity <- function(exp, inf) {
+denovo.similarity <- function(expected_denovo, inferred_denovo) {
 
-  if (length(exp)==0 | length(inf)==0) {
+  if (length(expected_denovo)==0 | length(inferred_denovo)==0) {
     return(NULL)
   } else {
-    df <- data.frame(matrix(nrow = nrow(inf), ncol = nrow(exp)))
-    colnames(df) <- rownames(exp)
-    rownames(df) <- rownames(inf)
+    df <- data.frame(matrix(nrow = nrow(inferred_denovo), ncol = nrow(expected_denovo)))
+    colnames(df) <- rownames(expected_denovo)
+    rownames(df) <- rownames(inferred_denovo)
 
-    for (i in 1:nrow(inf)) {
-      inferred <- inf[i,]
+    for (i in 1:nrow(inferred_denovo)) {
+      inferred <- inferred_denovo[i,]
       inferred_name <- rownames(inferred)
-      #maxScore <- 0
-      #bestMatch <- NULL
-      for (j in 1:nrow(exp)) {
-        target <- exp[j, ]
+      for (j in 1:nrow(expected_denovo)) {
+        target <- expected_denovo[j, ]
         target_name <- rownames(target)
         score <- cosine.vector(inferred, target)
         df[inferred_name, target_name] <- score
@@ -564,9 +625,14 @@ denovo.similarity <- function(exp, inf) {
     }
 
     #------------------------------
-    sim_list <- list()
+    #match_list <- list()
+    match_df <- data.frame(matrix(nrow = nrow(inferred_denovo), ncol = 2))
+    colnames(match_df) <- c("match", "similarity")
+    rownames(match_df) <- rownames(inferred_denovo)
+
     similarity <- 0
-    for (i in 1:min(nrow(inf), nrow(exp))) {
+    iter <- min(nrow(inferred_denovo), nrow(expected_denovo))
+    for (i in 1:iter) {
 
       max = which(df == max(df), arr.ind = TRUE)
       similarity <- similarity + df[max]
@@ -574,23 +640,18 @@ denovo.similarity <- function(exp, inf) {
       row <- row.names(df[max[,1],])
       column <- names(df[max[,2]])
 
-      sim_list[row] <- column
+      #match_list[row] <- column
+      match_df[row, 'match'] <- column
+      match_df[row, 'similarity'] <- df[max]
 
       df[row, column] <- 0
-
-      #row_index <- as.numeric(max)[1]
-      #col_index <- as.numeric(max)[2]
-
-      #if (!is.na(col_index) & !is.na(col_index)) {
-      #  df <- df[-c(row_index), -c(col_index)]
-      #}
     }
 
-  return( list( sim_avg=(similarity / nrow(inf)), sim_table=sim_list ) )
+  return( list( similarity_average=(similarity / iter), match_df=match_df ) )
   }
 }
 
-#-------------------------------------------------------------------------------
+#----------------------------------------------------------------------QC:PASSED
 
 denovo.ratio <- function(expected_denovo, inferred_denovo) {
 
@@ -602,60 +663,63 @@ denovo.ratio <- function(expected_denovo, inferred_denovo) {
   return(denovo_ratio)
 }
 
-#-------------------------------------------------------------------------------
+#----------------------------------------------------------------------QC:PASSED
 
 #' @import dplyr
-evaluate.data <- function(data) {
+evaluate.data <- function(x) {
+  #--------------------------
+  reference <- x$ref_cat[[1]]
+  input <- x$input_cat[[1]]
+  expected_fixed <- x$exp_fixed[[1]]
+  inferred_fixed <- x$inf_fixed[[1]]
+  a <- basilica:::fixed.accuracy(reference, input, expected_fixed, inferred_fixed)
+  TP <- a$TP
+  FP <- a$FP
+  TN <- a$TN
+  FN <- a$FN
+  accuracy <- (TP + TN) / (TP + TN + FP + FN)
+  #--------------------------
+  m <- x$x[[1]]
+  alpha <- x$inf_exposure[[1]]
+  beta <- rbind(x$inf_fixed[[1]], x$inf_denovo[[1]])
+  mr <- basilica:::reconstruct.count(m, alpha, beta)
+  mae <- basilica:::compute.mae(m, mr)
+  mse <- basilica:::compute.mse(m, mr)
+  #--------------------------
+  b <- basilica:::denovo.similarity(x$exp_denovo[[1]], x$inf_denovo[[1]])
+  denovo_similarity <- b$similarity_average  # numeric
+  denovo_match <- b$match_df                 # data.frame
+  #--------------------------
+  denovo_ratio <- basilica:::denovo.ratio(x$exp_denovo[[1]], x$inf_denovo[[1]])
+  #--------------------------
 
-  df <- tibble::tibble(
-    targetX = character(),
-    inputX = character(),
-    num_samples = numeric(),
+  # CREATE TIBBLE ----------------------------
+  obj <- tibble::tibble(
 
-    mae = numeric(),
-    fixed_acc = numeric(),
-    denovo_ratio = numeric(),
-    denovo_sim = numeric(),
-    denovo_match = list(),
-  )
-
-  m <- data$x[[1]]
-  inf_exposure <- data$inf_exposure[[1]]
-
-  inf_fixed <- data$inf_fixed[[1]]
-  inf_denovo <- data$inf_denovo[[1]]
-  exp_fixed <- data$exp_fixed[[1]]
-  exp_denovo <- data$exp_denovo[[1]]
-  inf_beta <- rbind(inf_fixed, inf_denovo)
-  mr <- reconstruct.count(m=m, alpha=inf_exposure, beta=inf_beta)
-  ref <- data$ref_cat[[1]]
-
-  mae <- compute.mae(m=m , mr=mr)
-  acc <- fixed.accuracy(reference=ref, expected_fixed=exp_fixed, inferred_fixed=inf_fixed)
-  ratio <- denovo.ratio(expected_denovo=exp_denovo, inferred_denovo=inf_denovo)
-  sim <- denovo.similarity(exp=exp_denovo, inf=inf_denovo)
-
-  # fill visualization tibble
-  df <- df %>% tibble::add_row(
-    targetX =  data$targetX,
-    inputX = data$inputX,
-    num_samples = nrow(data$exp_exposure[[1]]),
+    targetX = x$targetX,
+    inputX = x$inputX,
+    num_samples = nrow(m),
 
     mae = mae,
-    fixed_acc = acc,
-    denovo_ratio = ratio,
-    denovo_sim = sim$sim_avg,
-    denovo_match = list(sim$sim_table)
+    mse = mse,
+    fixed_acc = accuracy,
+    denovo_ratio = denovo_ratio,
+    denovo_sim = denovo_similarity,
+    denovo_match = list(denovo_match),
   )
-  return(df)
+
+  return(obj)
 }
 
-#-------------------------------------------------------------------------------
+#----------------------------------------------------------------------QC:PASSED
 
 evaluate.cohort <- function(x) {
   res <- NULL
+  counter <- 1 # TEST
   for (i in 1:nrow(x)) {
-    res <- rbind(res, evaluate.data(data = x[i, ]))
+    res <- rbind(res, evaluate.data(x = x[i, ]))
+    print(paste('counter:', counter)) # TEST
+    counter <- counter + 1 # TEST
   }
   return(res)
 }
@@ -664,159 +728,5 @@ evaluate.cohort <- function(x) {
 #=========================== VISUALIZATION =====================================
 #===============================================================================
 
-# plot exposure-----------------------------------------------------------------
-
-plot.alpha <- function(exp_alpha, inf_alpha) {
-  #exp_alpha <- x$exp_exposure[[1]]
-  rownames(exp_alpha) <- rownames(inf_alpha)  # just to be consistent, should be fixed later
-  exp_alpha$sample <- rownames(exp_alpha)
-  exp_alpha_long <- tidyr::gather(exp_alpha, key="signature", value="exposure", c(-sample))
-  exp_alpha_long$type <- rep('expected', each=nrow(exp_alpha_long))
-
-  #inf_alpha <- x$exposure[[1]]
-  inf_alpha$sample <- rownames(inf_alpha)
-  inf_alpha_long <- tidyr::gather(inf_alpha, key="signature", value="exposure", c(-sample))
-  inf_alpha_long$type <- rep('inferred', each=nrow(inf_alpha_long))
-
-  alpha <- rbind(exp_alpha_long, inf_alpha_long)
-
-  plt <- ggplot(data = alpha, aes(x=sample, y=exposure, fill=signature)) +
-    geom_bar(stat = "identity") +
-    facet_grid(type ~ .) +
-    theme_minimal() +
-    ggtitle("Signatures exposure (Expected vs. Inferred)")
-  #scale_y_continuous(labels=scales::percent)
-
-  #glist <-
-  #glist[[1]] <- plt
-
-  return(list(plt))
-}
-
-
-# plot signatures --------------------------------------------------------------
-
-plot.beta <- function(beta) {
-
-  if (is.null(beta)) {
-    p <- ggplot() +
-      theme_void() +
-      geom_text(aes(0,0,label='N/A')) +
-      xlab(NULL) #optional, but safer in case another theme is applied later
-  } else {
-    # separate context and alteration
-    x <- data.table::as.data.table(reshape2::melt(as.matrix(beta),varnames=c("signature","cat")))
-    x[, Context := paste0(substr(cat,1,1), ".", substr(cat, 7, 7)) ]
-    x[, alt := paste0(substr(cat,3,3),">",substr(cat,5,5)) ]
-
-    # make the ggplot2 object
-    glist <- list()
-    for(i in 1:nrow(beta)) {
-
-      plt <- ggplot(x[signature==rownames(beta)[i]]) +
-        geom_bar(aes(x=Context,y=value,fill=alt),stat="identity",position="identity") +
-        facet_wrap(~alt,nrow=1,scales="free_x") +
-        theme(axis.text.x=element_text(angle=90,hjust=1),panel.background=element_blank(),axis.line=element_line(colour="black")) +
-        ggtitle(rownames(beta)[i]) + theme(legend.position="none") + ylab("Frequency of mutations")
-
-      #if(!xlabels) {
-      plt <- plt + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank())
-      #}
-
-      glist[[i]] <- plt
-    }
-
-    # make the final plot
-    #gridExtra::grid.arrange(grobs=glist,ncol=ceiling(nrow(beta)/3))
-
-    p <- ggpubr::ggarrange(plotlist=glist, ncol = 1)
-  }
-
-  return(list(p))
-}
-
-# plot signatures cosine matrix ------------------------------------------------
-
-
-plot.beta.cosine <- function(exp_denovo, inf_denovo) {
-
-  if (is.null(exp_denovo) | is.null(inf_denovo)) {
-    cplot <- ggplot() +
-      theme_void() +
-      geom_text(aes(0,0,label='N/A')) +
-      xlab(NULL) #optional, but safer in case another theme is applied later
-  } else {
-    # expected vs inferred signatures cosine similarity matrix
-    cos <- cosine_matrix(inf_denovo, exp_denovo)
-    cos1 <- tibble::rownames_to_column(cos, var = 'inferred_denovo')
-    cos_long <- tidyr::gather(cos1, key="expected_denovo", value="cosine_similarity", c(-inferred_denovo))
-    # plot data
-    cplot <- ggplot(cos_long, aes(expected_denovo, inferred_denovo)) +
-      geom_tile(aes(fill = cosine_similarity)) +
-      geom_text(aes(label = round(cosine_similarity, 3))) +
-      scale_fill_gradient(low = "white", high = "darkgreen") +
-      ggtitle("Cosine similarity matrix (expected vs. inferred)") +
-      xlab("Expected") +
-      ylab("Inferred")
-  }
-
-  return(list(cplot))
-}
-
-#-------------------------------------------------------------------------------
-
-multi.plot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
-  library(grid)
-
-  # Make a list from the ... arguments and plotlist
-  plots <- c(list(...), plotlist)
-
-  numPlots = length(plots)
-
-  # If layout is NULL, then use 'cols' to determine layout
-  if (is.null(layout)) {
-    # Make the panel
-    # ncol: Number of columns of plots
-    # nrow: Number of rows needed, calculated from # of cols
-    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
-                     ncol = cols, nrow = ceiling(numPlots/cols))
-  }
-
-  if (numPlots==1) {
-    print(plots[[1]])
-
-  } else {
-    # Set up the page
-    grid.newpage()
-    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
-
-    # Make each plot, in the correct location
-    for (i in 1:numPlots) {
-      # Get the i,j matrix positions of the regions that contain this subplot
-      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
-
-      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
-                                      layout.pos.col = matchidx$col))
-    }
-  }
-}
-
-# ------------------------------------------------------------------------------
-
-final.plot <- function(exp_alpha, inf_alpha, exp_denovo, inf_denovo) {
-
-  alpha <- basilica:::plot.alpha(exp_alpha, inf_alpha)
-  beta.cosine <- plot.beta.cosine(exp_denovo, inf_denovo)
-  p1 <- list(ggpubr::ggarrange(plotlist=c(alpha, beta.cosine), ncol = 2))
-
-  exp.beta <- plot.beta(exp_denovo)
-  #ggpubr::annotate_figure(exp.beta, top = ggpubr::text_grob("Expected Signatures", color = "red", face = "bold", size = 14))
-  inf.beta <- plot.beta(inf_denovo)
-  #ggpubr::annotate_figure(inf.beta, top = ggpubr::text_grob("Inferred Signatures", color = "red", face = "bold", size = 14))
-  p2 <- list(ggpubr::ggarrange(plotlist=c(exp.beta, inf.beta), ncol = 2))
-  p <- c(p1, p2)
-
-  return(basilica:::multi.plot(plotlist = p))
-}
 
 
