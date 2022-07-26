@@ -525,6 +525,11 @@ run.cohort <- function(
 
   results <- NULL
   for (i in 1:nrow(cohort)) {
+
+    cat('============================================\n') # TEST
+    cat('                 Data No.', i, '\n') # TEST
+    cat('============================================\n') # TEST
+
     xx <- basilica:::run.data(
       data = cohort[i, ],
       k = k,
@@ -573,14 +578,6 @@ reconstruct.count <- function(m, alpha, beta) {
   theta <- diag(rowSums(m))               # matrix
   alpha <- theta %*% as.matrix(alpha)     # matrix
   beta <- as.matrix(beta)                 # matrix
-
-  # TEST
-  print('alpha:')
-  print(dim(alpha))
-  print('beta:')
-  print(dim(beta))
-  print('------------------------------------------------')
-  # TEST
 
   mr_matrix <- alpha %*% beta
   mr <- round(as.data.frame(mr_matrix))
@@ -718,7 +715,7 @@ evaluate.cohort <- function(x) {
   counter <- 1 # TEST
   for (i in 1:nrow(x)) {
     res <- rbind(res, evaluate.data(x = x[i, ]))
-    print(paste('counter:', counter)) # TEST
+    #print(paste('counter:', counter)) # TEST
     counter <- counter + 1 # TEST
   }
   return(res)

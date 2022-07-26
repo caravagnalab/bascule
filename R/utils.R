@@ -57,8 +57,7 @@ filter.fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
     col_names <- colnames(M)
     df = data.frame(matrix(nrow=0, ncol = length(col_names)))
     colnames(df) = col_names
-  }
-  else if (is.data.frame(beta_fixed)) {
+  } else if (is.data.frame(beta_fixed)) {
     theta <- matrix(rowSums(M), nrow = 1)
     #print(theta)
     alpha0 <- theta %*% as.matrix(alpha)
@@ -69,9 +68,11 @@ filter.fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
     #print(dropped)
     if (sum(dropped)==0) {
       df <- beta_fixed
+      dropped_list <- NULL
       #print('nothing to drop')
     } else {
       df <- beta_fixed[-c(dropped), ]
+      dropped_list <- beta_fixed[c(dropped), ]
       #dropped <- setdiff(rownames(beta_fixed[c(dropped), ]), chache)
       #if (length(dropped)==0) {
       #  df <- beta_fixed
@@ -80,12 +81,10 @@ filter.fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
       #}
       #print(paste('dropped', length(dropped), 'signatures'))
     }
-  }
-  else {
+  } else {
     warning("invalid fixed signatures (beta_fixed) !")
   }
-
-  return(df)
+  return(list(fixed=df, dropped=dropped_list))
 }
 
 #-------------------------------------------------------------------------------
@@ -120,40 +119,47 @@ cosine.vector <- function(a, b) {
 
 #-------------------------------------------------------------------------------
 
-filter.denovo <- function(beta_denovo=NULL, reference_catalogue, delta=0.9) {
+#' @import dplyr
+filter.denovo <- function(reference_catalogue, beta_fixed, beta_denovo=NULL, black_list=NULL, delta=0.9) {
 
   if (!is.data.frame(reference_catalogue)) {
     warning("Invalid reference catalogue!")
   }
-
   if (!is.numeric(delta)) {
     warning("Invalid delta argument!")
   }
 
+  # BETA FIXED ---------------------------------
+  if (is.data.frame(beta_fixed)) {
+    reference <- dplyr::setdiff(reference_catalogue, beta_fixed)
+  } else if (is.null(beta_fixed)) {
+    reference <- reference_catalogue
+  } else {
+    warning('invalid fixed signatures (beta_fixed) !')
+  }
+
+  # BETA DENOVO ---------------------------------
   if (is.null(beta_denovo)) {
-    col_names <- colnames(reference_catalogue)
-    df = data.frame(matrix(nrow=0, ncol = length(col_names)))
-    colnames(df) = col_names
-    return(df)
-  }
-  else if (is.data.frame(beta_denovo)) {
-    cos_matrix <- cosine.matrix(beta_denovo, reference_catalogue)
-  }
+    match_list <- c()
+  } else if (is.data.frame(beta_denovo)) {
+    match_list <- c()
+    cos_matrix <- cosine.matrix(beta_denovo, reference)
+    while (TRUE) {
+      max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
+      if (cos_matrix[max] < delta) {
+        break
+      }
+      row_index <- as.numeric(max)[1]
+      col_index <- as.numeric(max)[2]
+      match_list[length(match_list) + 1] <- colnames(cos_matrix[col_index])
 
-  match_list <- c()
-  while (TRUE) {
-    max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
-    if (cos_matrix[max] < delta) {
-      break
+      cos_matrix <- cos_matrix[-c(row_index), -c(col_index)]
+      if (nrow(cos_matrix)==0) {
+        break
+      }
     }
-    row_index <- as.numeric(max)[1]
-    col_index <- as.numeric(max)[2]
-    match_list[length(match_list) + 1] <- colnames(cos_matrix[col_index])
-
-    cos_matrix <- cos_matrix[-c(row_index), -c(col_index)]
-    if (nrow(cos_matrix)==0) {
-      break
-    }
+  } else {
+    warning("Invalid beta denovo!")
   }
 
   if (length(match_list) == 0) {
@@ -162,7 +168,8 @@ filter.denovo <- function(beta_denovo=NULL, reference_catalogue, delta=0.9) {
     colnames(df) = col_names
     return(df)
   } else {
-    return(reference_catalogue[match_list, ])
+    match_list <- setdiff(match_list, black_list)
+    return(reference[match_list, ])
   }
 }
 

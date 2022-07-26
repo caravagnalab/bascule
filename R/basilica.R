@@ -32,8 +32,10 @@ fit <- function(
     ) {
 
   counter <- 1
+  black_list <- c()
   while (TRUE) {
-    #print(paste("counter:", counter))
+
+    cat("    iteration:", counter, '\n') # TEST
 
     obj <- basilica:::pyfit(
       x=x,
@@ -52,26 +54,28 @@ fit <- function(
       colnames(input_catalogue) = col_names
     }
 
-    a <- basilica:::filter.fixed(x, obj$exposure, input_catalogue, phi)
+    out <- basilica:::filter.fixed(x, obj$exposure, input_catalogue, phi)
+    a <- out$fixed
+    black_list <- union(black_list, rownames(out$dropped))
 
-    b <- basilica:::filter.denovo(obj$denovo_signatures, reference_catalogue, delta)
+    b <- basilica:::filter.denovo(
+      reference_catalogue=reference_catalogue,
+      beta_fixed=input_catalogue,
+      beta_denovo=obj$denovo_signatures,
+      black_list=black_list,
+      delta=delta
+    )
 
-    #TEST
-    #print(paste("input_catalogue    :", list(rownames(input_catalogue))))
-    #print(paste("exposure           :", list(colnames(obj$exposure))))
-    #print(paste("denovo signatures  :", list(rownames(obj$denovo_signatures))))
-    #print(paste("filter fixed       :", list(rownames(a))))
-    #print(paste("filte denovo       :", list(rownames(b))))
-    #TEST
+    #TEST---------------------------------------------------------
+    cat("        fixed         :", rownames(input_catalogue), '\n')
+    cat("        filter fixed  :", rownames(a), '\n')
+    cat("        black_list    :", black_list, "\n\n")
+    cat("        denovo        :", rownames(obj$denovo_signatures), '\n')
+    cat("        filter denovo :", rownames(b), '\n')
+    #TEST---------------------------------------------------------
 
-    #if (length(setdiff(rownames(input_catalogue), rownames(a))) > 0) {
-    #  if (setdiff(rownames(input_catalogue), rownames(a)) == rownames(b)) {
-    #    b <- NULL
-    #    break
-    #  }
-    #}
-
-    if (nrow(a)==nrow(input_catalogue) & nrow(b)==0) {
+    if (nrow(dplyr::setdiff(input_catalogue, a))==0 & nrow(b)==0) {
+      cat('        break loop\n')
       break
     }
 
@@ -82,10 +86,11 @@ fit <- function(
     }
 
     counter <- counter + 1
-    if (counter>4) {
-      print('limit reached!')
+    if (counter>10) {
+      cat('        limit reached! : 10\n')
       break
     }
+    cat('    ------------------------------------\n')
   }
 
   if (nrow(input_catalogue)==0) {
