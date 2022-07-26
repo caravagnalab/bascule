@@ -173,3 +173,43 @@ filter.denovo <- function(reference_catalogue, beta_fixed, beta_denovo=NULL, bla
   }
 }
 
+
+
+#-------------------------------------------------------------------------------
+
+adjust.denovo.fixed <- function(exposure, fixed_signatures, denovo_signatures, limit=0.9) {
+
+  if (is.null(fixed_signatures) | is.null(denovo_signatures)) {
+    return(NULL)
+  }
+
+  cos_matrix <- basilica:::cosine.matrix(denovo_signatures, fixed_signatures)
+  while (TRUE) {
+    max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
+    if (cos_matrix[max] < limit) {
+      break
+    } else {
+      row_index <- as.numeric(max)[1]
+      col_index <- as.numeric(max)[2]
+      denovo_name <- rownames(cos_matrix[col_index])[row_index]
+      fixed_name <- colnames(cos_matrix[col_index])
+
+      # remove denovo signature
+      denovo_signatures <- denovo_signatures[!(rownames(denovo_signatures) %in% denovo_name), ]
+
+      # adjust fixed signature exposure
+      alpha[fixed_name] <- alpha[, fixed_name] + alpha[, denovo_name]
+      # remove denovo signature exposure
+      alpha <- alpha[ , !names(alpha) %in% denovo_name]
+
+      if (dim(cos_matrix)[1]==1 | dim(cos_matrix)[2]==1) {
+        break
+      } else {
+        cos_matrix <- cos_matrix[-c(row_index), -c(col_index)]
+      }
+    }
+  }
+  return(exposure=alpha, denovo_signatures=denovo_signatures)
+}
+
+
