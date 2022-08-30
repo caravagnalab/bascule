@@ -435,16 +435,16 @@ run.data <- function(
     sigma = sigma
   )
 
-  obj <- tibble::add_column(
+  simulation.fit.obj <- tibble::add_column(
     data,
-    inf_exposure = list(obj$exposure),
-    inf_denovo = list(obj$denovo_signatures),
-    inf_fixed = list(obj$catalogue_signatures),
-    bic = obj$bic,
-    losses = list(obj$losses),
+    #inf_exposure = list(obj$exposure),
+    #inf_denovo = list(obj$denovo_signatures),
+    #inf_fixed = list(obj$catalogue_signatures),
+    #bic = obj$bic,
+    #losses = list(obj$losses),
+    fit = list(obj)
   )
-
-  return(obj)
+  return(simulation.fit.obj)
 }
 
 #----------------------------------------------------------------------QC:PASSED
@@ -668,7 +668,8 @@ evaluate.data <- function(x) {
   reference <- x$ref_cat[[1]]
   input <- x$input_cat[[1]]
   expected_fixed <- x$exp_fixed[[1]]
-  inferred_fixed <- x$inf_fixed[[1]]
+  #inferred_fixed <- x$inf_fixed[[1]]
+  inferred_fixed <- x$fit[[1]]$catalogue_signatures
   a <- basilica:::fixed.accuracy(reference, input, expected_fixed, inferred_fixed)
   TP <- a$TP
   FP <- a$FP
@@ -677,17 +678,18 @@ evaluate.data <- function(x) {
   accuracy <- (TP + TN) / (TP + TN + FP + FN)
   #--------------------------
   m <- x$x[[1]]
-  alpha <- x$inf_exposure[[1]]
-  beta <- rbind(x$inf_fixed[[1]], x$inf_denovo[[1]])
+  #alpha <- x$inf_exposure[[1]]
+  alpha <- x$fit[[1]]$exposure
+  beta <- rbind(x$fit[[1]]$catalogue_signatures, x$fit[[1]]$denovo_signatures)
   mr <- basilica:::reconstruct.count(m, alpha, beta)
   mae <- basilica:::compute.mae(m, mr)
   mse <- basilica:::compute.mse(m, mr)
   #--------------------------
-  b <- basilica:::denovo.similarity(x$exp_denovo[[1]], x$inf_denovo[[1]])
+  b <- basilica:::denovo.similarity(x$exp_denovo[[1]], x$fit[[1]]$denovo_signatures)
   denovo_similarity <- b$similarity_average  # numeric
   denovo_match <- b$match_df                 # data.frame
   #--------------------------
-  denovo_ratio <- basilica:::denovo.ratio(x$exp_denovo[[1]], x$inf_denovo[[1]])
+  denovo_ratio <- basilica:::denovo.ratio(x$exp_denovo[[1]], x$fit[[1]]$denovo_signatures)
   #--------------------------
 
   # CREATE TIBBLE ----------------------------
@@ -721,9 +723,6 @@ evaluate.cohort <- function(x) {
   return(res)
 }
 
-#===============================================================================
-#=========================== VISUALIZATION =====================================
-#===============================================================================
 
 
 

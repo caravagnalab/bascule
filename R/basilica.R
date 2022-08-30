@@ -48,16 +48,17 @@ fit <- function(
       sigma=sigma
       )
 
-    if (is.null(input_catalogue)) {
-      col_names <- colnames(x)
-      input_catalogue = data.frame(matrix(nrow=0, ncol = length(col_names)))
-      colnames(input_catalogue) = col_names
-    }
+    # drop non-significant fixed signatures ------------------------------------
+    a <- basilica:::filter.fixed(
+      M = x,
+      alpha = obj$exposure,
+      beta_fixed = input_catalogue,
+      phi = phi
+    )
+    remained_fixed <- a$remained_fixed                          # data.frame / NULL
+    black_list <- union(black_list, rownames(a$dropped_fixed))  # character vector
 
-    out <- basilica:::filter.fixed(x, obj$exposure, input_catalogue, phi)
-    a <- out$fixed
-    black_list <- union(black_list, rownames(out$dropped))
-
+    # detect denovo signatures which are similar to reference signatures -------
     b <- basilica:::filter.denovo(
       reference_catalogue=reference_catalogue,
       beta_fixed=input_catalogue,
@@ -65,29 +66,51 @@ fit <- function(
       black_list=black_list,
       delta=delta
     )
+    new_fixed <- b$new_fixed  # data.frame / NULL (with labels from reference)
+    reduced_denovo <- b$reduced_denovo  # data.frame / NULL (remaining denovo signatures)
 
     #TEST---------------------------------------------------------
-    cat("        fixed         :", rownames(input_catalogue), '\n')
-    cat("        filter fixed  :", rownames(a), '\n')
-    cat("        black_list    :", black_list, "\n\n")
-    cat("        denovo        :", rownames(obj$denovo_signatures), '\n')
-    cat("        filter denovo :", rownames(b), '\n')
+    cat("        fixed          :", rownames(input_catalogue), '\n')
+    cat("        remained fixed :", rownames(remained_fixed), '\n')
+    cat("        black list     :", black_list, "\n\n")
+    cat("        denovo         :", rownames(obj$denovo_signatures), '\n')
+    cat("        new fixed      :", rownames(new_fixed), '\n')
+    cat("        reduced denovo :", rownames(reduced_denovo), '\n')
     #TEST---------------------------------------------------------
 
-    if (nrow(dplyr::setdiff(input_catalogue, a))==0 & nrow(b)==0) {
+
+    if (is.null(input_catalogue)) {
+      col_names <- colnames(x)
+      input_catalogue = data.frame(matrix(nrow=0, ncol = length(col_names)))
+      colnames(input_catalogue) = col_names
+    }
+
+    if (is.null(new_fixed)) {
+      col_names <- colnames(x)
+      new_fixed = data.frame(matrix(nrow=0, ncol = length(col_names)))
+      colnames(new_fixed) = col_names
+    }
+
+    if (is.null(remained_fixed)) {
+      col_names <- colnames(x)
+      remained_fixed = data.frame(matrix(nrow=0, ncol = length(col_names)))
+      colnames(remained_fixed) = col_names
+    }
+
+    if (nrow(dplyr::setdiff(input_catalogue, remained_fixed))==0 & nrow(new_fixed)==0) {
       cat('        break loop\n')
       break
     }
 
-    if (nrow(a)==0 & nrow(b)==0) {
+    if (nrow(remained_fixed)==0 & nrow(new_fixed)==0) {
       input_catalogue <- NULL
     } else {
-      input_catalogue <- rbind(a, b)
+      input_catalogue <- rbind(remained_fixed, new_fixed)
     }
 
     counter <- counter + 1
-    if (counter>10) {
-      cat('        limit reached! : 10\n')
+    if (counter > 5) {
+      cat('        limit reached! : 5\n')
       break
     }
     cat('    ------------------------------------\n')
@@ -98,9 +121,6 @@ fit <- function(
   } else {
     obj$catalogue_signatures <- input_catalogue
   }
-  #obj$reference_catalogue <- reference_catalogue
-  #obj$phi <- phi
-  #obj$delta <- delta
 
   # output
   #-------------------------------------:
