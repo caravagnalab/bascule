@@ -31,6 +31,17 @@ fit <- function(
     sigma=FALSE
     ) {
 
+  # quality check --------------------------------------------------------------
+  if (!identical(colnames(x), colnames(reference_catalogue))) {
+    reference_catalogue = reference_catalogue[names(x)]
+  }
+
+  if (!is.null(input_catalogue)) {
+    if (!identical(colnames(x), colnames(input_catalogue))) {
+      input_catalogue = input_catalogue[names(x)]
+    }
+  }
+
   counter <- 1
   black_list <- c()
   while (TRUE) {
@@ -56,7 +67,20 @@ fit <- function(
       phi = phi
     )
     remained_fixed <- a$remained_fixed                          # data.frame / NULL
-    black_list <- union(black_list, rownames(a$dropped_fixed))  # character vector
+
+    # TEST-----
+    print('a$dropped_fixed')
+    print(class(a$dropped_fixed))
+    print(a$dropped_fixed)
+    print('----------')
+    print('black_list')
+    print(class(black_list))
+    print(black_list)
+    # TEST-----
+
+    if (!is.null(a$dropped_fixed)) {
+      black_list <- union(black_list, rownames(a$dropped_fixed))  # character vector
+    }
 
     # detect denovo signatures which are similar to reference signatures -------
     b <- basilica:::filter.denovo(
@@ -109,7 +133,7 @@ fit <- function(
     }
 
     counter <- counter + 1
-    if (counter > 5) {
+    if (counter > 8) {
       cat('        limit reached! : 5\n')
       break
     }
@@ -122,7 +146,7 @@ fit <- function(
     obj$catalogue_signatures <- input_catalogue
   }
 
-  # output
+  # output ---> dtype: list
   #-------------------------------------:
   # exposure              --> data.frame
   # denovo_signatures     --> data.frame

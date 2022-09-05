@@ -1,116 +1,65 @@
+
 #' plot exposure matrix
 #'
 #' @description creates bar plot of relative exposure matrix, where x-axis are samples and y-axis are their relative contribution.
 #' @param x basilica object
 #'
-#' @return
+#' @return plot
 #' @export plot_exposure
 #'
 #' @examples
 plot_exposure <- function(x) {
-  alpha <- get_exposure(x, long = FALSE)
-  alpha$Sample <- rownames(alpha)
-  alpha_long <- tidyr::gather(alpha,
-                       key="Signature",
-                       value="Exposure",
-                       c(-Sample)
-  )
 
-  ggplot(data = alpha_long, aes(x=Sample, y=Exposure, fill=Signature)) +
-    geom_bar(stat = "identity") +
-    theme_minimal() +
-    ggtitle("Signatures Exposure in Samples") +
-    scale_y_continuous(labels=scales::percent)
+  alpha <- get_exposure(x, long = FALSE)
+
+  plt <- basilica:::.plot_exposure(x = alpha)
+
+  return(plt)
 }
 
+# ------------------------------------------------------------------------------
 
 #' plot signatures
 #'
 #' @description creates bar plot of inferred signature profiles, where x-axis are 96 substitution bases and y-axis are their relative contribution.
 #'
 #' @param x basilica object
-#' @param useRowNames using signature names from data.frame
-#' @param xlabels axis label
 #' @param denovoSignature if TRUE, plots inferred de-novo signatures, otherwise plots inferred catalogue signatures
 #'
-#' @return
+#' @return plot
 #' @export plot_signatures
-#'
-#' @import ggplot2
-#' @import data.table
-#'
 #' @examples
-plot_signatures <- function( x, useRowNames = TRUE, xlabels = FALSE, denovoSignature = TRUE ) {
+plot_signatures <- function(x, denovo = TRUE ) {
 
-  if (denovoSignature==TRUE) {
+  if (denovo==TRUE) {
     beta <- get_denovo_signatures(x)
   } else {
     beta <- get_catalogue_signatures(x)
   }
 
-  # set names of the signatures
-  if(!useRowNames) {
-    rownames(beta) <- paste0("Signature ", 1:nrow(beta))
-  }
+  plt <- basilica:::.plot_signatures(beta)
 
-  # separate context and alteration
-  x <- data.table::as.data.table(reshape2::melt(as.matrix(beta),varnames=c("signature","cat")))
-  x[, Context := paste0(substr(cat,1,1), ".", substr(cat, 7, 7)) ]
-  x[, alt := paste0(substr(cat,3,3),">",substr(cat,5,5)) ]
-
-  # make the ggplot2 object
-  glist <- list()
-  for(i in 1:nrow(beta)) {
-
-    plt <- ggplot(x[signature==rownames(beta)[i]]) +
-      geom_bar(aes(x=Context,y=value,fill=alt),stat="identity",position="identity") +
-      facet_wrap(~alt,nrow=1,scales="free_x") +
-      theme(axis.text.x=element_text(angle=90,hjust=1),panel.background=element_blank(),axis.line=element_line(colour="black")) +
-      ggtitle(rownames(beta)[i]) + theme(legend.position="none") + ylab("Frequency of mutations")
-
-    if(!xlabels) {
-      plt <- plt + theme(axis.text.x=element_blank(),axis.ticks.x=element_blank())
-    }
-
-    glist[[i]] <- plt
-
-  }
-
-  # make the final plot
-  gridExtra::grid.arrange(grobs=glist,ncol=ceiling(nrow(beta)/3))
-
+  return(plt)
 }
 
+# ------------------------------------------------------------------------------
 
-plot.cosine <- function(obj, reference_catalogue, limit) {
-  #reference <- obj$reference_catalogue
-  reference <- reference_catalogue
-  denovo <- obj$denovo_signatures
+plot_similarity <- function(denovo, reference, limit) {
 
-  cosine_matrix <- data.frame( matrix( nrow = nrow(reference), ncol = nrow(denovo) ) )
-  colnames(cosine_matrix) <- rownames(denovo)
-  rownames(cosine_matrix) <- rownames(reference)
+  cosine_matrix <- cosine.matrix(reference, denovo)
 
-  for (i in rownames(reference)) {
-    for (j in rownames(denovo)) {
-      c <- cosine.vector(as.numeric(reference[i, ]), as.numeric(denovo[j, ]))
-      cosine_matrix[i, j] <- c
-    }
-  }
   cosine_matrix <- cosine_matrix %>% dplyr::filter_all(dplyr::any_vars(. > limit))
-  cosine_matrix <- tibble::rownames_to_column(cosine_matrix, var="ref")
+  cosine_matrix <- tibble::rownames_to_column(cosine_matrix, var="reference")
+  cosine_long <- cosine_matrix %>% tidyr::pivot_longer(cols = -c(reference), names_to = 'denovo', values_to = 'cosine')
 
-  cos_long <- cosine_matrix %>% tidyr::pivot_longer(cols = -c(ref), names_to = 'denovo', values_to = 'cosine')
-
-  p <- ggplot(cos_long, aes(x=ref, y=cosine)) +
+  p <- ggplot(cosine_long, aes(x=reference, y=cosine)) +
     geom_point() +
-    #facet_wrap(~denovo, ncol = 1) +
     facet_grid(denovo ~ .) +
     theme(axis.text.x=element_text(angle=-90, vjust=0.5, hjust=0)) +
-    ggtitle("Similarity between Denovo and Catalogue Signatures") +
-    xlab("Catalogue Signatures") +
+    ggtitle("Denovo vs Reference (Similarity)") +
     ylab("Cosine Similarity") +
-    geom_hline(yintercept=c(limit), linetype='dashed', color='red')
+    geom_hline(yintercept=c(limit), linetype='dashed', color='red') +
+    theme(axis.title.x=element_blank())
 
   return(p)
 }

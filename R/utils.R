@@ -67,6 +67,12 @@ filter.fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
     contribution <- colSums(alpha0) / sum(alpha0)
     #print(contribution)
     dropped <- which(contribution < phi)
+    # TEST ------------------
+    print('======')
+    print('dropped')
+    print(dropped)
+    print('======')
+    # TEST ------------------
     #print(dropped)
     if (sum(dropped)==0) {
       remained_fixed <- beta_fixed
@@ -80,36 +86,6 @@ filter.fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
     warning("invalid fixed signatures (beta_fixed) !")
   }
   return(list(remained_fixed=remained_fixed, dropped_fixed=dropped_fixed))
-}
-
-#-------------------------------------------------------------------------------
-
-cosine.matrix <- function(a, b) {
-  # a and b are data.frame
-
-  df <- data.frame(matrix(0, nrow(a), nrow(b)))
-  rownames(df) <- rownames(a)
-  colnames(df) <- rownames(b)
-
-  for (i in 1:nrow(a)) {
-    denovo <- a[i, ]
-    for (j in 1:nrow(b)) {
-      ref <- b[j, ]
-
-      score <- cosine.vector(denovo, ref)
-      df[i,j] <- score
-    }
-  }
-
-  return(df)
-}
-
-#-------------------------------------------------------------------------------
-
-cosine.vector <- function(a, b) {
-  numerator <- sum(a * b)
-  denominator <- sqrt(sum(a^2)) * sqrt(sum(b^2))
-  return(numerator / denominator)
 }
 
 #-------------------------------------------------------------------------------
@@ -253,5 +229,14 @@ adjust.denovo.denovo <- function(alpha, denovo_signatures, limit=0.9) {
   }
   return(list(exposure=alpha, denovo_signatures=denovo_signatures))
 }
+
+
+#-------------------------------------------------------------------------------
+
+data.integrity.check <- function(a, b) {
+  b = b[names(a)]
+  print('hello world!')
+}
+
 
 

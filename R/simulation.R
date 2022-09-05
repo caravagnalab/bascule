@@ -10,7 +10,7 @@ split.reference <- function(reference_path, ratio, seed=NULL) {
   }
 
   # read csv file as data.frame
-  reference <- read.table(ref_path, sep = ",", row.names = 1, header = TRUE, check.names = FALSE)
+  reference <- read.table(reference_path, sep = ",", row.names = 1, header = TRUE, check.names = FALSE)
   num_ref <- round(ratio * nrow(reference))
 
   SBS1 <- reference['SBS1', ]   # save SBS1 (data.frame)
@@ -162,7 +162,9 @@ generate.input <- function(
 
   k_fixed <- nrow(beta_fixed)
 
-  if (is.numeric(complexity) & length(complexity)==2) {
+  if (is.null(complexity)) {
+    return(NULL)
+  } else if (is.numeric(complexity) & length(complexity)==2) {
     n_overlap <- complexity[1]
     n_extra <- complexity[2]
     if (n_overlap > k_fixed) {
