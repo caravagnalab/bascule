@@ -69,13 +69,11 @@ fit <- function(
     remained_fixed <- a$remained_fixed                          # data.frame / NULL
 
     # TEST-----
-    print('a$dropped_fixed')
-    print(class(a$dropped_fixed))
+    cat('class(a$dropped_fixed):', class(a$dropped_fixed), '\n')
+    cat('a$dropped_fixed:')
     print(a$dropped_fixed)
-    print('----------')
-    print('black_list')
-    print(class(black_list))
-    print(black_list)
+    cat('class(black_list):', class(black_list), '\n')
+    cat('black_list:', black_list, '\n')
     # TEST-----
 
     if (!is.null(a$dropped_fixed)) {

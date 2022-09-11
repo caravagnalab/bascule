@@ -40,7 +40,10 @@ pyfit <- function(
 }
 
 #-------------------------------------------------------------------------------
-
+# M ------------> data.frame
+# alpha --------> data.frame
+# beta_fixed ---> data.frame / NULL
+# phi ----------> numeric
 filter.fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
 
   if (!is.data.frame(M)) {
@@ -68,10 +71,10 @@ filter.fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
     #print(contribution)
     dropped <- which(contribution < phi)
     # TEST ------------------
-    print('======')
-    print('dropped')
-    print(dropped)
-    print('======')
+    #print('======')
+    #print('dropped')
+    #print(dropped)
+    #print('======')
     # TEST ------------------
     #print(dropped)
     if (sum(dropped)==0) {
@@ -80,12 +83,17 @@ filter.fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
       #print('nothing to drop')
     } else {
       remained_fixed <- beta_fixed[-c(dropped), ]
+      if (nrow(remained_fixed)==0) {
+        remained_fixed <- NULL
+      }
       dropped_fixed <- beta_fixed[c(dropped), ]
     }
   } else {
     warning("invalid fixed signatures (beta_fixed) !")
   }
   return(list(remained_fixed=remained_fixed, dropped_fixed=dropped_fixed))
+  # remained_fixed ----> data.frame / NULL
+  # dropped_fixed -----> data.frame / NULL
 }
 
 #-------------------------------------------------------------------------------
@@ -228,14 +236,6 @@ adjust.denovo.denovo <- function(alpha, denovo_signatures, limit=0.9) {
     }
   }
   return(list(exposure=alpha, denovo_signatures=denovo_signatures))
-}
-
-
-#-------------------------------------------------------------------------------
-
-data.integrity.check <- function(a, b) {
-  b = b[names(a)]
-  print('hello world!')
 }
 
 
