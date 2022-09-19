@@ -3,6 +3,10 @@
 
 cosine.vector <- function(a, b) {
 
+  if (!identical(colnames(a), colnames(b))) {
+    a = a[names(b)]
+  }
+
   numerator <- sum(a * b)
   denominator <- sqrt(sum(a^2)) * sqrt(sum(b^2))
   return(numerator / denominator)
