@@ -13,7 +13,10 @@ pyfit <- function(
 ) {
 
   py <- reticulate::import("pybasilica")
-  obj <- py$fit(x=x, k_list=k_list, lr=lr, n_steps=n_steps, groups=groups, beta_fixed=input_catalogue, lambda_rate=lambda_rate, sigma=sigma)
+  k_list <- reticulate::r_to_py(list(as.integer(k_list)))
+  obj <- py$fit(x=x, k_list=k_list, lr=lr, n_steps=n_steps, groups=groups, beta_fixed=input_catalogue)
+                # lambda_rate=lambda_rate,
+                # sigma=sigma)
 
 
   # save python object data in a list
