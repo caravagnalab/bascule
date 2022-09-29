@@ -410,8 +410,6 @@ run.data <- function(
     steps,
     phi,
     delta,
-    lambda_rate = NULL,
-    sigma = FALSE,
     input=TRUE
 ) {
 
@@ -432,9 +430,7 @@ run.data <- function(
     phi = phi,
     delta = delta,
     groups = NULL,
-    input_catalogue = input,
-    lambda_rate = lambda_rate,
-    sigma = sigma
+    input_catalogue = input
   )
 
   simulation.fit.obj <- tibble::add_column(

@@ -26,9 +26,7 @@ fit <- function(
     phi,
     delta,
     groups=NULL,
-    input_catalogue=NULL,
-    lambda_rate=NULL,
-    sigma=FALSE
+    input_catalogue=NULL
     ) {
 
   # quality check --------------------------------------------------------------
