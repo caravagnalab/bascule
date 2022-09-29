@@ -10,7 +10,7 @@ plot_exposure(x)
 \item{x}{basilica object}
 }
 \value{
-
+plot
 }
 \description{
 creates bar plot of relative exposure matrix, where x-axis are samples and y-axis are their relative contribution.

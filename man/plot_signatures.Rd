@@ -4,19 +4,15 @@
 \alias{plot_signatures}
 \title{plot signatures}
 \usage{
-plot_signatures(x, useRowNames = TRUE, xlabels = FALSE, denovoSignature = TRUE)
+plot_signatures(x, denovo = TRUE)
 }
 \arguments{
 \item{x}{basilica object}
 
-\item{useRowNames}{using signature names from data.frame}
-
-\item{xlabels}{axis label}
-
 \item{denovoSignature}{if TRUE, plots inferred de-novo signatures, otherwise plots inferred catalogue signatures}
 }
 \value{
-
+plot
 }
 \description{
 creates bar plot of inferred signature profiles, where x-axis are 96 substitution bases and y-axis are their relative contribution.

@@ -31,8 +31,9 @@ Imports:
     tidyr,
     reshape2,
     tibble,
-    dplyr, 
-    doParallel
+    dplyr,
+    doParallel,
+    cli
 RoxygenNote: 7.1.2
 URL: https://github.com/caravagnalab/basilica,
     https://caravagnalab.github.io/basilica/
