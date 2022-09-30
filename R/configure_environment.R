@@ -18,7 +18,7 @@ configure_environment = function(envname="basilica-env") {
   envname = check_conda_env(envname=envname)
 
   # check if the required python packages are installed in the environment
-  # check_python_deps(envname=envname)
+  check_python_deps(envname=envname)
 }
 
 

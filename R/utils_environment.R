@@ -100,7 +100,7 @@ have_conda = function() {
 
 
 create_conda_env = function(envname="basilica-env") {
-  reticulate::conda_create(envname=envname)
+  reticulate::conda_create(envname=envname, python_version="3.9")
 }
 
 
