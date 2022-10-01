@@ -22,9 +22,10 @@
 fit <- function(x,
                 reference_catalogue,
                 k,
+                cohort = "MyCohort",
                 lr = 0.05,
                 steps = 500,
-                phi,
+                phi = 0.05,
                 delta = 0.9,
                 groups = NULL,
                 input_catalogue = NULL,
@@ -33,6 +34,9 @@ fit <- function(x,
 {
   sig_col = function(x)
     crayon::blue(x)
+
+  fit = list()
+  class(fit) = 'basilica_obj'
 
   # cli::cli_h1("MUSICA - MUtational Signature Inference with a CAtalogue ")
   cli::cli_h1("Basilica - Bayesian signature learning with a catalogue")
@@ -78,9 +82,7 @@ fit <- function(x,
   }
   else
   {
-    cli::cli_alert_warning("    Input Catalogue Signatures (ICSs): none, detecting ICSs from data.")
-
-
+    cli::cli_alert_warning("    Input Catalogue Signatures (ICSs): none (no supervision).")
   }
 
   cli::cli_h2("Iterative Basilica inference algorithm")
@@ -90,11 +92,14 @@ fit <- function(x,
   counter <- 1
   black_list <- c()
 
-  BIC_trajectories = NULL
+  # Iterative objects
+  BIC_trajectories = ICS_trajectories = DNS_trajectories = NULL
 
   # repeat untill convergence
   repeat {
     cli::cli_h2("Basilica step {.field {counter}}")
+
+    ICS_trajectories = append(ICS_trajectories, list(input_catalogue))
 
     n_ICSs = ifelse(is.null(input_catalogue), 0, nrow(input_catalogue))
     cli::cli_h3("Bayesian NMF via SVI [{.field {steps}} steps, ICSs size {.field {n_ICSs}}]")
@@ -222,6 +227,8 @@ fit <- function(x,
     reduced_denovo <-
       b$reduced_denovo  # data.frame / NULL (remaining denovo signatures)
 
+    DNS_trajectories = append(DNS_trajectories, list(reduced_denovo))
+
     #TEST---------------------------------------------------------
     # cat("        fixed          :", rownames(input_catalogue), '\n')
     # cat("        remained fixed :", rownames(remained_fixed), '\n')
@@ -329,17 +336,58 @@ fit <- function(x,
                                     })
 
     paste0(
-      "BIC ",
+      "> BIC ",
       BIC_trajectories[1],
       " : ",
-      paste(BIC_trajectories_delta, collapse = " \u2192")
+      paste(BIC_trajectories_delta, collapse = " \u2192 ")
     ) %>% cat()
 
   }
 
 
+  # Store in the output obj all relevant information
+  fit$cohort = cohort
 
-  return(obj)
+  fit$n_samples = x %>% nrow()
+
+  cat_expo = obj$denovo_signatures %>% rownames()
+  cat_expo = setdiff(obj$exposure %>% colnames, cat_expo)
+  fit$n_catalogue = obj$exposure[, cat_expo] %>% ncol()
+
+  fit$n_denovo = ifelse(
+    obj$denovo_signatures %>% is.null,
+    0,
+    obj$denovo_signatures %>% nrow
+  )
+
+
+  fit$input = list(
+    counts = x,
+    reference_catalogue = reference_catalogue,
+    input_catalogue = ICS_trajectories[[1]]
+    )
+
+  fit$params = list(
+    k = k,
+    lr = lr,
+    steps = steps,
+    phi = phi,
+    delta = delta,
+    groups = groups,
+    lambda_rate = lambda_rate,
+    sigma = sigma
+  )
+
+  fit$iterations = list(
+    BIC = BIC_trajectories,
+    ICS = ICS_trajectories,
+    DNS = DNS_trajectories
+  )
+
+  fit$fit = obj
+
+
+  return(fit)
 }
 
 

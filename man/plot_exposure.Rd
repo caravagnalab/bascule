@@ -4,7 +4,7 @@
 \alias{plot_exposure}
 \title{plot exposure matrix}
 \usage{
-plot_exposure(x)
+plot_exposure(x, sort_by = NULL)
 }
 \arguments{
 \item{x}{basilica object}

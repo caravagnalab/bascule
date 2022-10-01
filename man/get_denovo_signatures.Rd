@@ -4,7 +4,7 @@
 \alias{get_denovo_signatures}
 \title{get de novo signatures}
 \usage{
-get_denovo_signatures(x)
+get_denovo_signatures(x, long = FALSE)
 }
 \arguments{
 \item{x}{basilica object}

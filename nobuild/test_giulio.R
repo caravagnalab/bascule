@@ -18,10 +18,10 @@ M_matrix = M %>% select(-sample, -organ, -cohort, -usedInCommonExtractionSBS,
 
 M_matrix = basilica::example_input
 
-M_fit = fit(
+x = fit(
     x = M_matrix,
     reference_catalogue = basilica::COSMIC_catalogue,
-    k = 3,
+    k = 7,
     lr = 0.01,
     steps = 1000,
     phi = 0.05,
@@ -31,3 +31,14 @@ M_fit = fit(
     lambda_rate=NULL,
     sigma=FALSE
 )
+
+# export(fit)
+# export(get_catalogue_signatures)
+# export(get_denovo_signatures)
+# export(get_exposure)
+# export(plot_exposure)
+# export(plot_signatures)
+
+plot_exposure(M_fit)
+plot_signatures
+

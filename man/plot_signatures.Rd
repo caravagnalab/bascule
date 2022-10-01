@@ -4,12 +4,10 @@
 \alias{plot_signatures}
 \title{plot signatures}
 \usage{
-plot_signatures(x, denovo = TRUE)
+plot_signatures(x, Type = c("De novo", "Catalogue"), highlight = 0.05)
 }
 \arguments{
 \item{x}{basilica object}
-
-\item{denovoSignature}{if TRUE, plots inferred de-novo signatures, otherwise plots inferred catalogue signatures}
 }
 \value{
 plot
