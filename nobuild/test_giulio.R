@@ -6,12 +6,17 @@ reticulate::py_list_packages('basilica-env')
 
 devtools::install()
 
-M = basilica::Degasperi_SBS_GEL_PCAWG_HW[['Myeloid']]
+Degasperi_SBS_GEL_PCAWG_HW = lapply(Degasperi_SBS_GEL_PCAWG_HW, function(x){
+  x %>% select(sample, organ, cohort, usedInCommonExtractionSBS, usedInCommonExtractionDBS, everything())
+})
+
+usethis::use_data(Degasperi_SBS_GEL_PCAWG_HW, overwrite = TRUE)
+
+M =  %>% [['Myeloid']]
 M_matrix = M %>% select(-sample, -organ, -cohort, -usedInCommonExtractionSBS,
                         -usedInCommonExtractionDBS)
 
-M_matrix = readr::read_csv("~/Downloads/data_sigphylo.csv")
-M_matrix = read.table("~/Downloads/data_sigphylo.csv", header = T, check.names = F, sep = ',')
+M_matrix = basilica::example_input
 
 M_fit = basilica::fit(
     x = M_matrix,

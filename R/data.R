@@ -35,3 +35,21 @@
 #' data(Degasperi_SBS_GEL_PCAWG_HW)
 #' print(Degasperi_SBS_GEL_PCAWG_HW)
 "Degasperi_SBS_GEL_PCAWG_HW"
+
+#' Example input SBS data (synthetic)
+#'
+#' @description
+#'
+#' Example input SBS data (synthetic)
+#'
+#' @docType data
+#'
+#' @usage data(example_input)
+#'
+#'
+#' @keywords datasets
+#'
+#' @examples
+#' data(example_input)
+#' print(example_input)
+"example_input"
