@@ -31,11 +31,11 @@ check_conda = function() {
 
 
 check_conda_env = function(envname="basilica-env") {
-  if (have_loaded_env()) {
-    envname = sapply(reticulate::conda_list()$name, grepl, reticulate::py_discover_config()$python) %>%
-      which() %>% names()
-    return(envname)
-  }
+  # if (have_loaded_env()) {
+  #   envname = sapply(reticulate::conda_list()$name, grepl, reticulate::py_discover_config()$python) %>%
+  #     which() %>% names()
+  #   return(envname)
+  # }
 
   if (!have_conda_env("basilica-env")) {
     cat("The environment 'basilica-env' is not present.\n")
