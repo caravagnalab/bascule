@@ -1,30 +1,7 @@
 
+#
 
 
-
-my_ggplot_theme = function ()
-{
-  ggplot2::theme_light(base_size = 10) +
-    ggplot2::theme(legend.position = "bottom",
-                   legend.key.size = ggplot2::unit(0.3, "cm"),
-                   panel.background = ggplot2::element_rect(fill = "white")
-                   )
-}
-
-
-get_signature_colors = function(x)
-{
-  dn = x$fit$denovo_signatures %>% rownames
-  sc = x$fit$catalogue_signatures %>% rownames
-
-  dn_c = ggsci::pal_nejm()(x$n_denovo)
-  names(dn_c) = dn
-
-  sc_c = ggsci::pal_simpsons()(x$n_catalogue)
-  names(sc_c) = sc
-
-  c(dn_c, sc_c)
-}
 
 
 # ------------------------------------------------------------------------------

@@ -71,6 +71,23 @@ filter.fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
     alpha0 <- theta %*% as.matrix(alpha)
     #print(alpha0)
     contribution <- colSums(alpha0) / sum(alpha0)
+
+    atb = alpha0 %>%
+      as_tibble() %>%
+      reshape2::melt(id = NULL) %>%
+      dplyr::rename(Signature = variable, TMB = value)
+
+    ctb = contribution %>%
+      as.list() %>%
+      as_tibble %>%
+      reshape2::melt(id = NULL) %>%
+      dplyr::rename(Signature = variable, proportion = value)
+
+    dplyr::full_join(atb, ctb, by ='Signature') %>%
+      dplyr::arrange(dplyr::desc(proportion)) %>%
+      print()
+
+
     #print(contribution)
     dropped <- which(contribution < phi)
     # TEST ------------------
@@ -89,6 +106,12 @@ filter.fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
       if (nrow(remained_fixed)==0) {
         remained_fixed <- NULL
       }
+
+      if(any(dropped > nrow(beta_fixed))) {
+        cli::boxx("AZAD this is a bug") %>% cat()
+        dropped = dropped[dropped < nrow(beta_fixed)]
+      }
+
       dropped_fixed <- beta_fixed[c(dropped), ]
     }
   } else {

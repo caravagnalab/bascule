@@ -39,6 +39,15 @@ x = fit(
 # export(plot_exposure)
 # export(plot_signatures)
 
-plot_exposure(M_fit)
-plot_signatures
+x$S9$X1 %>% length()
+Degasperi_catalogue = x$S21
+rownames(Degasperi_catalogue) = Degasperi_catalogue$mutationClass
+Degasperi_catalogue = Degasperi_catalogue[, -1]
+Degasperi_catalogue = Degasperi_catalogue %>% t
+Degasperi_catalogue = apply(Degasperi_catalogue, c(1,2), as.numeric)
 
+(basilica::COSMIC_catalogue %>% colnames) == (Degasperi_catalogue %>% colnames)
+
+Degasperi_catalogue = Degasperi_catalogue[, (basilica::COSMIC_catalogue %>% colnames)]
+
+usethis::use_data(Degasperi_catalogue)

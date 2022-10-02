@@ -26,7 +26,10 @@ plot_exposure <- function(x, sort_by = NULL) {
     levels = samples_order
   )
 
-  ggplot2::ggplot(
+  caption = paste0("Sorted by ", sort_by)
+  if(is.null(sort_by)) caption = "Sorted by sample"
+
+  plt = ggplot2::ggplot(
     data = alpha,
     ggplot2::aes(x=Sample, y=Exposure, fill=Signature)
   ) +
@@ -39,11 +42,7 @@ plot_exposure <- function(x, sort_by = NULL) {
     ) +
     ggplot2::labs(
       title = paste0(x$cohort, ' (n = ', x$n_samples, ')'),
-      caption = ifelse(
-        is.null(sort_by),
-        NULL,
-        paste0("Sorted by ", sort_by)
-      )
+      caption = caption
     ) +
     ggplot2::guides(
       fill = ggplot2::guide_legend(

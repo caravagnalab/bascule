@@ -11,11 +11,7 @@
 #' @examples
 plot_signatures <- function(x, Type = c("De novo", "Catalogue"), highlight = 0.05)
 {
-  sigs_dn = x %>% get_denovo_signatures(long = TRUE) %>% dplyr::mutate(Type = 'De novo')
-  sigs_ct = x %>% get_catalogue_signatures(long = TRUE) %>% dplyr::mutate(Type = 'Catalogue')
-
-  sigs = sigs_ct %>%
-    dplyr::bind_rows(sigs_dn) %>%
+  sigs = x %>% get_signatures(long = TRUE) %>%
     dplyr::filter(Type %in% !!Type)
 
   return(plot_signatures_sbs(x, sigs, highlight))

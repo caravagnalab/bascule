@@ -25,6 +25,7 @@ fit <- function(x,
                 cohort = "MyCohort",
                 lr = 0.05,
                 steps = 500,
+                max_iterations = 20,
                 phi = 0.05,
                 delta = 0.9,
                 groups = NULL,
@@ -280,7 +281,8 @@ fit <- function(x,
     }
 
     counter <- counter + 1
-    if (counter > 8) {
+    if (counter > max_iterations) {
+
       cli::cli_alert_danger("Converged forced after {.value {crayon::red(counter)}} iterations.")
 
       break

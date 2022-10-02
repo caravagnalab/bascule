@@ -54,7 +54,8 @@ get_catalogue_signatures <- function(x, long = FALSE) {
         Feature = Var2,
         Value = value
       ) %>%
-    dplyr::as_tibble()
+    dplyr::as_tibble()%>%
+    dplyr::mutate(Type = 'Catalogue')
 
   return(sigs)
 }
@@ -79,7 +80,47 @@ get_denovo_signatures <- function(x,  long = FALSE) {
       Feature = Var2,
       Value = value
     ) %>%
-    dplyr::as_tibble()
+    dplyr::as_tibble() %>%
+    dplyr::mutate(Type = 'De novo')
+
+  return(sigs)
+}
+
+
+#' get de novo and catalouge signatures
+#'
+#' @param x basilica object
+#'
+#' @return a data.frame where rows are inferred signatures (not included in reference catalogue) and columns are 96 substitution bases.
+#' @export get_denovo_signatures
+#'
+#' @examples
+get_signatures <- function(x,  long = FALSE) {
+  stopifnot(inherits(x, "basilica_obj"))
+
+  sigs_dn = x %>% get_denovo_signatures(long = !!long)
+  sigs_ct = x %>% get_catalogue_signatures(long = !!long)
+
+  sigs = sigs_ct %>%
+    dplyr::bind_rows(sigs_dn)
+
+  return(sigs)
+}
+
+get_reference_signatures <- function(x,  long = FALSE) {
+  stopifnot(inherits(x, "basilica_obj"))
+
+  sigs = x$input$reference_catalogue
+
+  if(long)
+    sigs = reshape2::melt(sigs %>% as.matrix()) %>%
+    dplyr::rename(
+      Signature = Var1,
+      Feature = Var2,
+      Value = value
+    ) %>%
+    dplyr::as_tibble() %>%
+    dplyr::mutate(Type = 'Reference')
 
   return(sigs)
 }

@@ -28,14 +28,16 @@ runs = easypar::run(
 
     if(!file.exists(output_fc))
     {
-      fit_COSMIC = basilica::fit(
+      fit_COSMIC = fit(
         x = input,
         reference_catalogue = basilica::COSMIC_catalogue,
-        k = 3,
+        cohort = cohort,
+        k = 5,
         lr = 0.01,
         steps = 1000,
-        phi = 0.025,
-        delta = 0.025,
+        max_iterations = 30,
+        phi = 0.01,
+        delta = 0.7,
         groups=NULL,
         input_catalogue=NULL,
         lambda_rate=NULL,
@@ -43,6 +45,44 @@ runs = easypar::run(
       )
 
       saveRDS(fit_COSMIC, file = output_fc)
+      ggsave(
+        filename = paste0(cohort, '/cosmic_signatures.pdf'),
+        fit_COSMIC %>% plot_signatures(),
+        width = 15,
+        height = fit_COSMIC$n_catalogue + fit_COSMIC$n_denovo
+      )
+
+      ggsave(
+        filename = paste0(cohort, '/cosmic_exposure.pdf'),
+        fit_COSMIC %>% plot_exposure(),
+        width = fit_COSMIC$n_samples * 0.1,
+        height = 6,
+        limitsize = FALSE
+      )
+
+      ggsave(
+        filename = paste0(cohort, '/cosmic_exposure.pdf'),
+        fit_COSMIC %>% plot_exposure(),
+        width = fit_COSMIC$n_samples * 0.1,
+        height = 6,
+        limitsize = FALSE
+      )
+
+      ggsave(
+        filename = paste0(cohort, '/cosmic_prevalence.pdf'),
+        fit_COSMIC %>% plot_cohort_prevalence(),
+        width = 8,
+        height = 6,
+        limitsize = FALSE
+      )
+
+      ggsave(
+        filename = paste0(cohort, '/cosmic_reference.pdf'),
+        fit_COSMIC %>% plot_similarity_reference(),
+        width = 20,
+        height = 20,
+        limitsize = FALSE
+      )
     }
     else
       {
@@ -51,14 +91,16 @@ runs = easypar::run(
 
     if(!file.exists(output_fd))
     {
-      fit_degasperi = basilica::fit(
+      fit_degasperi = fit(
         x = input,
         reference_catalogue = basilica::Degasperi_catalogue,
-        k = 3,
+        cohort = cohort,
+        k = 5,
         lr = 0.01,
         steps = 1000,
-        phi = 0.025,
-        delta = 0.025,
+        max_iterations = 30,
+        phi = 0.01,
+        delta = 0.7,
         groups=NULL,
         input_catalogue=NULL,
         lambda_rate=NULL,
@@ -66,6 +108,45 @@ runs = easypar::run(
       )
 
       saveRDS(fit_degasperi, file = output_fd)
+
+      ggsave(
+        filename = paste0(cohort, '/degasperi_signatures.pdf'),
+        fit_degasperi %>% plot_signatures(),
+        width = 15,
+        height = fit_COSMIC$n_catalogue + fit_COSMIC$n_denovo
+      )
+
+      ggsave(
+        filename = paste0(cohort, '/degasperi_exposure.pdf'),
+        fit_degasperi %>% plot_exposure(),
+        width = fit_COSMIC$n_samples * 0.1,
+        height = 6,
+        limitsize = FALSE
+      )
+
+      ggsave(
+        filename = paste0(cohort, '/degasperi_exposure.pdf'),
+        fit_degasperi %>% plot_exposure(),
+        width = fit_COSMIC$n_samples * 0.1,
+        height = 6,
+        limitsize = FALSE
+      )
+
+      ggsave(
+        filename = paste0(cohort, '/degasperi_prevalence.pdf'),
+        fit_degasperi %>% plot_cohort_prevalence(),
+        width = 8,
+        height = 6,
+        limitsize = FALSE
+      )
+
+      ggsave(
+        filename = paste0(cohort, '/degasperi_reference.pdf'),
+        fit_degasperi %>% plot_similarity_reference(),
+        width = 20,
+        height = 20,
+        limitsize = FALSE
+      )
     }
     else
     {

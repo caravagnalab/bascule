@@ -15,6 +15,23 @@
 #' print(COSMIC_catalogue)
 "COSMIC_catalogue"
 
+#' Degasperi catalogue (version XXXX)
+#'
+#' @description D......
+#'
+#' @docType data
+#'
+#' @usage data(Degasperi_catalogue)
+#'
+#' @format ....
+#'
+#' @keywords datasets
+#'
+#' @examples
+#' data(Degasperi_catalogue)
+#' print(Degasperi_catalogue)
+"Degasperi_catalogue"
+
 #' SBS data for PMID: 35949260
 #'
 #' @description
