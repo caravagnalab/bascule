@@ -116,11 +116,19 @@ fit <- function(x,
     blacklist_trajectories = append(blacklist_trajectories, list(black_list))
 
     n_ICSs = ifelse(is.null(input_catalogue), 0, nrow(input_catalogue))
-    cli::cli_h3("Bayesian NMF via SVI [{.field {steps}} steps, ICSs size {.field {n_ICSs}}]")
+    cli::cli_h3("Bayesian NMF via SVI [{.field {steps}} steps, ICSs {.field k = {n_ICSs}}]")
 
     TIME_it = as.POSIXct(Sys.time(), format = "%H:%M:%S")
 
     ################### Bayesian NMF
+    k_aux = k
+    if(0 %in% k & n_ICSs == 0) {
+      k = k[k != 0]
+      cli::cli_alert_info("ICSs {.field k = {n_ICSs}}, removing {.field k = {0}} for this run, using {.field k = {k}} .")
+
+      if(length(k) == 0) cli::cli_abort("Cannot proceed: ICSs {.field k = {n_ICSs}} and {.field k = {0}}.")
+    }
+
     obj <- pyfit(
       x = x,
       k_list = k,
@@ -132,15 +140,24 @@ fit <- function(x,
       sigma = sigma
     )
 
+    k = k_aux
+
     TIME_it = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"),
                        TIME_it, units = "mins") %>% round(2)
 
     loss = obj$losses[steps] %>% round(2)
     bic = obj$bic %>% round(2)
     BIC_trajectories = c(BIC_trajectories, bic)
+
+    best_k = obj$exposure %>% ncol()
+    fix_k = input_catalogue %>% ncol
+    if(fix_k %>% is.null) fix_k = 0
+
+    best_k = best_k - fix_k
+
     cli::cli_alert_success(
       paste0(
-        "NMF completed in {.field {TIME_it}} minutes [BIC {.field {bic}}, Loss {.field {loss}}]."
+        "NMF completed in {.field {TIME_it}} minutes [BIC {.field {bic}}, Loss {.field {loss}}, best DNSs {.field k = {best_k}} given ICSs {.field k = {n_ICSs}}]. "
       )
     )
 
