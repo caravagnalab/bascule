@@ -155,7 +155,7 @@ runs = easypar::run(
 
     return(0)
   },
-  PARAMS = lapply(list, ttypes),
+  PARAMS = lapply(ttypes, list),
   parallel = FALSE,
   filter_errors = FALSE
 )
