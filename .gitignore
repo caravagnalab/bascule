@@ -5,3 +5,5 @@
 docs
 R/run.R
 R/test.R
+*.rds
+*.pdf

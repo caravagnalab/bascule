@@ -83,10 +83,32 @@ filter.fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
       reshape2::melt(id = NULL) %>%
       dplyr::rename(Signature = variable, proportion = value)
 
-    dplyr::full_join(atb, ctb, by ='Signature') %>%
+    predicate_collapsed = dplyr::full_join(atb, ctb, by ='Signature') %>%
       dplyr::arrange(dplyr::desc(proportion)) %>%
-      print()
+      mutate(Signature = ifelse(proportion < phi, crayon::red(Signature), Signature))
 
+    predicate_collapsed$TMB = paste0(
+      "TMB = ",
+      predicate_collapsed$TMB %>% round(0)
+    )
+
+    predicate_collapsed$proportion = paste0(
+      "\u03c0 = ",
+      predicate_collapsed$proportion %>% round(3)
+    )
+
+    predicate_collapsed$Signature = sprintf("%20s", predicate_collapsed$Signature)
+    predicate_collapsed$TMB = sprintf("%20s", predicate_collapsed$TMB)
+    predicate_collapsed$proportion = sprintf("%20s", predicate_collapsed$proportion)
+
+    predicate_collapsed = apply(predicate_collapsed, 1, function(x) paste(x, collapse = ' '))
+
+    cli::boxx(
+      predicate_collapsed,
+      header = "TMB filter",
+      float = 'center',
+      footer = paste0("\u03c0 > ", phi)) %>% cat()
+    cat('\n')
 
     #print(contribution)
     dropped <- which(contribution < phi)
@@ -121,6 +143,51 @@ filter.fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
   # remained_fixed ----> data.frame / NULL
   # dropped_fixed -----> data.frame / NULL
 }
+
+# Checks if a signature has at least one patient where it's exposure exceeds phi
+  filter.fixed_minfreq <- function(alpha, beta_fixed, phi = 0.15)
+{
+  if(is.null(beta_fixed))
+    return(list(remained_fixed = NULL, dropped_fixed = NULL))
+
+  if(!is.null(alpha)){
+
+    alpha_cat = alpha[, rownames(beta_fixed)]
+    predicate = apply(alpha_cat, 2, function(x) sum(x > phi))
+
+    stays = colnames(alpha_cat)[predicate > 0]
+    goes = colnames(alpha_cat)[predicate == 0]
+
+    if(length(stays) == 0) remained_fixed = NULL
+    else remained_fixed = beta_fixed[stays, ]
+
+    if(length(goes) == 0) dropped_fixed = NULL
+    else dropped_fixed = beta_fixed[goes, ]
+
+    predicate_collapsed = predicate %>% as_tibble()
+    predicate_collapsed$Signature = names(predicate)
+
+    predicate_collapsed = predicate_collapsed %>%
+      group_by(value) %>%
+      mutate(Signature = paste(Signature, collapse = ', ')) %>%
+      distinct() %>%
+      arrange(value) %>%
+      mutate(Signature = ifelse(value == 0, crayon::red(Signature), Signature))
+
+    predicate_collapsed = paste('n =', predicate_collapsed$value, '[', predicate_collapsed$Signature, ']')
+
+    cli::boxx(
+      predicate_collapsed,
+      header = "Frequency filter",
+      float = 'center',
+      footer = paste0("\u03C6 > ", phi, " in n samples"))  %>% cat()
+
+    cat('\n')
+
+    return(list(remained_fixed = remained_fixed, dropped_fixed = dropped_fixed))
+  }
+}
+
 
 #-------------------------------------------------------------------------------
 

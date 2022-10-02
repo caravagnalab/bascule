@@ -11,6 +11,8 @@ fit(
   cohort = "MyCohort",
   lr = 0.05,
   steps = 500,
+  max_iterations = 20,
+  blacklist = c("freq"),
   phi = 0.05,
   delta = 0.9,
   groups = NULL,
@@ -37,6 +39,8 @@ fit(
 \item{groups}{vector of discrete labels with one entry per sample, it defines the groups that will be considered by basilica}
 
 \item{input_catalogue}{input signature profiles, NULL by default}
+
+\item{sigma}{}
 }
 \value{
 inferred exposure matrix, inferred signatures from reference catalogue and inferred de novo (not from reference catalogue) signatures

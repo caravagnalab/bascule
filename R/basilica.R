@@ -14,6 +14,11 @@
 #' @param delta threshold to consider inferred signature as COSMIC signature
 #' @param groups vector of discrete labels with one entry per sample, it defines the groups that will be considered by basilica
 #' @param input_catalogue input signature profiles, NULL by default
+#' @param cohort
+#' @param max_iterations
+#' @param blacklist
+#' @param lambda_rate
+#' @param sigma
 #'
 #' @return inferred exposure matrix, inferred signatures from reference catalogue and inferred de novo (not from reference catalogue) signatures
 #' @export fit
@@ -26,6 +31,7 @@ fit <- function(x,
                 lr = 0.05,
                 steps = 500,
                 max_iterations = 20,
+                blacklist = c("freq"),
                 phi = 0.05,
                 delta = 0.9,
                 groups = NULL,
@@ -34,7 +40,9 @@ fit <- function(x,
                 sigma = FALSE)
 {
   sig_col = function(x)
+  {
     crayon::blue(x)
+  }
 
   fit = list()
   class(fit) = 'basilica_obj'
@@ -55,7 +63,8 @@ fit <- function(x,
     groups = NULL,
     input_catalogue = input_catalogue,
     lambda_rate = lambda_rate,
-    sigma = sigma
+    sigma = sigma,
+    blacklist = blacklist
   )
 
   x = sanitized_inputs$x
@@ -66,6 +75,8 @@ fit <- function(x,
 
   cli::cli_alert("                       Input samples : {.field n = {nrow(x)}}")
   cli::cli_alert("                     Output clusters : {.field k = {k}}.")
+  cli::cli_alert("                        Blacklist by : {.field {blacklist}}.")
+  cli::cli_alert("                  Maximum iterations : {.field {max_iterations}}.")
 
   # Report messages for the reference
   cli::cli_alert(
@@ -94,13 +105,15 @@ fit <- function(x,
   black_list <- c()
 
   # Iterative objects
-  BIC_trajectories = ICS_trajectories = DNS_trajectories = NULL
+  BIC_trajectories = ICS_trajectories = DNS_trajectories =
+    blacklist_trajectories = NULL
 
   # repeat untill convergence
   repeat {
     cli::cli_h2("Basilica step {.field {counter}}")
 
     ICS_trajectories = append(ICS_trajectories, list(input_catalogue))
+    blacklist_trajectories = append(blacklist_trajectories, list(black_list))
 
     n_ICSs = ifelse(is.null(input_catalogue), 0, nrow(input_catalogue))
     cli::cli_h3("Bayesian NMF via SVI [{.field {steps}} steps, ICSs size {.field {n_ICSs}}]")
@@ -140,12 +153,24 @@ fit <- function(x,
     }
 
     # drop non-significant fixed signatures ------------------------------------
-    a <- filter.fixed(
-      M = x,
-      alpha = obj$exposure,
-      beta_fixed = input_catalogue,
-      phi = phi
-    )
+    if(blacklist == "TMB")
+    {
+      a <- filter.fixed(
+        M = x,
+        alpha = obj$exposure,
+        beta_fixed = input_catalogue,
+        phi = phi
+      )
+    }
+
+    if(blacklist == "freq")
+    {
+      a = filter.fixed_minfreq(
+        alpha = obj$exposure,
+        beta_fixed = input_catalogue,
+        phi = phi
+      )
+    }
 
     remained_fixed <-
       a$remained_fixed                          # data.frame / NULL
@@ -263,6 +288,7 @@ fit <- function(x,
     if (nrow(dplyr::setdiff(input_catalogue, remained_fixed)) == 0 &
         nrow(new_fixed) == 0)
     {
+      cat('\n')
       cli::cli_alert_success("Converged - ICSs is stable and all DNSs are genuine.")
 
       break
@@ -283,6 +309,7 @@ fit <- function(x,
     counter <- counter + 1
     if (counter > max_iterations) {
 
+      cat('\n')
       cli::cli_alert_danger("Converged forced after {.value {crayon::red(counter)}} iterations.")
 
       break
@@ -310,7 +337,7 @@ fit <- function(x,
                   TIME, units = "mins")
   TIME = TIME %>% round(2)
 
-  cli::cli_h3("Basilica completed in {.field {TIME}} minutes")
+  cli::cli_h3("Basilica completed in {.field {TIME}} minutes and {.field {counter}} iterations.")
 
   if (length(BIC_trajectories) > 1)
   {
@@ -383,7 +410,8 @@ fit <- function(x,
   fit$iterations = list(
     BIC = BIC_trajectories,
     ICS = ICS_trajectories,
-    DNS = DNS_trajectories
+    DNS = DNS_trajectories,
+    blacklist = blacklist_trajectories
   )
 
   fit$fit = obj
@@ -403,7 +431,8 @@ sanitize_inputs = function(x,
                            groups = NULL,
                            input_catalogue = NULL,
                            lambda_rate = NULL,
-                           sigma = FALSE)
+                           sigma = FALSE,
+                           blacklist)
 {
   # Input counts
   if (!is.data.frame(x))
@@ -489,6 +518,9 @@ sanitize_inputs = function(x,
   #   input_catalogue = NULL,
   #   lambda_rate = NULL,
   #   sigma = FALSE
+  # blacklist
+  # max_iterations (to be added yet...)
+
 
   return(
     list(

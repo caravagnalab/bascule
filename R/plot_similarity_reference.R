@@ -32,6 +32,81 @@ plot_similarity_reference <- function(x, similarity_cutoff = 0.4) {
   numbers = cosine_matrix %>% round(2)
   numbers[numbers < similarity_cutoff] = ''
 
+  # Blacklist
+  if(x$iterations$blacklist %>% sapply(length) %>% sum() > 0)
+  {
+    BList = x$iterations$blacklist %>%
+      seq_along() %>%
+      lapply(function(i){
+        x$iterations$blacklist[[i]] %>%
+          as.data.frame() %>%
+          mutate(iteration = i)
+      }) %>%
+      Reduce(f = bind_rows)
+
+    colnames(BList)[2] = "Signature"
+
+    BList = BList %>%
+      group_by(Signature) %>%
+      arrange(iteration) %>%
+      filter(row_number() == 1) %>%
+      as.data.frame()
+
+    rownames(BList) = BList$Signature
+    BList = BList[, -2, drop = FALSE]
+    colnames(BList) = 'blacklist'
+
+    color_BList = colorRampPalette(c("gray", "black"))
+    color_BList = color_BList(BList$blacklist %>% unique %>% length())
+    names(color_BList) = BList$blacklist %>% unique %>% sort
+  }
+  else
+  {
+    BList = color_BList = NULL
+  }
+
+  # Entry list -- exists
+  EList = x$iterations$ICS %>%
+    seq_along() %>%
+    lapply(function(i){
+      x$iterations$ICS[[i]] %>%
+        rownames() %>%
+        as.data.frame() %>%
+        mutate(iteration = i)
+    }) %>%
+    Reduce(f = bind_rows)
+
+  colnames(EList)[2] = "Signature"
+
+  EList = EList %>%
+    group_by(Signature) %>%
+    arrange(iteration) %>%
+    filter(row_number() == 1) %>%
+    as.data.frame()
+
+  rownames(EList) = EList$Signature
+  EList = EList[, -2, drop = FALSE]
+  colnames(EList) = 'detection'
+
+  if(
+    RColorBrewer::brewer.pal.info["Greens", ]$maxcolors >=
+    EList$detection %>% unique %>% length()
+    )
+  {
+    color_EList = RColorBrewer::brewer.pal(
+      EList$detection %>% unique %>% length(),
+      "Greens"
+    )
+    names(color_EList) = EList$detection %>% unique %>% sort
+  }
+  else{
+    tmp_g = RColorBrewer::brewer.pal(3, "Greens")
+
+    color_EList = colorRampPalette(c(tmp_g[1], tmp_g[3]))
+    color_EList = color_EList(EList$detection %>% unique %>% length())
+    names(color_EList) = EList$detection %>% unique %>% sort
+  }
+
   # The world is a better place now that I can pheatmap -> ggplot
   ggp = pheatmap::pheatmap(
     mat = cosine_matrix,
@@ -40,6 +115,9 @@ plot_similarity_reference <- function(x, similarity_cutoff = 0.4) {
     border_color = 'white',
     cellwidth = 25,
     cellheight = 15,
+    annotation_row = BList,
+    annotation_col = EList,
+    annotation_colors = list(blacklist = color_BList, detection = color_EList),
     display_numbers = numbers
   ) %>% ggplotify::as.ggplot()
 
@@ -120,3 +198,4 @@ plot_similarity_reference <- function(x, similarity_cutoff = 0.4) {
 
   return(ggp)
 }
+

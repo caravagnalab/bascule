@@ -1,4 +1,5 @@
 library(dplyr)
+library(ggplot2)
 
 ttypes = basilica::Degasperi_SBS_GEL_PCAWG_HW %>% names
 
@@ -36,7 +37,8 @@ runs = easypar::run(
         lr = 0.01,
         steps = 1000,
         max_iterations = 30,
-        phi = 0.01,
+        phi = 0.015,
+        blacklist = 'freq',
         delta = 0.7,
         groups=NULL,
         input_catalogue=NULL,
@@ -45,6 +47,7 @@ runs = easypar::run(
       )
 
       saveRDS(fit_COSMIC, file = output_fc)
+
       ggsave(
         filename = paste0(cohort, '/cosmic_signatures.pdf'),
         fit_COSMIC %>% plot_signatures(),
@@ -99,7 +102,8 @@ runs = easypar::run(
         lr = 0.01,
         steps = 1000,
         max_iterations = 30,
-        phi = 0.01,
+        phi = 0.15,
+        blacklist = 'freq',
         delta = 0.7,
         groups=NULL,
         input_catalogue=NULL,
@@ -135,7 +139,7 @@ runs = easypar::run(
       ggsave(
         filename = paste0(cohort, '/degasperi_prevalence.pdf'),
         fit_degasperi %>% plot_cohort_prevalence(),
-        width = 8,
+        width = 11,
         height = 6,
         limitsize = FALSE
       )
@@ -144,7 +148,7 @@ runs = easypar::run(
         filename = paste0(cohort, '/degasperi_reference.pdf'),
         fit_degasperi %>% plot_similarity_reference(),
         width = 20,
-        height = 20,
+        height = 30,
         limitsize = FALSE
       )
     }
@@ -152,6 +156,15 @@ runs = easypar::run(
     {
       cli::boxx(paste(output_fd, " -- CACHED!"), col = 'white', background_col = 'red') %>% cat
     }
+
+    fit_COSMIC = readRDS(file = output_fc)
+    fit_degasperi = readRDS(file = output_fd)
+
+    comparisons = plot_compare_fits(fit_COSMIC, fit_degasperi)
+
+    pdf(paste0(cohort, '/comparison.pdf'), width = 20, height = 10)
+    lapply(comparisons, print)
+    dev.off()
 
     return(0)
   },
