@@ -9,7 +9,9 @@ pyfit <- function(
     groups=NULL,
     input_catalogue=NULL,
     lambda_rate=NULL,
-    sigma=FALSE
+    sigma=FALSE,
+    CUDA = FALSE,
+    compile = TRUE
 ) {
 
   py <- reticulate::import("pybasilica")
@@ -20,7 +22,7 @@ pyfit <- function(
     k_list <- reticulate::r_to_py(list(as.integer(k_list)))
 
 
-  obj <- py$fit(x=x, k_list=k_list, lr=lr, n_steps=n_steps, groups=groups, beta_fixed=input_catalogue)
+  obj <- py$fit(x=x, k_list=k_list, lr=lr, n_steps=n_steps, groups=groups, beta_fixed=input_catalogue, CUDA = CUDA, compile_model = compile)
                 # lambda_rate=lambda_rate,
                 # sigma=sigma)
 

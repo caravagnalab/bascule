@@ -37,7 +37,9 @@ fit <- function(x,
                 groups = NULL,
                 input_catalogue = NULL,
                 lambda_rate = NULL,
-                sigma = FALSE)
+                sigma = FALSE,
+                CUDA = FALSE, 
+                compile = TRUE)
 {
   sig_col = function(x)
   {
@@ -137,7 +139,9 @@ fit <- function(x,
       groups = groups,
       input_catalogue = input_catalogue,
       lambda_rate = lambda_rate,
-      sigma = sigma
+      sigma = sigma,
+      CUDA = CUDA,
+      compile = compile
     )
 
     k = k_aux
