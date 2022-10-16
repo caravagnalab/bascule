@@ -12,6 +12,7 @@
 #' @param steps number of gradient steps
 #' @param phi threshold to discard the signature based on its value in exposure matrix
 #' @param delta threshold to consider inferred signature as COSMIC signature
+#' @param filt_pi threshold for COSMIC signature weight to be included as basis of the denovo signatures
 #' @param groups vector of discrete labels with one entry per sample, it defines the groups that will be considered by basilica
 #' @param input_catalogue input signature profiles, NULL by default
 #' @param cohort
@@ -28,12 +29,13 @@ fit <- function(x,
                 reference_catalogue,
                 k,
                 cohort = "MyCohort",
-                lr = 0.05,
+                lr = 0.01,
                 steps = 500,
                 max_iterations = 20,
                 blacklist = c("freq"),
                 phi = 0.05,
                 delta = 0.9,
+                filt_pi =0.1, 
                 groups = NULL,
                 input_catalogue = NULL,
                 lambda_rate = NULL,
@@ -248,12 +250,13 @@ fit <- function(x,
     )
 
     # detect denovo signatures which are similar to reference signatures -------
-    b <- filter.denovo(
+    b <- filter.denovo.QP(
       reference_catalogue = reference_catalogue,
       beta_fixed = input_catalogue,
       beta_denovo = obj$denovo_signatures,
       black_list = black_list,
-      delta = delta
+      delta = delta,
+      filt_pi = filt_pi
     )
 
     new_fixed <-

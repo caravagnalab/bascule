@@ -339,5 +339,112 @@ adjust.denovo.denovo <- function(alpha, denovo_signatures, limit=0.9) {
   return(list(exposure=alpha, denovo_signatures=denovo_signatures))
 }
 
+# filter based on linear projection with constraints
 
 
+#' @import dplyr
+filter.denovo.QP <- function(reference_catalogue, beta_fixed, beta_denovo=NULL, black_list=NULL, delta=0.9, filt_pi = 0.05) {
+  
+  if (!is.data.frame(reference_catalogue)) {
+    warning("Invalid reference catalogue!")
+  }
+  if (!is.numeric(delta)) {
+    warning("Invalid delta argument!")
+  }
+  
+  # (Reference - Beta Fixed) ----------------------
+  if (is.data.frame(beta_fixed)) {
+    reference <- dplyr::setdiff(reference_catalogue, beta_fixed)
+  } else if (is.null(beta_fixed)) {
+    reference <- reference_catalogue
+  } else {
+    warning('invalid fixed signatures (beta_fixed) !')
+  }
+  
+  # BETA DENOVO ---------------------------------
+  if (is.null(beta_denovo)) {
+    return(list(new_fixed=NULL, reduced_denovo=NULL))
+  } else if (is.data.frame(beta_denovo)) {
+    
+    
+    ### names of catalogue signatures to include + names de novo to remove
+    res_optimization <- solve.quadratic.optimization(beta_denovo, reference, delta=delta, filt_pi = filt_pi)
+    match_list <- res_optimization$catalogue_to_include
+    
+  } else {
+    warning("Invalid beta denovo!")
+  }
+  
+  match_list <- setdiff(match_list, black_list)
+  if (length(match_list) == 0) {
+    #col_names <- colnames(reference_catalogue)
+    #df = data.frame(matrix(nrow=0, ncol = length(col_names)))
+    #colnames(df) = col_names
+    return(list(new_fixed=NULL, reduced_denovo=beta_denovo))
+  } else {
+    if (is.null(res_optimization$denovo_to_include)) {
+      return(list(new_fixed=reference[match_list, ], reduced_denovo=NULL))
+    } else {
+      reduced_denovo <- beta_denovo[res_optimization$denovo_to_include, ]
+      return(list(new_fixed=reference[match_list, ], reduced_denovo=reduced_denovo))
+    }
+  }
+}
+
+
+
+solve.quadratic.optimization <- function(a,b, filt_pi = 0.05, delta = 0.9){
+  # a and b are data.frame
+  
+  df <- data.frame(matrix(0, nrow(a), nrow(b)))
+  rownames(df) <- rownames(a)
+  colnames(df) <- rownames(b)
+  
+  cmp = nrow(a) 
+  pb <- progress::progress_bar$new(
+    format = paste0("  Quadratic programming solver (n = ", cmp, ") [:bar] :percent eta: :eta"),
+    total = cmp,
+    clear = FALSE,
+    width= 90
+  )
+  
+  b_m <- as.matrix(b) %>% t
+  Rinv <- solve(chol(t(b_m) %*% b_m))
+  
+  res <- lapply(1:nrow(a),FUN = function(i) {
+    
+    optim_res <- solve.quadratic.optimization.aux(as.matrix(a)[i,] %>% t(),b_m,Rinv, filt_pi = filt_pi, delta = delta, denovo_name = rownames(a)[i])
+    pb$tick()
+    return(optim_res)
+    })
+  
+  catalogue_to_include <- lapply(res, function(x) x[[1]]) %>% do.call(c,.) %>% unique()
+  denovo_to_include <- lapply(res, function(x) x[[2]]) %>% do.call(c,.)
+  
+  
+  return(list(catalogue_to_include = catalogue_to_include, denovo_to_include = denovo_to_include) )
+}
+
+solve.quadratic.optimization.aux <- function(v,Z, Rinv,denovo_name, filt_pi = 0.05, delta = 0.9) {
+  
+  d <- v %*% Z  
+  
+  b <- c(1,rep(0,length(d)))
+  
+  C <- cbind(rep(1,length(d)), diag(length(d)))
+  
+  
+  pis <- quadprog::solve.QP(Dmat = Rinv, factorized = TRUE, dvec = d, Amat = C, bvec = b, meq = 1)$solution
+  pis[pis < filt_pi] <- 0 
+  
+  reconstructed_vector <- Z %*% pis
+  
+  cos_sim <- cosine.vector(matrix(v),reconstructed_vector)
+  
+  if(cos_sim > delta){
+    return(list(colnames(Z)[pis > 0], NULL) )
+  } else {
+    return(list(NULL,denovo_name))
+  }
+  
+}
