@@ -6,27 +6,32 @@
 \usage{
 fit(
   x,
-  reference_catalogue,
   k,
+  reference_catalogue = basilica::COSMIC_catalogue,
+  input_catalogue = basilica::COSMIC_catalogue["SBS1", ],
   cohort = "MyCohort",
-  lr = 0.05,
+  lr = 0.01,
   steps = 500,
   max_iterations = 20,
   blacklist = c("freq"),
   phi = 0.05,
   delta = 0.9,
+  filt_pi = 0.1,
   groups = NULL,
-  input_catalogue = NULL,
   lambda_rate = NULL,
-  sigma = FALSE
+  sigma = FALSE,
+  CUDA = FALSE,
+  compile = TRUE
 )
 }
 \arguments{
 \item{x}{input mutational counts data (data.frame; rows as samples and columns as 96 mutational categories)}
 
+\item{k}{vector of possible number of de novo signatures to infer}
+
 \item{reference_catalogue}{a catalog of reference signatures that basilica will use to compare input and de novo signatures (COSMIC catalogue by default)}
 
-\item{k}{vector of possible number of de novo signatures to infer}
+\item{input_catalogue}{input signature profiles, NULL by default}
 
 \item{lr}{stochastic variational inference learning rate}
 
@@ -36,9 +41,9 @@ fit(
 
 \item{delta}{threshold to consider inferred signature as COSMIC signature}
 
-\item{groups}{vector of discrete labels with one entry per sample, it defines the groups that will be considered by basilica}
+\item{filt_pi}{threshold for COSMIC signature weight to be included as basis of the denovo signatures}
 
-\item{input_catalogue}{input signature profiles, NULL by default}
+\item{groups}{vector of discrete labels with one entry per sample, it defines the groups that will be considered by basilica}
 
 \item{sigma}{}
 }

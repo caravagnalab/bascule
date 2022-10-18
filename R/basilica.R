@@ -26,8 +26,9 @@
 #'
 #' @examples
 fit <- function(x,
-                reference_catalogue,
                 k,
+                reference_catalogue = basilica::COSMIC_catalogue,
+                input_catalogue = basilica::COSMIC_catalogue["SBS1", ],
                 cohort = "MyCohort",
                 lr = 0.01,
                 steps = 500,
@@ -35,12 +36,11 @@ fit <- function(x,
                 blacklist = c("freq"),
                 phi = 0.05,
                 delta = 0.9,
-                filt_pi =0.1, 
+                filt_pi =0.1,
                 groups = NULL,
-                input_catalogue = NULL,
                 lambda_rate = NULL,
                 sigma = FALSE,
-                CUDA = FALSE, 
+                CUDA = FALSE,
                 compile = TRUE)
 {
   sig_col = function(x)
@@ -192,6 +192,14 @@ fit <- function(x,
         alpha = obj$exposure,
         beta_fixed = input_catalogue,
         phi = phi
+      )
+    }
+
+    if(is.null(blacklist))
+    {
+      a = filter.fixed_nofilter( # fake function
+        alpha = obj$exposure,
+        beta_fixed = input_catalogue
       )
     }
 
@@ -505,7 +513,7 @@ sanitize_inputs = function(x,
       cli::cli_abort("The input catalogue has no rownames (signature names)!")
 
     # Ref inluded in input
-    if (all(rownames(input_catalogue) %in% rownames(reference_catalogue)))
+    if (!all(rownames(input_catalogue) %in% rownames(reference_catalogue)))
       cli::cli_abort("The input catalogue has signatures that are not in there reference!")
 
     # What is there

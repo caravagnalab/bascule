@@ -32,6 +32,7 @@ runs = easypar::run(
       fit_COSMIC = fit(
         x = input,
         reference_catalogue = basilica::COSMIC_catalogue,
+        input_catalogue = basilica::COSMIC_catalogue["SBS1", ],
         cohort = cohort,
         k = 1:5,
         lr = 0.01,
@@ -41,9 +42,10 @@ runs = easypar::run(
         blacklist = 'freq',
         delta = 0.7,
         groups=NULL,
-        input_catalogue=NULL,
         lambda_rate=NULL,
-        sigma=FALSE
+        sigma=FALSE,
+        CUDA = FALSE,
+        compile = TRUE
       )
 
       saveRDS(fit_COSMIC, file = output_fc)
