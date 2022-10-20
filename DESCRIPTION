@@ -38,7 +38,8 @@ Imports:
     ggtext,
     pheatmap,
     ggplotify,
-    scales
+    scales,
+    quadprog
 RoxygenNote: 7.1.2
 URL: https://github.com/caravagnalab/basilica,
     https://caravagnalab.github.io/basilica/
