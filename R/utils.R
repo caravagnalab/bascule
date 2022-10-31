@@ -220,7 +220,9 @@ filter.fixed_nofilter <- function(alpha, beta_fixed)
     return(list(remained_fixed = NULL, dropped_fixed = NULL))
 
   if (!is.null(alpha))
-    return(list(remained_fixed = alpha[, rownames(beta_fixed)], dropped_fixed = NULL))
+    return(list(remained_fixed = 
+    beta_fixed[colnames(alpha)[colnames(alpha) %in% rownames(beta_fixed)],],
+                dropped_fixed = NULL))
 
 }
 
