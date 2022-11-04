@@ -178,6 +178,7 @@ fit <- function(x,
       cli::cli_alert_danger("No ICSs in this step were used.")
     }
 
+if(!is.null(blacklist)){
     # drop non-significant fixed signatures ------------------------------------
     if(!is.null(blacklist) && blacklist == "TMB")
     {
@@ -197,14 +198,12 @@ fit <- function(x,
         phi = phi
       )
     }
-
-    if(is.null(blacklist))
-    {
+}else{
       a = filter.fixed_nofilter( # fake function
         alpha = obj$exposure,
         beta_fixed = input_catalogue
       )
-    }
+  }
 
     remained_fixed <-
       a$remained_fixed                          # data.frame / NULL
