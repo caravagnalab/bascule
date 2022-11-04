@@ -15,6 +15,7 @@
 #' @param filt_pi threshold for COSMIC signature weight to be included as basis of the denovo signatures
 #' @param groups vector of discrete labels with one entry per sample, it defines the groups that will be considered by basilica
 #' @param input_catalogue input signature profiles, NULL by default
+#' @param enforce_sparsity use Laplace prior over exposure weights (bayesian LASSO)
 #' @param cohort
 #' @param max_iterations
 #' @param blacklist
@@ -41,7 +42,8 @@ fit <- function(x,
                 lambda_rate = NULL,
                 sigma = FALSE,
                 CUDA = FALSE,
-                compile = TRUE)
+                compile = TRUE,
+                enforce_sparsity = FALSE)
 {
   sig_col = function(x)
   {
@@ -143,7 +145,8 @@ fit <- function(x,
       lambda_rate = lambda_rate,
       sigma = sigma,
       CUDA = CUDA,
-      compile = compile
+      compile = compile,
+      enforce_sparsity = enforce_sparsity
     )
 
     k = k_aux
@@ -176,7 +179,7 @@ fit <- function(x,
     }
 
     # drop non-significant fixed signatures ------------------------------------
-    if(blacklist == "TMB")
+    if(!is.null(blacklist) && blacklist == "TMB")
     {
       a <- filter.fixed(
         M = x,
@@ -186,7 +189,7 @@ fit <- function(x,
       )
     }
 
-    if(blacklist == "freq")
+    if(!is.null(blacklist) && blacklist == "freq")
     {
       a = filter.fixed_minfreq(
         alpha = obj$exposure,

@@ -11,7 +11,8 @@ pyfit <- function(x,
                   lambda_rate = NULL,
                   sigma = FALSE,
                   CUDA = FALSE,
-                  compile = TRUE) {
+                  compile = TRUE,
+                  enforce_sparsity = FALSE) {
   py <- reticulate::import("pybasilica")
 
   if (length(k_list) > 1)
@@ -29,7 +30,8 @@ pyfit <- function(x,
       groups = groups,
       beta_fixed = input_catalogue,
       CUDA = CUDA,
-      compile_model = compile
+      compile_model = compile,
+      enforce_sparsity = enforce_sparsity
     )
   # lambda_rate=lambda_rate,
   # sigma=sigma)
@@ -219,8 +221,8 @@ filter.fixed_nofilter <- function(alpha, beta_fixed)
   if (is.null(beta_fixed))
     return(list(remained_fixed = NULL, dropped_fixed = NULL))
 
-  if (!is.null(alpha))
-    return(list(remained_fixed = alpha[, rownames(beta_fixed)], dropped_fixed = NULL))
+  if (!is.null(beta_fixed))
+    return(list(remained_fixed = beta_fixed, dropped_fixed = NULL))
 
 }
 
