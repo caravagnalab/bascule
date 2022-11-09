@@ -178,16 +178,16 @@ fit <- function(x,
       cli::cli_alert_danger("No ICSs in this step were used.")
     }
 
-<<<<<<< Updated upstream
+
 if(!is.null(blacklist)){
     # drop non-significant fixed signatures ------------------------------------
     if(!is.null(blacklist) && blacklist == "TMB")
-=======
+
     # drop non-significant fixed signatures -----------------------------------
   if(!is.null(blacklist)){
     
     if(blacklist == "TMB")
->>>>>>> Stashed changes
+
     {
       a <- filter.fixed(
         M = x,
@@ -205,20 +205,20 @@ if(!is.null(blacklist)){
         phi = phi
       )
     }
-<<<<<<< Updated upstream
+
 }else{
       a = filter.fixed_nofilter( # fake function
         alpha = obj$exposure,
         beta_fixed = input_catalogue
       )
   }
-=======
+
   }else{
           a = filter.fixed_nofilter( # fake function
             alpha = obj$exposure,
             beta_fixed = input_catalogue )
     }
->>>>>>> Stashed changes
+
 
     remained_fixed <-
       a$remained_fixed                          # data.frame / NULL
