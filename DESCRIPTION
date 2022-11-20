@@ -20,7 +20,7 @@ LazyData: true
 Config/reticulate:
   list(
     packages = list(
-      list(package = "pybasilica", pip = TRUE)
+      list(package = "pybasilica==0.1.2", pip = TRUE)
     )
   )
 Imports: 

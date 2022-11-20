@@ -73,6 +73,8 @@ get_denovo_signatures <- function(x,  long = FALSE) {
 
   sigs = x$fit$denovo_signatures
 
+  if(is.null(sigs)) return(NULL)
+
   if(long)
     sigs = reshape2::melt(sigs %>% as.matrix()) %>%
     dplyr::rename(

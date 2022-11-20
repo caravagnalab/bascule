@@ -44,7 +44,7 @@ plot_similarity_reference <- function(x, similarity_cutoff = 0.4) {
       }) %>%
       Reduce(f = bind_rows)
 
-    colnames(BList)[2] = "Signature"
+    colnames(BList)[1] = "Signature"
 
     BList = BList %>%
       group_by(Signature) %>%
@@ -76,7 +76,7 @@ plot_similarity_reference <- function(x, similarity_cutoff = 0.4) {
     }) %>%
     Reduce(f = bind_rows)
 
-  colnames(EList)[2] = "Signature"
+  colnames(EList)[1] = "Signature"
 
   EList = EList %>%
     group_by(Signature) %>%

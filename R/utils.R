@@ -540,7 +540,7 @@ solve.quadratic.optimization.aux <-
 
     cos_sim <- cosine.vector(matrix(v), reconstructed_vector)
 
-    if (cos_sim > delta) {
+    if (!is.na(cos_sim) && cos_sim > delta) {
       return(list(colnames(Z)[pis > 0], NULL))
     } else {
       return(list(NULL, denovo_name))

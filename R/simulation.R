@@ -3,14 +3,12 @@
 #----------------------------------------------------------------------QC:PASSED
 # split reference catalogue to 2 sub catalogue:
 # reference catalogue (SBS1 included) + denovo catalogue
-split.reference <- function(reference_path, ratio, seed=NULL) {
+split.reference <- function(reference, ratio, seed=NULL) {
 
   if (!is.null(seed)) {
     set.seed(seed = seed)
   }
 
-  # read csv file as data.frame
-  reference <- read.table(reference_path, sep = ",", row.names = 1, header = TRUE, check.names = FALSE)
   num_ref <- round(ratio * nrow(reference))
 
   SBS1 <- reference['SBS1', ]   # save SBS1 (data.frame)
@@ -406,12 +404,19 @@ generate.data <- function(
 run.data <- function(
     data,
     k,
-    lr,
-    steps,
-    phi,
-    delta,
+    lr = 0.01,
+    steps = 500,
+    max_iterations = 20,
+    blacklist = NULL,
+    phi = 0.05,
+    delta = 0.9,
+    filt_pi =0.1,
+    groups = NULL,
     lambda_rate = NULL,
     sigma = FALSE,
+    CUDA = FALSE,
+    compile = TRUE,
+    enforce_sparsity = FALSE,
     input=TRUE
 ) {
 
@@ -427,14 +432,20 @@ run.data <- function(
     x=x,
     reference_catalogue = reference,
     k = k,
+    cohort = "Simulation",
     lr = lr,
     steps = steps,
+    max_iterations = max_iterations,
+    blacklist = blacklist,
     phi = phi,
     delta = delta,
-    groups = NULL,
-    input_catalogue = input,
+    filt_pi =filt_pi,
+    groups = groups,
     lambda_rate = lambda_rate,
-    sigma = sigma
+    sigma = sigma,
+    CUDA = CUDA,
+    compile = compile,
+    enforce_sparsity = enforce_sparsity
   )
 
   simulation.fit.obj <- tibble::add_column(
@@ -452,7 +463,7 @@ run.data <- function(
 #----------------------------------------------------------------------QC:PASSED
 
 generate.cohort <- function(
-    reference_path,
+    reference_signatures,
     ratio,
     targetX,
     inputX,
@@ -463,7 +474,7 @@ generate.cohort <- function(
     num_data
     ) {
 
-  reference_denovo <- basilica:::split.reference(reference_path=reference_path, ratio=ratio, seed=seed)
+  reference_denovo <- split.reference(reference =reference_signatures, ratio=ratio, seed=seed)
 
   reference_catalogue <- reference_denovo$reference
   denovo_catalogue <- reference_denovo$denovo
@@ -515,13 +526,20 @@ generate.cohort <- function(
 
 run.cohort <- function(
     cohort,
-    k,
-    lr,
-    steps,
-    phi,
-    delta,
+    k = 0:5,
+    lr = 0.01,
+    steps = 500,
+    max_iterations = 20,
+    blacklist = NULL,
+    phi = 0.05,
+    delta = 0.9,
+    filt_pi =0.1,
+    groups = NULL,
     lambda_rate = NULL,
     sigma = FALSE,
+    CUDA = FALSE,
+    compile = TRUE,
+    enforce_sparsity = FALSE,
     input=TRUE
     ) {
 
@@ -537,11 +555,18 @@ run.cohort <- function(
       k = k,
       lr = lr,
       steps = steps,
+      max_iterations = max_iterations,
+      blacklist = blacklist,
       phi = phi,
       delta = delta,
+      filt_pi = filt_pi,
+      groups = groups,
       lambda_rate = lambda_rate,
       sigma = sigma,
-      input = input
+      CUDA = CUDA,
+      compile = compile,
+      enforce_sparsity = enforce_sparsity,
+      input=input
     )
     results <- rbind(results, xx)
   }
@@ -671,7 +696,7 @@ evaluate.data <- function(x) {
   input <- x$input_cat[[1]]
   expected_fixed <- x$exp_fixed[[1]]
   #inferred_fixed <- x$inf_fixed[[1]]
-  inferred_fixed <- x$fit[[1]]$catalogue_signatures
+  inferred_fixed <- x$fit[[1]]$fit$catalogue_signatures
   a <- basilica:::fixed.accuracy(reference, input, expected_fixed, inferred_fixed)
   TP <- a$TP
   FP <- a$FP
@@ -681,17 +706,17 @@ evaluate.data <- function(x) {
   #--------------------------
   m <- x$x[[1]]
   #alpha <- x$inf_exposure[[1]]
-  alpha <- x$fit[[1]]$exposure
-  beta <- rbind(x$fit[[1]]$catalogue_signatures, x$fit[[1]]$denovo_signatures)
+  alpha <- x$fit[[1]]$fit$exposure
+  beta <- rbind(x$fit[[1]]$fit$catalogue_signatures, x$fit[[1]]$fit$denovo_signatures)
   mr <- basilica:::reconstruct.count(m, alpha, beta)
   mae <- basilica:::compute.mae(m, mr)
   mse <- basilica:::compute.mse(m, mr)
   #--------------------------
-  b <- basilica:::denovo.similarity(x$exp_denovo[[1]], x$fit[[1]]$denovo_signatures)
+  b <- basilica:::denovo.similarity(x$exp_denovo[[1]], x$fit[[1]]$fit$denovo_signatures)
   denovo_similarity <- b$similarity_average  # numeric
   denovo_match <- b$match_df                 # data.frame
   #--------------------------
-  denovo_ratio <- basilica:::denovo.ratio(x$exp_denovo[[1]], x$fit[[1]]$denovo_signatures)
+  denovo_ratio <- basilica:::denovo.ratio(x$exp_denovo[[1]], x$fit[[1]]$fit$denovo_signatures)
   #--------------------------
 
   # CREATE TIBBLE ----------------------------
@@ -705,7 +730,7 @@ evaluate.data <- function(x) {
     mse = mse,
     fixed_acc = accuracy,
     denovo_ratio = denovo_ratio,
-    denovo_sim = denovo_similarity,
+    denovo_sim = list(denovo_similarity),
     denovo_match = list(denovo_match),
   )
 
