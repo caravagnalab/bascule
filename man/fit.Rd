@@ -8,14 +8,12 @@ fit(
   x,
   reference_catalogue,
   k,
-  lr,
-  steps,
+  lr = 0.05,
+  steps = 500,
   phi,
-  delta,
+  delta = 0.9,
   groups = NULL,
-  input_catalogue = NULL,
-  lambda_rate = NULL,
-  sigma = FALSE
+  input_catalogue = NULL
 )
 }
 \arguments{

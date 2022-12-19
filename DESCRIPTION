@@ -34,7 +34,7 @@ Imports:
     dplyr,
     doParallel,
     cli
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.1
 URL: https://github.com/caravagnalab/basilica,
     https://caravagnalab.github.io/basilica/
 Depends: 

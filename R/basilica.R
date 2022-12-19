@@ -18,19 +18,7 @@
 #' @export fit
 #'
 #' @examples
-<<<<<<< HEAD
-fit <- function(
-    x,
-    reference_catalogue,
-    k,
-    lr,
-    steps,
-    phi,
-    delta,
-    groups=NULL,
-    input_catalogue=NULL
-    ) {
-=======
+
 fit <- function(x,
                 reference_catalogue,
                 k,
@@ -39,14 +27,12 @@ fit <- function(x,
                 phi,
                 delta = 0.9,
                 groups = NULL,
-                input_catalogue = NULL,
-                lambda_rate = NULL,
-                sigma = FALSE)
+                input_catalogue = NULL)
 {
   # cli::cli_h1("MUSICA - MUtational Signature Inference with a CAtalogue ")
   cli::cli_h1("Basilica - Bayesian signature learning with a catalogue")
   cat("\n")
->>>>>>> 3cb40b3527aabd136063f345b48acd13176212ed
+#>>>>>>> 3cb40b3527aabd136063f345b48acd13176212ed
 
   # First, sanitize inputs
   sanitized_inputs = sanitize_inputs(
@@ -58,9 +44,9 @@ fit <- function(x,
     phi = phi,
     delta = delta,
     groups = NULL,
-    input_catalogue = input_catalogue,
-    lambda_rate = lambda_rate,
-    sigma = sigma
+    input_catalogue = input_catalogue
+    #lambda_rate = lambda_rate,
+    #sigma = sigma
   )
 
   x = sanitized_inputs$x
@@ -110,8 +96,8 @@ fit <- function(x,
       n_steps = steps,
       groups = groups,
       input_catalogue = input_catalogue,
-      lambda_rate = lambda_rate,
-      sigma = sigma
+      #lambda_rate = lambda_rate,
+      #sigma = sigma
     )
 
     cli::cli_h2("Signatures matching")
@@ -227,9 +213,9 @@ sanitize_inputs = function(x,
                            phi,
                            delta,
                            groups = NULL,
-                           input_catalogue = NULL,
-                           lambda_rate = NULL,
-                           sigma = FALSE
+                           input_catalogue = NULL
+                           #lambda_rate = NULL,
+                           #sigma = FALSE
                            )
 {
   # Input counts
