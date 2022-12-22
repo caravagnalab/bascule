@@ -26,6 +26,7 @@
 #' @export fit
 #'
 #' @examples
+
 fit <- function(x,
                 k,
                 reference_catalogue = basilica::COSMIC_catalogue,
@@ -44,6 +45,7 @@ fit <- function(x,
                 CUDA = FALSE,
                 compile = TRUE,
                 enforce_sparsity = FALSE)
+
 {
   sig_col = function(x)
   {
@@ -56,6 +58,7 @@ fit <- function(x,
   # cli::cli_h1("MUSICA - MUtational Signature Inference with a CAtalogue ")
   cli::cli_h1("Basilica - Bayesian signature learning with a catalogue")
   cat("\n")
+#>>>>>>> 3cb40b3527aabd136063f345b48acd13176212ed
 
   # First, sanitize inputs
   sanitized_inputs = sanitize_inputs(
@@ -71,6 +74,7 @@ fit <- function(x,
     lambda_rate = lambda_rate,
     sigma = sigma,
     blacklist = blacklist
+
   )
 
   x = sanitized_inputs$x
@@ -482,6 +486,7 @@ sanitize_inputs = function(x,
                            lambda_rate = NULL,
                            sigma = FALSE,
                            blacklist)
+
 {
   # Input counts
   if (!is.data.frame(x))

@@ -22,6 +22,7 @@ fit(
   sigma = FALSE,
   CUDA = FALSE,
   compile = TRUE
+
 )
 }
 \arguments{
