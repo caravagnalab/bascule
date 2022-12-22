@@ -4,7 +4,7 @@
 \alias{get_catalogue_signatures}
 \title{get catalogue signatures}
 \usage{
-get_catalogue_signatures(x)
+get_catalogue_signatures(x, long = FALSE)
 }
 \arguments{
 \item{x}{basilica object}

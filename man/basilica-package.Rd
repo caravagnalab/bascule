@@ -6,7 +6,8 @@
 \alias{basilica-package}
 \title{basilica: basilica}
 \description{
-\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
+\if{html}{\figure{logo.png}{options: align='right' alt='logo' width='120'}}
+
 
 This packages provides the basilica (Bayesian signature learning including a catalogue) algorithm to detect single-nucleotide substituion signatures in cancer. The main feature of basilica is to provide a full Bayesian hierarchical formulation based on non-negative matrix factorisation, leveraging a semi-supervised trainig set (i.e., a catalogue). The tool is specifically developed to detect de novo mutational signatures that are different from the pre-defined reference catalogue.
 }

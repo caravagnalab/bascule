@@ -15,6 +15,23 @@
 #' print(COSMIC_catalogue)
 "COSMIC_catalogue"
 
+#' Degasperi catalogue (version XXXX)
+#'
+#' @description D......
+#'
+#' @docType data
+#'
+#' @usage data(Degasperi_catalogue)
+#'
+#' @format ....
+#'
+#' @keywords datasets
+#'
+#' @examples
+#' data(Degasperi_catalogue)
+#' print(Degasperi_catalogue)
+"Degasperi_catalogue"
+
 #' SBS data for PMID: 35949260
 #'
 #' @description
@@ -35,3 +52,21 @@
 #' data(Degasperi_SBS_GEL_PCAWG_HW)
 #' print(Degasperi_SBS_GEL_PCAWG_HW)
 "Degasperi_SBS_GEL_PCAWG_HW"
+
+#' Example input SBS data (synthetic)
+#'
+#' @description
+#'
+#' Example input SBS data (synthetic)
+#'
+#' @docType data
+#'
+#' @usage data(example_input)
+#'
+#'
+#' @keywords datasets
+#'
+#' @examples
+#' data(example_input)
+#' print(example_input)
+"example_input"

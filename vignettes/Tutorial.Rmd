@@ -1,0 +1,41 @@
+---
+title: "Tutorial"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+```{r setup}
+#library(basilica)
+
+setwd("~/work/Trieste/r_packages/basilica")
+devtools::load_all(".")
+catalogue <- basilica::COSMIC_catalogue
+input <- basilica::example_input
+res <- basilica::fit(input , 5)
+res
+```
+```{r}
+catalogue <- basilica::COSMIC_catalogue
+input <- basilica::example_input
+
+```
+```{r}
+
+res <- basilica::fit(input , 5)
+res
+```
+```{r}
+res
+```
+

@@ -1,19 +1,40 @@
 
+
 #------------------------------------------------------------------ [QC: PASSED]
 
-pyfit <- function(
-    x,
-    k_list,
-    lr,
-    n_steps,
-    groups=NULL,
-    input_catalogue=NULL,
-    lambda_rate=NULL,
-    sigma=FALSE
-) {
-
+pyfit <- function(x,
+                  k_list,
+                  lr,
+                  n_steps,
+                  groups = NULL,
+                  input_catalogue = NULL,
+                  lambda_rate = NULL,
+                  sigma = FALSE,
+                  CUDA = FALSE,
+                  compile = TRUE,
+                  enforce_sparsity = FALSE) {
   py <- reticulate::import("pybasilica")
-  obj <- py$fit(x=x, k_list=k_list, lr=lr, n_steps=n_steps, groups=groups, beta_fixed=input_catalogue, lambda_rate=lambda_rate, sigma=sigma)
+
+  if (length(k_list) > 1)
+    k_list <- reticulate::r_to_py(as.integer(k_list))
+  else
+    k_list <- reticulate::r_to_py(list(as.integer(k_list)))
+
+
+  obj <-
+    py$fit(
+      x = x,
+      k_list = k_list,
+      lr = lr,
+      n_steps = n_steps,
+      groups = groups,
+      beta_fixed = input_catalogue,
+      CUDA = CUDA,
+      compile_model = compile,
+      enforce_sparsity = enforce_sparsity
+    )
+  # lambda_rate=lambda_rate,
+  # sigma=sigma)
 
 
   # save python object data in a list
@@ -25,9 +46,9 @@ pyfit <- function(
   #data$lr <- lr
   #data$steps <- n_steps
   data$exposure <- obj$alpha
-  data$denovo_signatures=obj$beta_denovo
-  data$bic=obj$bic
-  data$losses=obj$losses
+  data$denovo_signatures = obj$beta_denovo
+  data$bic = obj$bic
+  data$losses = obj$losses
 
   # output
   # ---------------------------------:
@@ -44,8 +65,10 @@ pyfit <- function(
 # alpha --------> data.frame
 # beta_fixed ---> data.frame / NULL
 # phi ----------> numeric
-filter.fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
-
+filter.fixed <- function(M,
+                         alpha,
+                         beta_fixed = NULL,
+                         phi = 0.05) {
   if (!is.data.frame(M)) {
     warning("invalid count matrix (M) !")
   }
@@ -68,6 +91,43 @@ filter.fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
     alpha0 <- theta %*% as.matrix(alpha)
     #print(alpha0)
     contribution <- colSums(alpha0) / sum(alpha0)
+
+    atb = alpha0 %>%
+      as_tibble() %>%
+      reshape2::melt(id = NULL) %>%
+      dplyr::rename(Signature = variable, TMB = value)
+
+    ctb = contribution %>%
+      as.list() %>%
+      as_tibble %>%
+      reshape2::melt(id = NULL) %>%
+      dplyr::rename(Signature = variable, proportion = value)
+
+    predicate_collapsed = dplyr::full_join(atb, ctb, by = 'Signature') %>%
+      dplyr::arrange(dplyr::desc(proportion)) %>%
+      mutate(Signature = ifelse(proportion < phi, crayon::red(Signature), Signature))
+
+    predicate_collapsed$TMB = paste0("TMB = ",
+                                     predicate_collapsed$TMB %>% round(0))
+
+    predicate_collapsed$proportion = paste0("\u03c0 = ",
+                                            predicate_collapsed$proportion %>% round(3))
+
+    predicate_collapsed$Signature = sprintf("%20s", predicate_collapsed$Signature)
+    predicate_collapsed$TMB = sprintf("%20s", predicate_collapsed$TMB)
+    predicate_collapsed$proportion = sprintf("%20s", predicate_collapsed$proportion)
+
+    predicate_collapsed = apply(predicate_collapsed, 1, function(x)
+      paste(x, collapse = ' '))
+
+    cli::boxx(
+      predicate_collapsed,
+      header = "TMB filter",
+      float = 'center',
+      footer = paste0("\u03c0 > ", phi)
+    ) %>% cat()
+    cat('\n')
+
     #print(contribution)
     dropped <- which(contribution < phi)
     # TEST ------------------
@@ -77,166 +137,413 @@ filter.fixed <- function(M, alpha, beta_fixed=NULL, phi=0.05) {
     #print('======')
     # TEST ------------------
     #print(dropped)
-    if (sum(dropped)==0) {
+    if (sum(dropped) == 0) {
       remained_fixed <- beta_fixed
       dropped_fixed <- NULL
       #print('nothing to drop')
     } else {
-      remained_fixed <- beta_fixed[-c(dropped), ]
-      if (nrow(remained_fixed)==0) {
+      remained_fixed <- beta_fixed[-c(dropped),]
+      if (nrow(remained_fixed) == 0) {
         remained_fixed <- NULL
       }
-      dropped_fixed <- beta_fixed[c(dropped), ]
+
+      if (any(dropped > nrow(beta_fixed))) {
+        cli::boxx("AZAD this is a bug") %>% cat()
+        dropped = dropped[dropped < nrow(beta_fixed)]
+      }
+
+      dropped_fixed <- beta_fixed[c(dropped),]
     }
   } else {
     warning("invalid fixed signatures (beta_fixed) !")
   }
-  return(list(remained_fixed=remained_fixed, dropped_fixed=dropped_fixed))
+  return(list(remained_fixed = remained_fixed, dropped_fixed = dropped_fixed))
   # remained_fixed ----> data.frame / NULL
   # dropped_fixed -----> data.frame / NULL
 }
 
+# Checks if a signature has at least one patient where it's exposure exceeds phi
+filter.fixed_minfreq <- function(alpha, beta_fixed, phi = 0.15)
+{
+  if (is.null(beta_fixed))
+    return(list(remained_fixed = NULL, dropped_fixed = NULL))
+
+  if (!is.null(alpha)) {
+    alpha_cat = alpha[, rownames(beta_fixed)]
+    predicate = apply(alpha_cat, 2, function(x)
+      sum(x > phi))
+
+    stays = colnames(alpha_cat)[predicate > 0]
+    goes = colnames(alpha_cat)[predicate == 0]
+
+    if (length(stays) == 0)
+      remained_fixed = NULL
+    else
+      remained_fixed = beta_fixed[stays,]
+
+    if (length(goes) == 0)
+      dropped_fixed = NULL
+    else
+      dropped_fixed = beta_fixed[goes,]
+
+    predicate_collapsed = predicate %>% as_tibble()
+    predicate_collapsed$Signature = names(predicate)
+
+    predicate_collapsed = predicate_collapsed %>%
+      group_by(value) %>%
+      mutate(Signature = paste(Signature, collapse = ', ')) %>%
+      distinct() %>%
+      arrange(value) %>%
+      mutate(Signature = ifelse(value == 0, crayon::red(Signature), Signature))
+
+    predicate_collapsed = paste('n =',
+                                predicate_collapsed$value,
+                                '[',
+                                predicate_collapsed$Signature,
+                                ']')
+
+    cli::boxx(
+      predicate_collapsed,
+      header = "Frequency filter",
+      float = 'center',
+      footer = paste0("\u03C6 > ", phi, " in n samples")
+    )  %>% cat()
+
+    cat('\n')
+
+    return(list(remained_fixed = remained_fixed, dropped_fixed = dropped_fixed))
+  }
+}
+
+# Fake filter implementation
+filter.fixed_nofilter <- function(alpha, beta_fixed)
+{
+  if (is.null(beta_fixed))
+    return(list(remained_fixed = NULL, dropped_fixed = NULL))
+
+
+  if (!is.null(beta_fixed))
+    return(list(remained_fixed = beta_fixed, dropped_fixed = NULL))
+
+  if (!is.null(alpha))
+    return(list(remained_fixed = beta_fixed[colnames(alpha)[colnames(alpha) %in% rownames(beta_fixed)],],dropped_fixed = NULL))
+
+
+}
+
+
 #-------------------------------------------------------------------------------
 
 #' @import dplyr
-filter.denovo <- function(reference_catalogue, beta_fixed, beta_denovo=NULL, black_list=NULL, delta=0.9) {
+filter.denovo <-
+  function(reference_catalogue,
+           beta_fixed,
+           beta_denovo = NULL,
+           black_list = NULL,
+           delta = 0.9) {
+    if (!is.data.frame(reference_catalogue)) {
+      warning("Invalid reference catalogue!")
+    }
+    if (!is.numeric(delta)) {
+      warning("Invalid delta argument!")
+    }
 
-  if (!is.data.frame(reference_catalogue)) {
-    warning("Invalid reference catalogue!")
-  }
-  if (!is.numeric(delta)) {
-    warning("Invalid delta argument!")
+    # (Reference - Beta Fixed) ----------------------
+    if (is.data.frame(beta_fixed)) {
+      reference <- dplyr::setdiff(reference_catalogue, beta_fixed)
+    } else if (is.null(beta_fixed)) {
+      reference <- reference_catalogue
+    } else {
+      warning('invalid fixed signatures (beta_fixed) !')
+    }
+
+    # BETA DENOVO ---------------------------------
+    if (is.null(beta_denovo)) {
+      return(list(new_fixed = NULL, reduced_denovo = NULL))
+    } else if (is.data.frame(beta_denovo)) {
+      match_list <- c()
+      cos_matrix <- cosine.matrix(beta_denovo, reference)
+      while (TRUE) {
+        max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
+        if (cos_matrix[max] < delta) {
+          break
+        }
+        row_index <- as.numeric(max)[1]
+        col_index <- as.numeric(max)[2]
+        match_list[length(match_list) + 1] <-
+          colnames(cos_matrix[col_index])
+
+        if (dim(cos_matrix)[1] == 1 | dim(cos_matrix)[2] == 1) {
+          cos_matrix <- cos_matrix[-c(row_index),-c(col_index)]
+          break
+        } else {
+          cos_matrix <- cos_matrix[-c(row_index),-c(col_index)]
+        }
+      }
+    } else {
+      warning("Invalid beta denovo!")
+    }
+
+    match_list <- setdiff(match_list, black_list)
+    if (length(match_list) == 0) {
+      #col_names <- colnames(reference_catalogue)
+      #df = data.frame(matrix(nrow=0, ncol = length(col_names)))
+      #colnames(df) = col_names
+      return(list(new_fixed = NULL, reduced_denovo = beta_denovo))
+    } else {
+      if (is.null(dim(cos_matrix))) {
+        return(list(new_fixed = reference[match_list,], reduced_denovo = NULL))
+      } else {
+        reduced_denovo <- beta_denovo[rownames(cos_matrix),]
+        return(list(new_fixed = reference[match_list,], reduced_denovo = reduced_denovo))
+      }
+    }
   }
 
-  # (Reference - Beta Fixed) ----------------------
-  if (is.data.frame(beta_fixed)) {
-    reference <- dplyr::setdiff(reference_catalogue, beta_fixed)
-  } else if (is.null(beta_fixed)) {
-    reference <- reference_catalogue
-  } else {
-    warning('invalid fixed signatures (beta_fixed) !')
-  }
+#-------------------------------------------------------------------------------
 
-  # BETA DENOVO ---------------------------------
-  if (is.null(beta_denovo)) {
-    return(list(new_fixed=NULL, reduced_denovo=NULL))
-  } else if (is.data.frame(beta_denovo)) {
-    match_list <- c()
-    cos_matrix <- cosine.matrix(beta_denovo, reference)
+adjust.denovo.fixed <-
+  function(alpha,
+           fixed_signatures,
+           denovo_signatures,
+           limit = 0.9) {
+    if (is.null(fixed_signatures) | is.null(denovo_signatures)) {
+      return(list(exposure = alpha, denovo_signatures = denovo_signatures))
+    }
+
+    cos_matrix <-
+      basilica:::cosine.matrix(denovo_signatures, fixed_signatures)
     while (TRUE) {
       max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
-      if (cos_matrix[max] < delta) {
-        break
-      }
-      row_index <- as.numeric(max)[1]
-      col_index <- as.numeric(max)[2]
-      match_list[length(match_list) + 1] <- colnames(cos_matrix[col_index])
-
-      if (dim(cos_matrix)[1]==1 | dim(cos_matrix)[2]==1) {
-        cos_matrix <- cos_matrix[-c(row_index), -c(col_index)]
+      if (cos_matrix[max] < limit) {
         break
       } else {
-        cos_matrix <- cos_matrix[-c(row_index), -c(col_index)]
+        row_index <- as.numeric(max)[1]
+        col_index <- as.numeric(max)[2]
+        denovo_name <- rownames(cos_matrix[col_index])[row_index]
+        fixed_name <- colnames(cos_matrix[col_index])
+
+        # remove denovo signature
+        denovo_signatures <-
+          denovo_signatures[!(rownames(denovo_signatures) %in% denovo_name),]
+
+        # adjust fixed signature exposure
+        alpha[fixed_name] <-
+          alpha[, fixed_name] + alpha[, denovo_name]
+        # remove denovo signature exposure
+        alpha <- alpha[,!names(alpha) %in% denovo_name]
+
+        if (dim(cos_matrix)[1] == 1 | dim(cos_matrix)[2] == 1) {
+          break
+        } else {
+          cos_matrix <- cos_matrix[-c(row_index),-c(col_index)]
+        }
       }
     }
-  } else {
-    warning("Invalid beta denovo!")
+    return(list(exposure = alpha, denovo_signatures = denovo_signatures))
   }
-
-  match_list <- setdiff(match_list, black_list)
-  if (length(match_list) == 0) {
-    #col_names <- colnames(reference_catalogue)
-    #df = data.frame(matrix(nrow=0, ncol = length(col_names)))
-    #colnames(df) = col_names
-    return(list(new_fixed=NULL, reduced_denovo=beta_denovo))
-  } else {
-    if (is.null(dim(cos_matrix))) {
-      return(list(new_fixed=reference[match_list, ], reduced_denovo=NULL))
-    } else {
-      reduced_denovo <- beta_denovo[rownames(cos_matrix), ]
-      return(list(new_fixed=reference[match_list, ], reduced_denovo=reduced_denovo))
-    }
-  }
-}
 
 #-------------------------------------------------------------------------------
 
-adjust.denovo.fixed <- function(alpha, fixed_signatures, denovo_signatures, limit=0.9) {
-
-  if (is.null(fixed_signatures) | is.null(denovo_signatures)) {
-    return(list(exposure=alpha, denovo_signatures=denovo_signatures))
-  }
-
-  cos_matrix <- basilica:::cosine.matrix(denovo_signatures, fixed_signatures)
-  while (TRUE) {
-    max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
-    if (cos_matrix[max] < limit) {
-      break
-    } else {
-      row_index <- as.numeric(max)[1]
-      col_index <- as.numeric(max)[2]
-      denovo_name <- rownames(cos_matrix[col_index])[row_index]
-      fixed_name <- colnames(cos_matrix[col_index])
-
-      # remove denovo signature
-      denovo_signatures <- denovo_signatures[!(rownames(denovo_signatures) %in% denovo_name), ]
-
-      # adjust fixed signature exposure
-      alpha[fixed_name] <- alpha[, fixed_name] + alpha[, denovo_name]
-      # remove denovo signature exposure
-      alpha <- alpha[ , !names(alpha) %in% denovo_name]
-
-      if (dim(cos_matrix)[1]==1 | dim(cos_matrix)[2]==1) {
+adjust.denovo.denovo <-
+  function(alpha, denovo_signatures, limit = 0.9) {
+    if (is.null(denovo_signatures)) {
+      return(list(exposure = alpha, denovo_signatures = denovo_signatures))
+    } else if (nrow(denovo_signatures) == 1) {
+      return(list(exposure = alpha, denovo_signatures = denovo_signatures))
+    }
+    cos_matrix <-
+      basilica:::cosine.matrix(denovo_signatures, denovo_signatures)
+    for (i in 1:nrow(cos_matrix)) {
+      cos_matrix[i, i] <- 0
+    }
+    while (TRUE) {
+      max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
+      if (cos_matrix[max][1] < limit) {
         break
       } else {
-        cos_matrix <- cos_matrix[-c(row_index), -c(col_index)]
+        row_index <- as.numeric(max)[1]
+        col_index <- as.numeric(max)[2]
+        denovo_one <- rownames(cos_matrix[col_index])[row_index]
+        denovo_two <- colnames(cos_matrix[col_index])
+
+        denovo_signatures[paste(denovo_one, denovo_two, sep = ''),] <-
+          denovo_signatures[denovo_one,] + denovo_signatures[denovo_two,]
+
+        denovo_signatures <-
+          denovo_signatures[!(rownames(denovo_signatures) %in% c(denovo_one, denovo_two)),]
+
+        # adjust signature in exposure
+        alpha[paste(denovo_one, denovo_two, sep = '')] <-
+          alpha[, denovo_one] + alpha[, denovo_two]
+        # remove signature from exposure
+        alpha <-
+          alpha[,!names(alpha) %in% c(denovo_one, denovo_two)]
+
+        if (dim(cos_matrix)[1] == 2 | dim(cos_matrix)[2] == 2) {
+          break
+        } else {
+          cos_matrix <-
+            cos_matrix[-c(row_index, col_index),-c(col_index, row_index)]
+        }
+      }
+    }
+    return(list(exposure = alpha, denovo_signatures = denovo_signatures))
+  }
+
+# filter based on linear projection with constraints
+
+
+#' @import dplyr
+filter.denovo.QP <-
+  function(reference_catalogue,
+           beta_fixed,
+           beta_denovo = NULL,
+           black_list = NULL,
+           delta = 0.9,
+           filt_pi = 0.05) {
+    if (!is.data.frame(reference_catalogue)) {
+      warning("Invalid reference catalogue!")
+    }
+    if (!is.numeric(delta)) {
+      warning("Invalid delta argument!")
+    }
+
+    # (Reference - Beta Fixed) ----------------------
+    if (is.data.frame(beta_fixed)) {
+      reference <- dplyr::setdiff(reference_catalogue, beta_fixed)
+    } else if (is.null(beta_fixed)) {
+      reference <- reference_catalogue
+    } else {
+      warning('invalid fixed signatures (beta_fixed) !')
+    }
+
+    # BETA DENOVO ---------------------------------
+    if (is.null(beta_denovo)) {
+      return(list(new_fixed = NULL, reduced_denovo = NULL))
+    } else if (is.data.frame(beta_denovo)) {
+      ### names of catalogue signatures to include + names de novo to remove
+      res_optimization <-
+        solve.quadratic.optimization(beta_denovo,
+                                     reference,
+                                     delta = delta,
+                                     filt_pi = filt_pi)
+      match_list <- res_optimization$catalogue_to_include
+
+    } else {
+      warning("Invalid beta denovo!")
+    }
+
+    match_list <- setdiff(match_list, black_list)
+    if (length(match_list) == 0) {
+      #col_names <- colnames(reference_catalogue)
+      #df = data.frame(matrix(nrow=0, ncol = length(col_names)))
+      #colnames(df) = col_names
+      return(list(new_fixed = NULL, reduced_denovo = beta_denovo))
+    } else {
+      if (is.null(res_optimization$denovo_to_include)) {
+        return(list(new_fixed = reference[match_list,], reduced_denovo = NULL))
+      } else {
+        reduced_denovo <- beta_denovo[res_optimization$denovo_to_include,]
+        return(list(new_fixed = reference[match_list,], reduced_denovo = reduced_denovo))
       }
     }
   }
-  return(list(exposure=alpha, denovo_signatures=denovo_signatures))
-}
 
-#-------------------------------------------------------------------------------
 
-adjust.denovo.denovo <- function(alpha, denovo_signatures, limit=0.9) {
 
-  if (is.null(denovo_signatures)) {
-    return(list(exposure=alpha, denovo_signatures=denovo_signatures))
-  } else if (nrow(denovo_signatures)==1) {
-    return(list(exposure=alpha, denovo_signatures=denovo_signatures))
-  }
-  cos_matrix <- basilica:::cosine.matrix(denovo_signatures, denovo_signatures)
-  for (i in 1:nrow(cos_matrix)) {
-    cos_matrix[i, i] <- 0
-  }
-  while (TRUE) {
-    max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
-    if (cos_matrix[max][1] < limit) {
-      break
-    } else {
-      row_index <- as.numeric(max)[1]
-      col_index <- as.numeric(max)[2]
-      denovo_one <- rownames(cos_matrix[col_index])[row_index]
-      denovo_two <- colnames(cos_matrix[col_index])
+solve.quadratic.optimization <-
+  function(a,
+           b,
+           filt_pi = 0.05,
+           delta = 0.9) {
+    # a and b are data.frame
 
-      denovo_signatures[paste(denovo_one, denovo_two, sep = ''), ] <- denovo_signatures[denovo_one, ] + denovo_signatures[denovo_two, ]
+    df <- data.frame(matrix(0, nrow(a), nrow(b)))
+    rownames(df) <- rownames(a)
+    colnames(df) <- rownames(b)
 
-      denovo_signatures <- denovo_signatures[!(rownames(denovo_signatures) %in% c(denovo_one, denovo_two)), ]
+    cmp = nrow(a)
+    pb <- progress::progress_bar$new(
+      format = paste0(
+        "  Quadratic programming solver (n = ",
+        cmp,
+        ") [:bar] :percent eta: :eta"
+      ),
+      total = cmp,
+      clear = FALSE,
+      width = 90
+    )
 
-      # adjust signature in exposure
-      alpha[paste(denovo_one, denovo_two, sep = '')] <- alpha[, denovo_one] + alpha[, denovo_two]
-      # remove signature from exposure
-      alpha <- alpha[ , !names(alpha) %in% c(denovo_one, denovo_two)]
+    b_m <- as.matrix(b) %>% t
+    Rinv <- solve(chol(t(b_m) %*% b_m))
 
-      if (dim(cos_matrix)[1]==2 | dim(cos_matrix)[2]==2) {
-        break
-      } else {
-        cos_matrix <- cos_matrix[-c(row_index, col_index), -c(col_index, row_index)]
+    res <- lapply(
+      1:nrow(a),
+      FUN = function(i) {
+        optim_res <-
+          solve.quadratic.optimization.aux(
+            as.matrix(a)[i, ] %>% t(),
+            b_m,
+            Rinv,
+            filt_pi = filt_pi,
+            delta = delta,
+            denovo_name = rownames(a)[i]
+          )
+        pb$tick()
+        return(optim_res)
       }
-    }
+    )
+
+    catalogue_to_include <-
+      lapply(res, function(x)
+        x[[1]]) %>% do.call(c, .) %>% unique()
+    denovo_to_include <-
+      lapply(res, function(x)
+        x[[2]]) %>% do.call(c, .)
+
+
+    return(
+      list(
+        catalogue_to_include = catalogue_to_include,
+        denovo_to_include = denovo_to_include
+      )
+    )
   }
-  return(list(exposure=alpha, denovo_signatures=denovo_signatures))
-}
+
+solve.quadratic.optimization.aux <-
+  function(v,
+           Z,
+           Rinv,
+           denovo_name,
+           filt_pi = 0.05,
+           delta = 0.9) {
+    d <- v %*% Z
+
+    b <- c(1, rep(0, length(d)))
+
+    C <- cbind(rep(1, length(d)), diag(length(d)))
 
 
+    pis <-
+      quadprog::solve.QP(
+        Dmat = Rinv,
+        factorized = TRUE,
+        dvec = d,
+        Amat = C,
+        bvec = b,
+        meq = 1
+      )$solution
+    pis[pis < filt_pi] <- 0
 
+    reconstructed_vector <- Z %*% pis
+
+    cos_sim <- cosine.vector(matrix(v), reconstructed_vector)
+
+    if (!is.na(cos_sim) && cos_sim > delta) {
+      return(list(colnames(Z)[pis > 0], NULL))
+    } else {
+      return(list(NULL, denovo_name))
+    }
+
+  }

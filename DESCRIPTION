@@ -20,7 +20,7 @@ LazyData: true
 Config/reticulate:
   list(
     packages = list(
-      list(package = "pybasilica", pip = TRUE)
+      list(package = "pybasilica==0.1.2", pip = TRUE)
     )
   )
 Imports: 
@@ -33,11 +33,20 @@ Imports:
     tibble,
     dplyr,
     doParallel,
-    cli
-RoxygenNote: 7.2.1
+    cli,
+    stringr,
+    ggtext,
+    pheatmap,
+    ggplotify,
+    scales,
+    quadprog
+RoxygenNote: 7.1.2
 URL: https://github.com/caravagnalab/basilica,
     https://caravagnalab.github.io/basilica/
 Depends: 
     R (>= 2.10)
 Suggests: 
-    covr
+    covr,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

@@ -21,10 +21,19 @@ cosine.matrix <- function(a, b) {
   rownames(df) <- rownames(a)
   colnames(df) <- rownames(b)
 
+  cmp = nrow(a) * nrow(b)
+  pb <- progress::progress_bar$new(
+    format = paste0("  Cosine similarity (n = ", cmp, ") [:bar] :percent eta: :eta"),
+    total = cmp,
+    clear = FALSE,
+    width= 90
+    )
+
   for (i in 1:nrow(a)) {
     denovo <- a[i, ]
     for (j in 1:nrow(b)) {
       ref <- b[j, ]
+      pb$tick()
 
       score <- cosine.vector(denovo, ref)
       df[i,j] <- score

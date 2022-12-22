@@ -1,46 +1,12 @@
 
-#' plot exposure matrix
-#'
-#' @description creates bar plot of relative exposure matrix, where x-axis are samples and y-axis are their relative contribution.
-#' @param x basilica object
-#'
-#' @return plot
-#' @export plot_exposure
-#'
-#' @examples
-plot_exposure <- function(x) {
+#
 
-  alpha <- get_exposure(x, long = FALSE)
 
-  plt <- basilica:::.plot_exposure(x = alpha)
 
-  return(plt)
-}
 
 # ------------------------------------------------------------------------------
 
-#' plot signatures
-#'
-#' @description creates bar plot of inferred signature profiles, where x-axis are 96 substitution bases and y-axis are their relative contribution.
-#'
-#' @param x basilica object
-#' @param denovoSignature if TRUE, plots inferred de-novo signatures, otherwise plots inferred catalogue signatures
-#'
-#' @return plot
-#' @export plot_signatures
-#' @examples
-plot_signatures <- function(x, denovo = TRUE ) {
 
-  if (denovo==TRUE) {
-    beta <- get_denovo_signatures(x)
-  } else {
-    beta <- get_catalogue_signatures(x)
-  }
-
-  plt <- basilica:::.plot_signatures(beta)
-
-  return(plt)
-}
 
 # ------------------------------------------------------------------------------
 
