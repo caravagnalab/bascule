@@ -9,9 +9,6 @@ plot_cohort_prevalence(x)
 \arguments{
 \item{x}{}
 }
-\value{
-
-}
 \description{
 Title
 }

@@ -13,7 +13,7 @@ fit(
   lr = 0.01,
   steps = 500,
   max_iterations = 20,
-  blacklist = c("freq"),
+  blacklist = NULL,
   phi = 0.05,
   delta = 0.9,
   filt_pi = 0.1,
@@ -21,8 +21,8 @@ fit(
   lambda_rate = NULL,
   sigma = FALSE,
   CUDA = FALSE,
-  compile = TRUE
-
+  compile = TRUE,
+  enforce_sparsity = FALSE
 )
 }
 \arguments{
@@ -47,6 +47,8 @@ fit(
 \item{groups}{vector of discrete labels with one entry per sample, it defines the groups that will be considered by basilica}
 
 \item{sigma}{}
+
+\item{enforce_sparsity}{use Laplace prior over exposure weights (bayesian LASSO)}
 }
 \value{
 inferred exposure matrix, inferred signatures from reference catalogue and inferred de novo (not from reference catalogue) signatures

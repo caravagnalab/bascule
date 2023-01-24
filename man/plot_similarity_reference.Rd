@@ -9,9 +9,6 @@ plot_similarity_reference(x, similarity_cutoff = 0.4)
 \arguments{
 \item{similarity_cutoff}{}
 }
-\value{
-
-}
 \description{
 Title
 }
