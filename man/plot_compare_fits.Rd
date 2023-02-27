@@ -9,9 +9,6 @@ plot_compare_fits(x, y, similarity_cutoff = 0.4)
 \arguments{
 \item{similarity_cutoff}{}
 }
-\value{
-
-}
 \description{
 Title
 }

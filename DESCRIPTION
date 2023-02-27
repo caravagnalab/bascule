@@ -39,8 +39,9 @@ Imports:
     pheatmap,
     ggplotify,
     scales,
-    quadprog
-RoxygenNote: 7.1.2
+    quadprog, 
+    progress
+RoxygenNote: 7.2.1
 URL: https://github.com/caravagnalab/basilica,
     https://caravagnalab.github.io/basilica/
 Depends: 
