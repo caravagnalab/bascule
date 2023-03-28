@@ -65,7 +65,7 @@ plot_signatures_sbs = function(x, sigs, highlight = 0.05)
       ggplot2::aes(x = crazy_map, y = Value, fill = Signature, color = highlight),
       stat="identity",
       position="identity") +
-    ggplot2::facet_grid(Signature~substitution, scales="free", drop = FALSE, space="free_x") +
+    ggplot2::facet_grid(as.character(Signature)~substitution, scales="free", drop = FALSE, space="free_x") +
     my_ggplot_theme() +
     ggplot2::theme(
       axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)
@@ -74,17 +74,17 @@ plot_signatures_sbs = function(x, sigs, highlight = 0.05)
       y = "Frequency",
       title = paste0(x$cohort, ' (n = ', x$n_samples, ')')
     ) +
-    ggplot2::scale_fill_manual(values = get_signature_colors(x) %>% ggplot2::alpha(0.7)) +
+    # ggplot2::scale_fill_manual(values = get_signature_colors(x) %>% ggplot2::alpha(0.7)) +
     ggplot2::scale_color_manual(values = "black", na.value = NA, na.translate = F) +
     ggplot2::guides(fill = ggplot2::guide_legend(
       paste0("p >", highlight * 100, '%')
     )) +
-    ggplot2::guides(
-      fill = ggplot2::guide_legend(
-        nrow = ifelse(x$n_catalogue + x$n_denovo > 8, 2, 1)),
-      color = ggplot2::guide_legend("", override.aes = ggplot2::aes(fill = NA))
-    ) +
-    theme(axis.text.x = ggtext::element_markdown(angle = 90, hjust = 0))
+    # ggplot2::guides(
+    #   fill = ggplot2::guide_legend(
+    #     nrow = ifelse(x$n_catalogue + x$n_denovo > 8, 2, 1)),
+    #   color = ggplot2::guide_legend("", override.aes = ggplot2::aes(fill = NA))
+    # ) +
+    ggplot2::theme(axis.text.x = ggtext::element_markdown(angle = 90, hjust = 0))
 
   return(plt)
 }

@@ -3,6 +3,7 @@
 #------------------------------------------------------------------ [QC: PASSED]
 
 pyfit <- function(x,
+                  py,
                   k_list,
                   lr,
                   n_steps,
@@ -13,7 +14,7 @@ pyfit <- function(x,
                   CUDA = FALSE,
                   compile = TRUE,
                   enforce_sparsity = FALSE) {
-  py <- reticulate::import("pybasilica")
+  # py <- reticulate::import("pybasilica")
 
   if (length(k_list) > 1)
     k_list <- reticulate::r_to_py(as.integer(k_list))
@@ -45,10 +46,13 @@ pyfit <- function(x,
   #data$input_catalogue <- input_catalogue
   #data$lr <- lr
   #data$steps <- n_steps
-  data$exposure <- obj$alpha
+  data$exposure <- obj$alpha$numpy()
   data$denovo_signatures = obj$beta_denovo
   data$bic = obj$bic
   data$losses = obj$losses
+
+  if (!is.null(groups))
+    data$groups = obj$groups
 
   # output
   # ---------------------------------:

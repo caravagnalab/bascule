@@ -29,6 +29,7 @@
 
 fit <- function(x,
                 k,
+                py,
                 reference_catalogue = basilica::COSMIC_catalogue,
                 input_catalogue = basilica::COSMIC_catalogue["SBS1", ],
                 cohort = "MyCohort",
@@ -47,6 +48,7 @@ fit <- function(x,
                 enforce_sparsity = FALSE)
 
 {
+
   sig_col = function(x)
   {
     crayon::blue(x)
@@ -101,8 +103,7 @@ fit <- function(x,
     )
 
     input_catalogue %>% dplyr::as_tibble() %>% print()
-  }
-  else
+  } else
   {
     cli::cli_alert_warning("    Input Catalogue Signatures (ICSs): none (no supervision).")
   }
@@ -141,6 +142,7 @@ fit <- function(x,
 
     obj <- pyfit(
       x = x,
+      py=py,
       k_list = k,
       lr = lr,
       n_steps = steps,
@@ -189,7 +191,7 @@ if(!is.null(blacklist)){
 
     # drop non-significant fixed signatures -----------------------------------
   if(!is.null(blacklist)){
-    
+
     if(blacklist == "TMB")
 
     {
@@ -432,15 +434,22 @@ if(!is.null(blacklist)){
 
   fit$n_samples = x %>% nrow()
 
-  cat_expo = obj$denovo_signatures %>% rownames()
-  cat_expo = setdiff(obj$exposure %>% colnames, cat_expo)
-  fit$n_catalogue = obj$exposure[, cat_expo] %>% ncol()
+  #### CHECK ########
+  # cat_expo = obj$denovo_signatures %>% rownames()
+  # cat_expo = setdiff(obj$exposure %>% colnames, cat_expo)
+  # fit$n_catalogue = obj$exposure[, cat_expo] %>% ncol()
 
   fit$n_denovo = ifelse(
     obj$denovo_signatures %>% is.null,
     0,
     obj$denovo_signatures %>% nrow
   )
+
+  if (is.matrix(obj$alpha)) {
+    obj$alpha = obj$alpha %>% as.data.frame()
+    colnames(obj$alpha) = c(obj$catalogue_signatures %>% rownames(),
+                            obj$denovo_signatures %>% rownames())
+  }
 
 
   fit$input = list(

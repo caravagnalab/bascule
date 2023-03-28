@@ -14,6 +14,15 @@ get_exposure <- function(x, long = FALSE) {
 
   alpha <- x$fit$exposure
 
+  if (is.matrix(alpha)) {
+    alpha = alpha %>% as.data.frame()
+    colnames(alpha) = c(x$fit$catalogue_signatures %>% rownames(),
+                        x$fit$denovo_signatures %>% rownames())
+  }
+
+  if ("groups" %in% names(x$fit))
+    alpha$groups = x$fit$groups
+
   if (long) {
 
     is_denovo = function(n){
@@ -21,7 +30,7 @@ get_exposure <- function(x, long = FALSE) {
     }
 
     alpha$Sample <- rownames(alpha)
-    alpha <- tidyr::gather(alpha, key="Signature", value="Exposure", c(-Sample))
+    alpha <- tidyr::gather(alpha, key="Signature", value="Exposure", c(-Sample, -groups))
     alpha = alpha %>%
       dplyr::mutate(Type = ifelse(
         is_denovo(Signature),
@@ -29,6 +38,7 @@ get_exposure <- function(x, long = FALSE) {
         "Catalogue"
       )) %>%
       tidyr::as_tibble()
+
   }
 
   return(alpha)
