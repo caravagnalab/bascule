@@ -1,30 +1,3 @@
-reticulate::use_condaenv("basilica-env")
-
-header = read.csv("./nobuild/test_groups/counts_all.tsv", header=F, sep="\t", nrows=1) %>% setNames(NULL)
-counts = read.csv("./nobuild/test_groups/counts_all.tsv", header=T, row.names=1, sep="\t")
-colnames(counts) = header
-counts.gel = counts %>% dplyr::filter(cohort=="GEL") %>%
-  dplyr::filter(organ%in%c("Colorectal","Lung","Breast"))
-keep = sample(1:nrow(counts.gel), 100)
-
-counts.gel.sub = counts.gel[keep,]
-
-groups = counts.gel.sub$organ
-table(groups)
-
-py = reticulate::import_from_path(module="pybasilica", path="~/GitHub/pybasilicah/")
-
-obj.nogroups = fit(counts.gel.sub %>% dplyr::select(-organ, -cohort), py=py, k=c(3, 5, 7), cohort="GEL")
-obj.groups = fit(counts.gel.sub %>% dplyr::select(-organ, -cohort), py=py, k=c(3, 5, 7), cohort="GEL", groups=map_groups(groups))
-
-
-sbs1 = plot_signatures(obj.nogroups, Type="De novo")
-sbs2 = plot_signatures(obj.groups, Type="De novo")
-patchwork::wrap_plots(sbs1, sbs2)
-
-plot_exposure(obj.groups)
-
-
 
 map_groups = function(groups) {
   n_gr = groups %>% unique() %>% length()
@@ -34,3 +7,39 @@ map_groups = function(groups) {
 
   return(grps.int[groups] %>% setNames(NULL))
 }
+
+devtools::load_all()
+
+reticulate::use_condaenv("basilica-env")
+
+header = read.csv("./nobuild/test_groups/counts_all.tsv", header=F, sep="\t", nrows=1) %>% setNames(NULL)
+counts = read.csv("./nobuild/test_groups/counts_all.tsv", header=T, row.names=1, sep="\t")
+colnames(counts) = header
+counts.gel = counts %>% dplyr::filter(cohort=="GEL") %>%
+  dplyr::filter(organ%in%c("Colorectal","Lung","Breast"))
+groups = counts.gel$organ
+
+# keep = sample(1:nrow(counts.gel), 100)
+# counts.gel.sub = counts.gel[keep,]
+# groups.sub = counts.gel.sub$organ
+
+table(groups)
+
+py = reticulate::import_from_path(module="pybasilica", path="~/dati_elenab/signatures/pybasilicah/")
+
+obj.nogroups = fit(counts.gel %>% dplyr::select(-organ, -cohort), py=py, k=3:7, cohort="GEL")
+obj.groups = fit(counts.gel %>% dplyr::select(-organ, -cohort), py=py, k=3:7, cohort="GEL", groups=map_groups(groups))
+# obj.cluster = fit(counts.gel.sub %>% dplyr::select(-organ, -cohort), py=py, k=3:7, cohort="GEL", cluster=T)
+
+saveRDS(obj.nogroups, "./nobuild/test_groups/gel.std.fit.Rds")
+saveRDS(obj.groups, "./nobuild/test_groups/gel.hier.fit.Rds")
+
+
+# sbs1 = plot_signatures(obj.nogroups, Type="De novo")
+# sbs2 = plot_signatures(obj.groups, Type="De novo")
+# patchwork::wrap_plots(sbs1, sbs2)
+#
+# plot_exposure(obj.groups)
+
+
+
