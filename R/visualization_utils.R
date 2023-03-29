@@ -16,8 +16,13 @@ get_signature_colors = function(x)
   dn_c = ggsci::pal_nejm()(x$n_denovo)
   names(dn_c) = dn
 
-  sc_c = ggsci::pal_simpsons()(x$n_catalogue)
+  n_cat = x$fit$catalogue_signatures %>% nrow
+
+  sc_c = ggsci::pal_simpsons()(n_cat)
   names(sc_c) = sc
+
+  # sc_c = ggsci::pal_simpsons()(x$n_catalogue)
+  # names(sc_c) = sc
 
   c(dn_c, sc_c)
 }
