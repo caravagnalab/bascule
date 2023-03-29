@@ -3,18 +3,20 @@
 #------------------------------------------------------------------ [QC: PASSED]
 
 pyfit <- function(x,
-                  py,
                   k_list,
                   lr,
                   n_steps,
+                  py = NULL,
                   groups = NULL,
                   input_catalogue = NULL,
                   lambda_rate = NULL,
                   sigma = FALSE,
                   CUDA = FALSE,
                   compile = TRUE,
-                  enforce_sparsity = FALSE) {
-  # py <- reticulate::import("pybasilica")
+                  enforce_sparsity = FALSE,
+                  store_parameters = FALSE) {
+  if (is.null(py))
+    py <- reticulate::import("pybasilica")
 
   if (length(k_list) > 1)
     k_list <- reticulate::r_to_py(as.integer(k_list))
@@ -32,7 +34,8 @@ pyfit <- function(x,
       beta_fixed = input_catalogue,
       CUDA = CUDA,
       compile_model = compile,
-      enforce_sparsity = enforce_sparsity
+      enforce_sparsity = enforce_sparsity,
+      store_parameters = store_parameters
     )
   # lambda_rate=lambda_rate,
   # sigma=sigma)
@@ -46,13 +49,12 @@ pyfit <- function(x,
   #data$input_catalogue <- input_catalogue
   #data$lr <- lr
   #data$steps <- n_steps
-  data$exposure <- obj$alpha$numpy()
+  data$exposure <- obj$alpha
   data$denovo_signatures = obj$beta_denovo
   data$bic = obj$bic
   data$losses = obj$losses
-
-  if (!is.null(groups))
-    data$groups = obj$groups
+  data$train_params = get_train_params(obj)
+  data$groups = obj$groups
 
   # output
   # ---------------------------------:
@@ -62,6 +64,46 @@ pyfit <- function(x,
   # losses            --> numeric
 
   return(data)
+}
+
+
+get_train_params = function(obj) {
+  if (!obj$store_parameters)
+    return(NULL)
+  train_params = obj$train_params
+  samples_names = obj$alpha %>% rownames()
+  bfixed_names = obj$beta_fixed %>% rownames()
+  bdenovo_names = obj$beta_denovo %>% rownames()
+  contexts = obj$beta_denovo %>% colnames()
+
+  alpha_all = data.frame() %>% dplyr::mutate(sample_id=as.character(NA), signature=as.character(NA),
+                                             iteration=as.integer(NA), alpha=as.numeric(NA))
+  beta_d = data.frame() %>% dplyr::mutate(signature=as.character(NA), context=as.character(NA),
+                                          iteration=as.integer(NA), beta=as.numeric(NA))
+
+  for (i in 1:length(train_params)) {
+    tmp_a = train_params[[i]][["alpha"]]$numpy() %>% as.data.frame()
+    rownames(tmp_a) = samples_names
+    colnames(tmp_a) = c(bfixed_names, bdenovo_names)
+
+    tmp_a = tmp_a %>% tibble::rownames_to_column(var="sample_id") %>%
+      reshape2::melt(id="sample_id",variable.name="signature",value.name="alpha") %>%
+      dplyr::mutate(iteration=i)
+
+    alpha_all = alpha_all %>% dplyr::add_row(tmp_a)
+
+    tmp_b = train_params[[i]][["beta_d"]]$numpy() %>% as.data.frame()
+    rownames(tmp_b) = bdenovo_names
+    colnames(tmp_b) = contexts
+
+    tmp_b = tmp_b %>% tibble::rownames_to_column(var="signature") %>%
+      reshape2::melt(id="signature",variable.name="context",value.name="beta") %>%
+      dplyr::mutate(iteration=i)
+
+    beta_d = beta_d %>% dplyr::add_row(tmp_b)
+  }
+
+  return(tibble::tibble(alpha=list(alpha_all), beta_d=list(beta_d)))
 }
 
 #-------------------------------------------------------------------------------
@@ -405,7 +447,8 @@ filter.denovo.QP <-
            beta_denovo = NULL,
            black_list = NULL,
            delta = 0.9,
-           filt_pi = 0.05) {
+           filt_pi = 0.05,
+           substitutions = NULL) {
     if (!is.data.frame(reference_catalogue)) {
       warning("Invalid reference catalogue!")
     }
@@ -422,16 +465,23 @@ filter.denovo.QP <-
       warning('invalid fixed signatures (beta_fixed) !')
     }
 
+    if (nrow(reference)==0) {
+      print("!!!!!!!!")
+      return(list(new_fixed = NULL, reduced_denovo = beta_denovo))
+    }
+
     # BETA DENOVO ---------------------------------
     if (is.null(beta_denovo)) {
       return(list(new_fixed = NULL, reduced_denovo = NULL))
+
     } else if (is.data.frame(beta_denovo)) {
       ### names of catalogue signatures to include + names de novo to remove
       res_optimization <-
         solve.quadratic.optimization(beta_denovo,
                                      reference,
                                      delta = delta,
-                                     filt_pi = filt_pi)
+                                     filt_pi = filt_pi,
+                                     substitutions = substitutions)
       match_list <- res_optimization$catalogue_to_include
 
     } else {
@@ -460,7 +510,8 @@ solve.quadratic.optimization <-
   function(a,
            b,
            filt_pi = 0.05,
-           delta = 0.9) {
+           delta = 0.9,
+           substitutions = NULL) {
     # a and b are data.frame
 
     df <- data.frame(matrix(0, nrow(a), nrow(b)))
@@ -492,7 +543,8 @@ solve.quadratic.optimization <-
             Rinv,
             filt_pi = filt_pi,
             delta = delta,
-            denovo_name = rownames(a)[i]
+            denovo_name = rownames(a)[i],
+            substitutions = substitutions
           )
         pb$tick()
         return(optim_res)
@@ -521,7 +573,8 @@ solve.quadratic.optimization.aux <-
            Rinv,
            denovo_name,
            filt_pi = 0.05,
-           delta = 0.9) {
+           delta = 0.9,
+           substitutions = NULL) {
     d <- v %*% Z
 
     b <- c(1, rep(0, length(d)))
@@ -542,7 +595,10 @@ solve.quadratic.optimization.aux <-
 
     reconstructed_vector <- Z %*% pis
 
-    cos_sim <- cosine.vector(matrix(v), reconstructed_vector)
+    vec1 = matrix(v)
+    rownames(vec1) = rownames(reconstructed_vector)
+
+    cos_sim <- cosine.vector(vec1, reconstructed_vector, substitutions = substitutions)
 
     if (!is.na(cos_sim) && cos_sim > delta) {
       return(list(colnames(Z)[pis > 0], NULL))

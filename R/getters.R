@@ -30,7 +30,10 @@ get_exposure <- function(x, long = FALSE) {
     }
 
     alpha$Sample <- rownames(alpha)
-    alpha <- tidyr::gather(alpha, key="Signature", value="Exposure", c(-Sample, -groups))
+    if ("groups" %in% colnames(alpha))
+      alpha <- tidyr::gather(alpha, key="Signature", value="Exposure", c(-Sample, -groups)) else
+        alpha <- tidyr::gather(alpha, key="Signature", value="Exposure", c(-Sample))
+
     alpha = alpha %>%
       dplyr::mutate(Type = ifelse(
         is_denovo(Signature),
