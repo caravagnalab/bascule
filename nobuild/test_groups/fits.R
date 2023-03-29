@@ -19,21 +19,21 @@ counts.gel = counts %>% dplyr::filter(cohort=="GEL") %>%
   dplyr::filter(organ%in%c("Colorectal","Lung","Breast"))
 groups = counts.gel$organ
 
-# keep = sample(1:nrow(counts.gel), 100)
-# counts.gel.sub = counts.gel[keep,]
-# groups.sub = counts.gel.sub$organ
+keep = sample(1:nrow(counts.gel), 2000)
+counts.gel.sub = counts.gel[keep,]
+groups.sub = counts.gel.sub$organ
 
 table(groups)
 
 py = reticulate::import_from_path(module="pybasilica", path="~/dati_elenab/signatures/pybasilicah/")
 
-obj.nogroups = fit(counts.gel %>% dplyr::select(-organ, -cohort), py=py, k=3:7, cohort="GEL")
-obj.groups = fit(counts.gel %>% dplyr::select(-organ, -cohort), py=py, k=3:7, cohort="GEL", groups=map_groups(groups))
+obj.nogroups = fit(counts.gel.sub %>% dplyr::select(-organ, -cohort), py=py, k=3:7, cohort="GEL")
+obj.groups = fit(counts.gel.sub %>% dplyr::select(-organ, -cohort), py=py, k=3:7, cohort="GEL", groups=map_groups(groups.sub))
 # obj.cluster = fit(counts.gel.sub %>% dplyr::select(-organ, -cohort), py=py, k=3:7, cohort="GEL", cluster=T)
 
 saveRDS(obj.nogroups, "./nobuild/test_groups/gel.std.fit.Rds")
 saveRDS(obj.groups, "./nobuild/test_groups/gel.hier.fit.Rds")
-
+saveRDS(counts.gel.sub %>% dplyr::mutate(groups=groups.sub), "./nobuild/test_groups/input_data.Rds")
 
 # sbs1 = plot_signatures(obj.nogroups, Type="De novo")
 # sbs2 = plot_signatures(obj.groups, Type="De novo")
