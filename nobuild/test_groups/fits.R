@@ -49,7 +49,7 @@ obj.nogroups2 = fit(counts.gel.sub %>% dplyr::select(-organ, -cohort), py=py, k=
 #                  cohort="GEL_crc", groups=map_groups(groups.sub), reference_catalogue=reference_crc)
 # obj.cluster = fit(counts.gel.sub %>% dplyr::select(-organ, -cohort), py=py, k=3:7, cohort="GEL", cluster=T)
 
-# saveRDS(obj.nogroups, "./nobuild/test_groups/gel.std.fit.Rds")
+saveRDS(obj.nogroups, "./nobuild/test_groups/gel.std.fit.Rds")
 # saveRDS(obj.groups, "./nobuild/test_groups/gel.hier.fit.Rds")
 # saveRDS(counts.gel.sub %>% dplyr::mutate(groups=groups.sub), "./nobuild/test_groups/input_data.Rds")
 #
