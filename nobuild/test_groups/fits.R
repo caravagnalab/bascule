@@ -35,11 +35,27 @@ saveRDS(obj.nogroups, "./nobuild/test_groups/gel.std.fit.Rds")
 saveRDS(obj.groups, "./nobuild/test_groups/gel.hier.fit.Rds")
 saveRDS(counts.gel.sub %>% dplyr::mutate(groups=groups.sub), "./nobuild/test_groups/input_data.Rds")
 
-# sbs1 = plot_signatures(obj.nogroups, Type="De novo")
-# sbs2 = plot_signatures(obj.groups, Type="De novo")
+
+obj.nogroups = readRDS("./nobuild/test_groups/gel.std.fit.Rds")
+obj.groups = readRDS("./nobuild/test_groups/gel.hier.fit.Rds")
+
+
+sbs1 = plot_signatures(obj.groups)
+sbs2 = plot_signatures(obj.nogroups, Type="De novo")
 # patchwork::wrap_plots(sbs1, sbs2)
 #
-# plot_exposure(obj.groups)
+plot_exposure(obj.groups)
+
+w = plot_similarity_reference(obj.groups)
+pdf("./test.pdf", width = 44, height = 28)
+print(w)
+dev.off()
+
+
+w = plot_similarity_reference(obj.nogroups)
+pdf("./test.nogroups.pdf", width = 44, height = 28)
+print(w)
+dev.off()
 
 
 
