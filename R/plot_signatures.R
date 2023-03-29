@@ -74,7 +74,7 @@ plot_signatures_sbs = function(x, sigs, highlight = 0.05)
       y = "Frequency",
       title = paste0(x$cohort, ' (n = ', x$n_samples, ')')
     ) +
-    # ggplot2::scale_fill_manual(values = get_signature_colors(x) %>% ggplot2::alpha(0.7)) +
+    ggplot2::scale_fill_manual(values = get_signature_colors(x) %>% ggplot2::alpha(0.7)) +
     ggplot2::scale_color_manual(values = "black", na.value = NA, na.translate = F) +
     ggplot2::guides(fill = ggplot2::guide_legend(
       paste0("p >", highlight * 100, '%')

@@ -59,10 +59,12 @@ saveRDS(obj.nogroups, "./nobuild/test_groups/gel.std.fit.Rds")
 
 
 # sbs1 = plot_signatures(obj.groups)
-plot_signatures(obj.nogroups2)
+plot_signatures(obj.nogroups)
+ggplot2::ggsave("./nobuild/test_groups/sigs.nogroups.pdf", height=8, width=8)
 # patchwork::wrap_plots(sbs1, sbs2)
 #
-plot_exposure(obj.nogroups)
+plot_exposure(obj.nogroups, sort_by = "D4")
+ggplot2::ggsave("./nobuild/test_groups/exposure.nogroups.pdf", height=8, width=8)
 
 
 w = plot_similarity_reference(obj.nogroups, by_subs = F)
