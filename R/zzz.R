@@ -6,5 +6,5 @@
   # cli::cli_alert_success(
   #   'Loading {.field {pk}}. Support : {.url { www}}' )
 
-  # configure_environment()
+  configure_environment()
 }
