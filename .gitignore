@@ -8,4 +8,4 @@ R/test.R
 *.rds
 *.pdf
 inst/doc
-.DS_Store
+**.DS_Store
