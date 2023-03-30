@@ -43,11 +43,15 @@ plot_exposure <- function(x, sort_by = NULL) {
     ggplot2::labs(
       title = paste0(x$cohort, ' (n = ', x$n_samples, ')'),
       caption = caption
-    ) +
-    ggplot2::guides(
-      fill = ggplot2::guide_legend(
-        nrow = ifelse(x$n_catalogue + x$n_denovo > 8, 2, 1))
-      )
+    )
+  # ggplot2::guides(
+  #   fill = ggplot2::guide_legend(
+  #     nrow = ifelse(x$n_catalogue + x$n_denovo > 8, 2, 1))
+  #   )
+
+  if ("groups" %in% names(x$fit))
+    plt = plt + ggplot2::facet_grid(groups~., scales="free_x")
+
 
   return(plt)
 }

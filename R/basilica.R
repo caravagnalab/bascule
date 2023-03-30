@@ -29,6 +29,7 @@
 
 fit <- function(x,
                 k,
+                py = NULL,
                 reference_catalogue = basilica::COSMIC_catalogue,
                 input_catalogue = basilica::COSMIC_catalogue["SBS1", ],
                 cohort = "MyCohort",
@@ -44,13 +45,13 @@ fit <- function(x,
                 sigma = FALSE,
                 CUDA = FALSE,
                 compile = TRUE,
-                enforce_sparsity = FALSE)
+                enforce_sparsity = FALSE,
+                store_parameters = FALSE,
+                cosine_by_subs = FALSE)
 
 {
-  sig_col = function(x)
-  {
-    crayon::blue(x)
-  }
+
+  sig_col = function(x) crayon::blue(x)
 
   fit = list()
   class(fit) = 'basilica_obj'
@@ -58,7 +59,6 @@ fit <- function(x,
   # cli::cli_h1("MUSICA - MUtational Signature Inference with a CAtalogue ")
   cli::cli_h1("Basilica - Bayesian signature learning with a catalogue")
   cat("\n")
-#>>>>>>> 3cb40b3527aabd136063f345b48acd13176212ed
 
   # First, sanitize inputs
   sanitized_inputs = sanitize_inputs(
@@ -94,16 +94,12 @@ fit <- function(x,
   )
 
   # Report messages for the input
-  if (!is.null(input_catalogue))
-  {
+  if (!is.null(input_catalogue)) {
     cli::cli_alert(
       "    Input Catalogue Signatures (ICSs): {.field {head(rownames(input_catalogue)) %>% sig_col}, ...} ({.field n = {nrow(input_catalogue)}})"
     )
-
     input_catalogue %>% dplyr::as_tibble() %>% print()
-  }
-  else
-  {
+    } else {
     cli::cli_alert_warning("    Input Catalogue Signatures (ICSs): none (no supervision).")
   }
 
@@ -139,8 +135,9 @@ fit <- function(x,
       if(length(k) == 0) cli::cli_abort("Cannot proceed: ICSs {.field k = {n_ICSs}} and {.field k = {0}}.")
     }
 
-    obj <- pyfit(
+    obj = pyfit(
       x = x,
+      py = py,
       k_list = k,
       lr = lr,
       n_steps = steps,
@@ -150,7 +147,8 @@ fit <- function(x,
       sigma = sigma,
       CUDA = CUDA,
       compile = compile,
-      enforce_sparsity = enforce_sparsity
+      enforce_sparsity = enforce_sparsity,
+      store_parameters = store_parameters
     )
 
     k = k_aux
@@ -163,7 +161,7 @@ fit <- function(x,
     BIC_trajectories = c(BIC_trajectories, bic)
 
     best_k = obj$exposure %>% ncol()
-    fix_k = input_catalogue %>% ncol
+    fix_k = input_catalogue %>% nrow()
     if(fix_k %>% is.null) fix_k = 0
 
     best_k = best_k - fix_k
@@ -177,59 +175,52 @@ fit <- function(x,
     ################### Filter out small-exposure signatures
     cli::cli_h3("Checking ICSs exposure, \u03b1 > \u03A6 ({.field \u03A6 = {phi}}).")
 
-    if (is.null(input_catalogue) || nrow(input_catalogue) == 0)
-    {
+    if (is.null(input_catalogue) || nrow(input_catalogue) == 0) {
       cli::cli_alert_danger("No ICSs in this step were used.")
     }
 
 
-if(!is.null(blacklist)){
-    # drop non-significant fixed signatures ------------------------------------
-    if(!is.null(blacklist) && blacklist == "TMB")
+    if(!is.null(blacklist)) {
+      # drop non-significant fixed signatures ------------------------------------
+      if(!is.null(blacklist) && blacklist == "TMB")
 
-    # drop non-significant fixed signatures -----------------------------------
-  if(!is.null(blacklist)){
-    
-    if(blacklist == "TMB")
+        # drop non-significant fixed signatures -----------------------------------
+        if(!is.null(blacklist)) {
 
-    {
-      a <- filter.fixed(
-        M = x,
-        alpha = obj$exposure,
-        beta_fixed = input_catalogue,
-        phi = phi
-      )
-    }
+          if(blacklist == "TMB") {
+            a <- filter.fixed(
+              M = x,
+              alpha = obj$exposure,
+              beta_fixed = input_catalogue,
+              phi = phi
+              )
+          }
 
-    if(!is.null(blacklist) && blacklist == "freq")
-    {
-      a = filter.fixed_minfreq(
-        alpha = obj$exposure,
-        beta_fixed = input_catalogue,
-        phi = phi
-      )
-    }
-
-}else{
-      a = filter.fixed_nofilter( # fake function
-        alpha = obj$exposure,
-        beta_fixed = input_catalogue
-      )
-  }
-
-  }else{
+          if(!is.null(blacklist) && blacklist == "freq") {
+            a = filter.fixed_minfreq(
+              alpha = obj$exposure,
+              beta_fixed = input_catalogue,
+              phi = phi
+            )
+          }
+        } else {
           a = filter.fixed_nofilter( # fake function
             alpha = obj$exposure,
-            beta_fixed = input_catalogue )
+            beta_fixed = input_catalogue
+          )
+        }
+
+    } else {
+      a = filter.fixed_nofilter( # fake function
+        alpha = obj$exposure,
+        beta_fixed = input_catalogue )
     }
 
 
-    remained_fixed <-
-      a$remained_fixed                          # data.frame / NULL
+    remained_fixed <- a$remained_fixed # data.frame / NULL
 
     # Here we might have dropped something
-    if (!is.null(a$dropped_fixed))
-    {
+    if (!is.null(a$dropped_fixed)) {
       n_dropped = a$dropped_fixed %>% nrow()
       w_dropped = a$dropped_fixed %>% rownames
 
@@ -239,20 +230,14 @@ if(!is.null(blacklist)){
         )
       )
 
-      black_list <-
-        union(black_list, w_dropped)  # character vector
+      black_list <- union(black_list, w_dropped)  # character vector
 
       cli::cli_alert_warning(paste0(
         "The updated blacklist is: {.field {black_list %>% crayon::red()}}."
       ))
-    }
-    else
-    {
-      # print(input_catalogue)
-      # print(n_cat)
+    } else {
 
-      if (!is.null(input_catalogue))
-      {
+      if (!is.null(input_catalogue)) {
         n_cat = input_catalogue %>% nrow()
 
         # Here we did NOT drop, and had some input signatures - we report it
@@ -270,7 +255,6 @@ if(!is.null(blacklist)){
     # cat('black_list:', black_list, '\n')
     # TEST-----
 
-
     n_denovo = obj$denovo_signatures %>% nrow
     n_catalogue = reference_catalogue %>% nrow
 
@@ -279,32 +263,32 @@ if(!is.null(blacklist)){
     )
 
     # detect denovo signatures which are similar to reference signatures -------
+    if (cosine_by_subs)
+      substitutions = get_contexts(obj) %>% dplyr::pull(subs) %>% unique() else
+      substitutions = NULL
+
     b <- filter.denovo.QP(
       reference_catalogue = reference_catalogue,
       beta_fixed = input_catalogue,
       beta_denovo = obj$denovo_signatures,
       black_list = black_list,
       delta = delta,
-      filt_pi = filt_pi
+      filt_pi = filt_pi,
+      substitutions = substitutions
     )
 
-    new_fixed <-
-      b$new_fixed  # data.frame / NULL (with labels from reference)
+    new_fixed <- b$new_fixed  # data.frame / NULL (with labels from reference)
 
-    if (!is.null(new_fixed) && nrow(new_fixed) > 0)
-    {
+    if (!is.null(new_fixed) && nrow(new_fixed) > 0) {
       n_denovo_denovo = b$reduced_denovo %>% nrow()
       cli::cli_alert_warning(
         "{.field {nrow(new_fixed)}}/{.field {n_denovo}} DNSs were found in the reference catalogue, and will become part of the ICSs!"
       )
-    }
-    else
-    {
+    } else {
       cli::cli_alert_success("No DNSs were found in the reference catalogue!")
     }
 
-    reduced_denovo <-
-      b$reduced_denovo  # data.frame / NULL (remaining denovo signatures)
+    reduced_denovo <- b$reduced_denovo  # data.frame / NULL (remaining denovo signatures)
 
     DNS_trajectories = append(DNS_trajectories, list(reduced_denovo))
 
@@ -339,8 +323,7 @@ if(!is.null(blacklist)){
     # - we keep finding exactly the ICSs
     # - there are no DNSs that seem to actually be part of RCSs
     if (nrow(dplyr::setdiff(input_catalogue, remained_fixed)) == 0 &
-        nrow(new_fixed) == 0)
-    {
+        nrow(new_fixed) == 0) {
       cat('\n')
       cli::cli_alert_success("Converged - ICSs is stable and all DNSs are genuine.")
 
@@ -392,10 +375,8 @@ if(!is.null(blacklist)){
 
   cli::cli_h3("Basilica completed in {.field {TIME}} minutes and {.field {counter}} iterations.")
 
-  if (length(BIC_trajectories) > 1)
-  {
+  if (length(BIC_trajectories) > 1) {
     cli::cli_h3("Fit statistics")
-
 
     # Print the BIC trajectory in +/- %
     BIC_trajectories_delta = sapply(1:(length(BIC_trajectories) - 1),
@@ -423,7 +404,6 @@ if(!is.null(blacklist)){
       " : ",
       paste(BIC_trajectories_delta, collapse = " \u2192 ")
     ) %>% cat()
-
   }
 
 
@@ -432,15 +412,22 @@ if(!is.null(blacklist)){
 
   fit$n_samples = x %>% nrow()
 
-  cat_expo = obj$denovo_signatures %>% rownames()
-  cat_expo = setdiff(obj$exposure %>% colnames, cat_expo)
-  fit$n_catalogue = obj$exposure[, cat_expo] %>% ncol()
+  #### CHECK ########
+  # cat_expo = obj$denovo_signatures %>% rownames()
+  # cat_expo = setdiff(obj$exposure %>% colnames, cat_expo)
+  # fit$n_catalogue = obj$exposure[, cat_expo] %>% ncol()
 
   fit$n_denovo = ifelse(
     obj$denovo_signatures %>% is.null,
     0,
     obj$denovo_signatures %>% nrow
   )
+
+  if (is.matrix(obj$alpha)) {
+    obj$alpha = obj$alpha %>% as.data.frame()
+    colnames(obj$alpha) = c(obj$catalogue_signatures %>% rownames(),
+                            obj$denovo_signatures %>% rownames())
+  }
 
 
   fit$input = list(
