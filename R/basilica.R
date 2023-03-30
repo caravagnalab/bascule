@@ -44,9 +44,10 @@ fit <- function(x,
                 lambda_rate = NULL,
                 sigma = FALSE,
                 CUDA = FALSE,
-                compile = TRUE,
+                compile = FALSE,
                 enforce_sparsity = FALSE,
                 store_parameters = FALSE,
+                regularizer="cosine",
                 cosine_by_subs = FALSE)
 
 {

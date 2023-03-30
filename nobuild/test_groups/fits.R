@@ -32,14 +32,14 @@ groups.sub = counts.gel.sub$organ
 
 table(groups)
 
-py_path = paste0(path, "pybasilicah")
+py_path = paste0(path, "pybasilica")
 py = reticulate::import_from_path(module="pybasilica", path=py_path)
 
 reference_crc = COSMIC_catalogue[c("SBS1","SBS5","SBS6","SBS10a","SBS10b"),]
 
 obj.nogroups = fit(counts.gel.sub %>% dplyr::select(-organ, -cohort), py=py, k=1:5,
                    cohort="GEL_crc", input_catalogue=COSMIC_catalogue[c("SBS1","SBS5"),],
-                   reference_catalogue=reference_crc, cosine_by_subs=FALSE)
+                   reference_catalogue=COSMIC_catalogue, cosine_by_subs=FALSE)
 
 obj.nogroups2 = fit(counts.gel.sub %>% dplyr::select(-organ, -cohort), py=py, k=1:5,
                    cohort="GEL_crc", input_catalogue=COSMIC_catalogue[c("SBS1","SBS5"),],

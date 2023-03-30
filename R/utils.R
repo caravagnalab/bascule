@@ -12,9 +12,10 @@ pyfit <- function(x,
                   lambda_rate = NULL,
                   sigma = FALSE,
                   CUDA = FALSE,
-                  compile = TRUE,
+                  compile = FALSE,
                   enforce_sparsity = FALSE,
-                  store_parameters = FALSE) {
+                  store_parameters = FALSE,
+                  regularizer = "cosine") {
   if (is.null(py))
     py <- reticulate::import("pybasilica")
 
@@ -35,7 +36,8 @@ pyfit <- function(x,
       CUDA = CUDA,
       compile_model = compile,
       enforce_sparsity = enforce_sparsity,
-      store_parameters = store_parameters
+      store_parameters = store_parameters,
+      regularizer = regularizer
     )
   # lambda_rate=lambda_rate,
   # sigma=sigma)
