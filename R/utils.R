@@ -507,8 +507,8 @@ filter.denovo.QP <-
 
 
 solve.quadratic.optimization <-
-  function(a,
-           b,
+  function(a,  # denovo
+           b,  # reference
            filt_pi = 0.05,
            delta = 0.9,
            substitutions = NULL) {
