@@ -12,7 +12,8 @@ pyfit <- function(x,
                   sigma = FALSE,
                   CUDA = FALSE,
                   compile = TRUE,
-                  enforce_sparsity = FALSE) {
+                  enforce_sparsity = FALSE,
+                  regularizer = "cosine") {
   py <- reticulate::import("pybasilica")
 
   if (length(k_list) > 1)
@@ -31,7 +32,8 @@ pyfit <- function(x,
       beta_fixed = input_catalogue,
       CUDA = CUDA,
       compile_model = compile,
-      enforce_sparsity = enforce_sparsity
+      enforce_sparsity = enforce_sparsity,
+      regularizer = regularizer
     )
   # lambda_rate=lambda_rate,
   # sigma=sigma)

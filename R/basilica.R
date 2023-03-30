@@ -16,6 +16,7 @@
 #' @param groups vector of discrete labels with one entry per sample, it defines the groups that will be considered by basilica
 #' @param input_catalogue input signature profiles, NULL by default
 #' @param enforce_sparsity use Laplace prior over exposure weights (bayesian LASSO)
+#' @param regularizer distance measure between signatures to use in the loss regularization term (default cosine similarity)
 #' @param cohort
 #' @param max_iterations
 #' @param blacklist
@@ -44,7 +45,8 @@ fit <- function(x,
                 sigma = FALSE,
                 CUDA = FALSE,
                 compile = TRUE,
-                enforce_sparsity = FALSE)
+                enforce_sparsity = FALSE,
+                regularizer = "cosine")
 
 {
   sig_col = function(x)
@@ -150,7 +152,8 @@ fit <- function(x,
       sigma = sigma,
       CUDA = CUDA,
       compile = compile,
-      enforce_sparsity = enforce_sparsity
+      enforce_sparsity = enforce_sparsity,
+      regularizer = regularizer
     )
 
     k = k_aux
