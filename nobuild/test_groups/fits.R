@@ -32,14 +32,15 @@ groups.sub = counts.gel.sub$organ
 
 table(groups)
 
-py_path = paste0(path, "pybasilica")
-py = reticulate::import_from_path(module="pybasilica", path=py_path)
+# py_path = paste0(path, "pybasilica")
+# py = reticulate::import_from_path(module="pybasilica", path=py_path)
+py = NULL
 
 reference_crc = COSMIC_catalogue[c("SBS1","SBS5","SBS6","SBS10a","SBS10b"),]
 
-obj.nogroups = fit(counts.gel.sub %>% dplyr::select(-organ, -cohort), py=py, k=1:5,
+obj.nogroups = fit(counts.gel.sub %>% dplyr::select(-organ, -cohort), py=py, k=1:8,
                    cohort="GEL_crc", input_catalogue=COSMIC_catalogue[c("SBS1","SBS5"),],
-                   reference_catalogue=COSMIC_catalogue, cosine_by_subs=FALSE)
+                   reference_catalogue=reference_crc, cosine_by_subs=FALSE)
 
 obj.nogroups2 = fit(counts.gel.sub %>% dplyr::select(-organ, -cohort), py=py, k=1:5,
                    cohort="GEL_crc", input_catalogue=COSMIC_catalogue[c("SBS1","SBS5"),],
@@ -59,15 +60,15 @@ saveRDS(obj.nogroups, "./nobuild/test_groups/gel.std.fit.Rds")
 
 
 # sbs1 = plot_signatures(obj.groups)
-plot_signatures(x)
+plot_signatures(obj.nogroups)
 ggplot2::ggsave("./nobuild/test_groups/sigs.nogroups.pdf", height=8, width=8)
 # patchwork::wrap_plots(sbs1, sbs2)
 #
-plot_exposure(x, sort_by = "D2")
+plot_exposure(obj.nogroups, sort_by = "D4")
 ggplot2::ggsave("./nobuild/test_groups/exposure.nogroups.pdf", height=8, width=8)
 
 
-w = plot_similarity_reference(x, by_subs = F)
+w = plot_similarity_reference(obj.nogroups, by_subs = F)
 pdf("./test.nogroups.pdf", width = 44, height = 28)
 print(w)
 dev.off()
