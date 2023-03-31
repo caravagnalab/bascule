@@ -32,8 +32,8 @@ groups.sub = counts.gel.sub$organ
 
 table(groups)
 
-# py_path = paste0(path, "pybasilica")
-# py = reticulate::import_from_path(module="pybasilica", path=py_path)
+py_path = paste0(path, "pybasilica")
+py = reticulate::import_from_path(module="pybasilica", path=py_path)
 py = NULL
 
 reference_crc = COSMIC_catalogue[c("SBS1","SBS5","SBS6","SBS10a","SBS10b"),]

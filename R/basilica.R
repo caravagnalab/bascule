@@ -48,6 +48,8 @@ fit <- function(x,
                 enforce_sparsity = FALSE,
                 store_parameters = FALSE,
                 regularizer="cosine",
+                reg_weight = 1,
+                reg_bic = FALSE,
                 cosine_by_subs = FALSE)
 
 {
@@ -75,7 +77,6 @@ fit <- function(x,
     lambda_rate = lambda_rate,
     sigma = sigma,
     blacklist = blacklist
-
   )
 
   x = sanitized_inputs$x
@@ -149,7 +150,10 @@ fit <- function(x,
       CUDA = CUDA,
       compile = compile,
       enforce_sparsity = enforce_sparsity,
-      store_parameters = store_parameters
+      store_parameters = store_parameters,
+      regularizer = regularizer,
+      reg_weight = reg_weight,
+      reg_bic = reg_bic
     )
 
     k = k_aux
@@ -282,11 +286,11 @@ fit <- function(x,
 
     if (!is.null(new_fixed) && nrow(new_fixed) > 0) {
       n_denovo_denovo = b$reduced_denovo %>% nrow()
-      cli::cli_alert_warning(
-        "{.field {nrow(new_fixed)}}/{.field {n_denovo}} DNSs were found in the reference catalogue, and will become part of the ICSs!"
-      )
+      # cli::cli_alert_warning(
+      #   "{.field {nrow(new_fixed)}}/{.field {n_denovo}} DNSs were found in the reference catalogue, and will become part of the ICSs!"
+      # )
     } else {
-      cli::cli_alert_success("No DNSs were found in the reference catalogue!")
+      # cli::cli_alert_success("No DNSs were found in the reference catalogue!")
     }
 
     reduced_denovo <- b$reduced_denovo  # data.frame / NULL (remaining denovo signatures)
