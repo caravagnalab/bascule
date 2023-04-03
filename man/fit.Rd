@@ -7,6 +7,7 @@
 fit(
   x,
   k,
+  py = NULL,
   reference_catalogue = basilica::COSMIC_catalogue,
   input_catalogue = basilica::COSMIC_catalogue["SBS1", ],
   cohort = "MyCohort",
@@ -21,8 +22,13 @@ fit(
   lambda_rate = NULL,
   sigma = FALSE,
   CUDA = FALSE,
-  compile = TRUE,
-  enforce_sparsity = FALSE
+  compile = FALSE,
+  enforce_sparsity = FALSE,
+  store_parameters = FALSE,
+  regularizer = "cosine",
+  reg_weight = 1,
+  reg_bic = FALSE,
+  cosine_by_subs = FALSE
 )
 }
 \arguments{

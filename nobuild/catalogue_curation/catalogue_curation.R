@@ -1,4 +1,5 @@
 library(ggplot2)
+source("~/GitHub/basilica/nobuild/catalogue_curation/helper_fns.R")
 
 ## Datasets ####
 
@@ -17,24 +18,23 @@ thr = c(0.01, 0.02)
 p = c(0.3, 0.5)
 
 catalogue_long = wide_to_long(catalogue)
-catalogue_long.filt_perc = filter_catalogue_by_perc(catalogue_long, p=p)
-catalogue_long.filt_thr = catalogue_long %>%
-  dplyr::mutate(dens=ifelse(dens<thr,0,dens)) %>% normalize_cat()
+catalogue_long.filt = catalogue_long %>%
+  filter_catalogue(p=p, thr=thr)
+
+
+## Export filtered catalogue - thr = 0.02 #####
+COSMIC_filtered = (catalogue_long.filt %>% dplyr::filter(type=="filt_thr_0.02") %>% long_to_wide())$filt_thr_0.02
+COSMIC_filtered["SBS5",] = catalogue["SBS5",]
+usethis::use_data(COSMIC_filtered)
+save(COSMIC_filtered, file="~/GitHub/basilica/nobuild/catalogue_curation/COSMIC_filtered.rda")
+
 
 cosine.all = compute_similarity(catalogue)
 # cosine.filt_perc = compute_similarity(long_to_wide(catalogue_long.filt_perc))
-cosine.filt_thr = compute_similarity(long_to_wide(catalogue_long.filt_thr))
+cosine.filt = compute_similarity(long_to_wide(catalogue_long.filt))
 
 cosine_long.all = get_cosine_long(cosine.all) %>%
-  dplyr::mutate(type="nofilt") %>%
-  dplyr::add_row(
-    get_cosine_long(cosine.filt_perc) %>%
-      dplyr::mutate(type="filt_perc")
-  ) %>%
-  dplyr::add_row(
-    get_cosine_long(cosine.filt_thr) %>%
-      dplyr::mutate(type="filt_thr")
-  )
+  dplyr::add_row(get_cosine_long(cosine.filt))
 
 
 
@@ -42,19 +42,19 @@ cosine_long.all = get_cosine_long(cosine.all) %>%
 
 ### beta distributions ####
 catalogue_long %>%
-  dplyr::left_join(compute_percentile(catalogue_long, p=p), by="sig") %>%
+  dplyr::left_join(compute_percentile(catalogue_long, p=.5), by="sig") %>%
   ggplot() +
   geom_histogram(aes(x=dens), bins=50) +
-  geom_vline(aes(xintercept=perc)) +
+  geom_vline(aes(xintercept=thr)) +
   facet_wrap(~sig, scales="free") +
   theme_bw()
 
 
 catalogue_long %>%
-  dplyr::left_join(compute_percentile(catalogue_long, p=p), by="sig") %>%
+  dplyr::left_join(compute_percentile(catalogue_long, p=.5), by="sig") %>%
 
   dplyr::group_by(sig) %>%
-  dplyr::summarise(cum_fn=list( ecdf(dens) ), perc=unique(perc)) %>%
+  dplyr::summarise(cum_fn=list( ecdf(dens) ), thr=unique(thr)) %>%
   dplyr::ungroup() %>%
 
   dplyr::mutate(x_eval=list(seq(0,1,length.out=200))) %>%
@@ -73,7 +73,7 @@ catalogue_long %>%
   ggplot() +
   # geom_histogram(aes(x=dens), bins=50) +
   geom_point(aes(x=x_eval, y=y_eval), size=.5) +
-  geom_vline(aes(xintercept=perc)) +
+  geom_vline(aes(xintercept=thr)) +
   facet_wrap(~sig, scales="free") +
   theme_bw()
 
@@ -86,11 +86,18 @@ catalogue_long %>%
 
 ### cosine similarities ####
 pheatmap(cosine.all, cluster_rows=F, cluster_cols=F)
-pheatmap(cosine.filt_perc, cluster_rows=F, cluster_cols=F)
-pheatmap(cosine.filt_thr, cluster_rows=F, cluster_cols=F)
+filt_heatmap = lapply(cosine.filt, function(i) pheatmap(i, cluster_rows=F, cluster_cols=F))
 
 
 cosine_long.all %>%
+  dplyr::filter(type %in% c("nofilt", "filt_perc_0.05")) %>%
+  ggplot() +
+  geom_histogram(aes(x=simil), bins=50) +
+  ggh4x::facet_nested_wrap(~sig1+type) +
+  theme_bw()
+
+cosine_long.all %>%
+  dplyr::filter(type %in% c("nofilt", "filt_thr_0.02")) %>%
   ggplot() +
   geom_histogram(aes(x=simil), bins=50) +
   ggh4x::facet_nested_wrap(~sig1+type) +
@@ -103,9 +110,8 @@ cosine_long.all %>%
 
 
 ## Save the report ####
-catalogue_long.complete = catalogue_long %>% dplyr::mutate(type="nofilt", perc=0) %>%
-  dplyr::add_row(catalogue_long.filt_perc %>% dplyr::mutate(type="filt_perc")) %>%
-  dplyr::add_row(catalogue_long.filt_thr %>% dplyr::mutate(type="filt_thr"))
+catalogue_long.complete = catalogue_long %>% dplyr::mutate(type="nofilt", thr=0) %>%
+  dplyr::add_row(catalogue_long.filt)
 
 
 sigsnames = catalogue_long.complete$sig %>% unique()
@@ -115,7 +121,7 @@ plots = lapply(sigsnames, function(ss) {
     dplyr::filter(sig1==ss | sig2==ss, simil!=1) %>%
     ggplot() +
     geom_histogram(aes(x=simil), bins=50) +
-    ggh4x::facet_nested_wrap(~type) +
+    facet_grid(~type) +
     theme_bw()
   p2 = cosine_long.all %>%
     dplyr::filter(sig1==ss | sig2==ss, simil!=1) %>%
@@ -131,11 +137,10 @@ plots = lapply(sigsnames, function(ss) {
     theme_bw()
 
   patchwork::wrap_plots((p1+p2)/p3) &
-    patchwork::plot_annotation(title=paste0("Signature ", ss),
-                               subtitle=paste0("thr=", thr, ", p=", p))
+    patchwork::plot_annotation(title=paste0("Signature ", ss))
   } ) %>% setNames(sigsnames)
 
-pdf(paste0("./nobuild/catalogue_cur.p",p,".pdf"), height = 6, width = 12)
+pdf(paste0("./nobuild/catalogue_curation/catalogue_cur.pdf"), height = 10, width = 12)
 print(plots)
 dev.off()
 
