@@ -7,7 +7,10 @@
 #' @export
 #'
 #' @examples
-plot_similarity_reference <- function(x, similarity_cutoff = 0.4, by_subs=FALSE) {
+plot_similarity_reference <- function(x, reference=NULL, similarity_cutoff = 0.4, by_subs=FALSE) {
+
+  if (!is.null(reference))
+    x$input$reference_catalogue = reference
 
   if (!by_subs)
     # Similarity to the reference
