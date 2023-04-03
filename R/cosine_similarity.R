@@ -3,8 +3,8 @@
 
 cosine.vector <- function(a, b, substitutions = NULL) {
 
-  if (is.matrix(a) & nrow(a)>1) a = t(a)
-  if (is.matrix(b) & nrow(b)>1) b = t(b)
+  if (is.matrix(a) && nrow(a)>1) a = t(a)
+  if (is.matrix(b) && nrow(b)>1) b = t(b)
 
   if (is.null(substitutions)) {
     if (!identical(colnames(a), colnames(b))) {
