@@ -7,7 +7,7 @@
 #' @export
 #'
 #' @examples
-plot_similarity_reference <- function(x, reference=NULL, similarity_cutoff = 0.4, by_subs=FALSE) {
+plot_similarity_reference <- function(x, reference=NULL, similarity_cutoff = 0.4, by_subs=FALSE, context = T,add_pheatmap = T) {
 
   if (!is.null(reference))
     x$input$reference_catalogue = reference
@@ -195,6 +195,8 @@ plot_similarity_reference <- function(x, reference=NULL, similarity_cutoff = 0.4
             .(names(col)[1])~'vs'~
               .(names(col)[2])~"cosine similarity"~theta~ '='~.(cosine_matrix_dnm[i]))
         )
+      
+      if(context == F){ plt = plt + theme(axis.ticks.x = element_blank(),axis.text.x = element_blank()) + labs(x = "")}
 
       extra_plots = append(extra_plots, list(plt))
     }
@@ -204,13 +206,18 @@ plot_similarity_reference <- function(x, reference=NULL, similarity_cutoff = 0.4
       ncol = 1
     )
 
-    ggp = ggpubr::ggarrange(
-      ggp,
-      extra_plots,
-      ncol = 2
-    )
-  }
+    if (add_pheatmap) {
+    plot =   ggpubr::ggarrange(
+        plotlist = list(ggp, extra_plots),
+        nrow = 1,
+        ncol = 2
+      )
+    } else{
+     plot = extra_plots
+    }
+         
+}
 
-  return(ggp)
+  return(plot)
 }
 
