@@ -4,7 +4,12 @@
 \alias{plot_similarity_reference}
 \title{Title}
 \usage{
-plot_similarity_reference(x, similarity_cutoff = 0.4)
+plot_similarity_reference(
+  x,
+  reference = NULL,
+  similarity_cutoff = 0.4,
+  by_subs = FALSE
+)
 }
 \arguments{
 \item{similarity_cutoff}{}

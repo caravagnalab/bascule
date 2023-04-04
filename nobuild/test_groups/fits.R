@@ -17,34 +17,51 @@ reticulate::use_condaenv("basilica-env")
 header = read.csv("./nobuild/test_groups/counts_all.tsv", header=F, sep="\t", nrows=1) %>% setNames(NULL)
 counts = read.csv("./nobuild/test_groups/counts_all.tsv", header=T, row.names=1, sep="\t")
 colnames(counts) = header
-counts.gel = counts %>% dplyr::filter(cohort=="GEL") %>%
-  dplyr::filter(organ%in%c("Colorectal","Lung","Breast"))
-groups = counts.gel$organ
+# counts.gel = counts %>% dplyr::filter(cohort=="GEL") %>%
+#   dplyr::filter(organ%in%c("Colorectal","Lung","Breast"))
+# groups = counts.gel$organ
 
 # keep = sample(1:nrow(counts.gel), 2000)
 # counts.gel.sub = counts.gel[keep,]
 # groups.sub = counts.gel.sub$organ
 
-counts.gel.sub = counts.gel %>% dplyr::filter(organ == "Colorectal")
-keep = sample(1:nrow(counts.gel.sub), 100)
-counts.gel.sub = counts.gel.sub[keep,]
-groups.sub = counts.gel.sub$organ
+sample_patients = function(counts, N=100, organ_list=c("Colorectal"), cohort_list=c("GEL","ICGC","Hartwig"), seed=5) {
+  # organ = c(organ)
+  # cohort = c(cohort)
+  counts.sub = counts %>% dplyr::filter(organ %in% organ_list, cohort %in% cohort_list)
+  set.seed(seed)
+  keep = sample(1:nrow(counts.sub), N)
+  counts.sub = counts.sub[keep,]
+  groups.sub = map_groups(counts.sub$organ)
+  return(list("counts"=counts.sub %>% dplyr::select(-cohort, -organ),
+              "groups_idx"=groups.sub,
+              "organ"=counts.sub$organ,
+              "cohort"=counts.sub$cohort))
+}
 
-table(groups)
+## First try with only one organ -> CRC
+counts_groups = sample_patients(counts, cohort_list="GEL", organ_list=c("Colorectal","Lung","Breast"))
+table(counts_groups$organ)
 
 py_path = paste0(path, "pybasilica")
 py = reticulate::import_from_path(module="pybasilica", path=py_path)
-py = NULL
+# py = NULL
 
-reference_crc = COSMIC_catalogue[c("SBS1","SBS5","SBS6","SBS10a","SBS10b"),]
+reference_sub = COSMIC_filtered[c("SBS1","SBS5","SBS6","SBS10a","SBS10b","SBS4",),]
 
-obj.nogroups = fit(counts.gel.sub %>% dplyr::select(-organ, -cohort), py=py, k=1:8,
-                   cohort="GEL_crc", input_catalogue=COSMIC_catalogue[c("SBS1","SBS5"),],
-                   reference_catalogue=reference_crc, cosine_by_subs=FALSE)
+obj.nogroups = fit(counts.gel.sub %>% dplyr::select(-organ, -cohort), py=py, k=0:15,
+                   cohort="GEL_crc", input_catalogue=COSMIC_filtered[c("SBS1","SBS5"),],
+                   reference_catalogue=reference_crc, reg_weight=1., reg_bic=FALSE)
 
-obj.nogroups2 = fit(counts.gel.sub %>% dplyr::select(-organ, -cohort), py=py, k=1:5,
-                   cohort="GEL_crc", input_catalogue=COSMIC_catalogue[c("SBS1","SBS5"),],
-                   reference_catalogue=reference_crc, cosine_by_subs=TRUE, delta=.85)
+plot_signatures(obj.nogroups)
+plot_exposure(obj.nogroups)
+plot_similarity_reference(obj.nogroups, reference = reference_crc)
+
+obj.groups = fit(counts.gel.sub %>% dplyr::select(-organ, -cohort), py=py,
+                 k=0:15, groups=groups.sub, cohort="GEL_crc_lung",
+                 input_catalogue=COSMIC_filtered[c("SBS1","SBS5"),],
+                 reference_catalogue=reference_crc,
+                 reg_weight=1., reg_bic=FALSE)
 
 # obj.groups = fit(counts.gel.sub %>% dplyr::select(-organ, -cohort), py=py, k=0:7,
 #                  cohort="GEL_crc", groups=map_groups(groups.sub), reference_catalogue=reference_crc)
