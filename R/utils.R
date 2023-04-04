@@ -112,7 +112,7 @@ get_train_params = function(obj) {
   return(tibble::tibble(alpha=list(alpha_all), beta_d=list(beta_d)))
 }
 
-#-------------------------------------------------------------------------------
+# Filter fixed signatures ------------------------------------------------------
 # M ------------> data.frame
 # alpha --------> data.frame
 # beta_fixed ---> data.frame / NULL
@@ -284,7 +284,7 @@ filter.fixed_nofilter <- function(alpha, beta_fixed)
 }
 
 
-#-------------------------------------------------------------------------------
+# Filter denovo signatures -----------------------------------------------------
 
 #' @import dplyr
 filter.denovo <-
@@ -443,8 +443,8 @@ adjust.denovo.denovo <-
     return(list(exposure = alpha, denovo_signatures = denovo_signatures))
   }
 
-# filter based on linear projection with constraints
 
+# filter based on linear projection with constraints
 
 #' @import dplyr
 filter.denovo.QP <-
@@ -454,13 +454,13 @@ filter.denovo.QP <-
            black_list = NULL,
            delta = 0.9,
            filt_pi = 0.05,
+           thr_exposure = 0.05,
+           exposures = NULL,
            substitutions = NULL) {
-    if (!is.data.frame(reference_catalogue)) {
-      warning("Invalid reference catalogue!")
-    }
-    if (!is.numeric(delta)) {
-      warning("Invalid delta argument!")
-    }
+    ## if denovo = TRUE -> check also if the denovo have exposure > thr in same samples
+
+    if (!is.data.frame(reference_catalogue)) warning("Invalid reference catalogue!")
+    if (!is.numeric(delta)) warning("Invalid delta argument!")
 
     # (Reference - Beta Fixed) ----------------------
     if (is.data.frame(beta_fixed)) {
@@ -471,28 +471,30 @@ filter.denovo.QP <-
       warning('invalid fixed signatures (beta_fixed) !')
     }
 
-    if (nrow(reference)==0) {
-      print("!!!!!!!!")
-      return(list(new_fixed = NULL, reduced_denovo = beta_denovo))
-    }
+    if (nrow(reference)==0) return(list(new_fixed = NULL, reduced_denovo = beta_denovo))
 
     # BETA DENOVO ---------------------------------
-    if (is.null(beta_denovo)) {
-      return(list(new_fixed = NULL, reduced_denovo = NULL))
+    if (is.null(beta_denovo)) return(list(new_fixed = NULL, reduced_denovo = NULL))
 
-    } else if (is.data.frame(beta_denovo)) {
+    if (is.data.frame(beta_denovo)) {
+      if (is.null(exposures)) {
+        a = beta_denovo
+        b = reference
+      } else {
+        a = reference
+        b = beta_denovo
+      }
       ### names of catalogue signatures to include + names de novo to remove
       res_optimization <-
-        solve.quadratic.optimization(beta_denovo,
-                                     reference,
+        solve.quadratic.optimization(a,
+                                     b,
                                      delta = delta,
                                      filt_pi = filt_pi,
+                                     thr_exposure = thr_exposure,
+                                     exposures = exposures,
                                      substitutions = substitutions)
       match_list <- res_optimization$catalogue_to_include
-
-    } else {
-      warning("Invalid beta denovo!")
-    }
+      } else warning("Invalid beta denovo!")
 
     match_list <- setdiff(match_list, black_list)
     if (length(match_list) == 0) {
@@ -513,10 +515,12 @@ filter.denovo.QP <-
 
 
 solve.quadratic.optimization <-
-  function(a,  # denovo
-           b,  # reference
+  function(a,
+           b,
            filt_pi = 0.05,
            delta = 0.9,
+           exposures = NULL,
+           thr_exposure = 0.05,
            substitutions = NULL) {
     # a and b are data.frame
 
@@ -573,6 +577,7 @@ solve.quadratic.optimization <-
     )
   }
 
+
 solve.quadratic.optimization.aux <-
   function(v,
            Z,
@@ -586,7 +591,6 @@ solve.quadratic.optimization.aux <-
     b <- c(1, rep(0, length(d)))
 
     C <- cbind(rep(1, length(d)), diag(length(d)))
-
 
     pis <-
       quadprog::solve.QP(
@@ -612,4 +616,23 @@ solve.quadratic.optimization.aux <-
       return(list(NULL, denovo_name))
     }
 
-  }
+}
+
+# Renormalize denovo -----------------------------------------------------------
+
+renormalize_denovo_thr = function(denovo) {
+  denovo.tmp = obj$denovo_signatures
+  denovo.tmp[denovo.tmp<.02] = 0
+  return(denovo.tmp / rowSums(denovo.tmp))
+}
+
+
+# Combine denovo as lincomb of reference ----------------------------------------
+
+check_denovo = function(denovo, reference, exposure) {
+
+}
+
+
+
+

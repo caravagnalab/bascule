@@ -18,9 +18,10 @@ plot_similarity_reference <- function(x, reference=NULL, similarity_cutoff = 0.4
       x$input$reference_catalogue,
       x %>% get_signatures()
     ) else {
+      cosine_matrix.tmp = cosine.matrix(x$input$reference_catalogue, x %>% get_signatures(), substitutions = get_contexts(x)$subs %>% unique())
       cosine_matrix.tmp = lapply(get_contexts(x)$subs %>% unique(), function(ss)
-        cosine.matrix(x$input$reference_catalogue, x %>% get_signatures(), substitution = ss)
-        ) %>% setNames(get_contexts(x)$subs %>% unique())
+        cosine.matrix(x$input$reference_catalogue, x %>% get_signatures(), substitutions = ss)
+      )
 
       all.df = data.frame(matrix(0, nrow(x$input$reference_catalogue), nrow(x %>% get_signatures())))
       rownames(all.df) <- rownames(x$input$reference_catalogue)
@@ -195,7 +196,7 @@ plot_similarity_reference <- function(x, reference=NULL, similarity_cutoff = 0.4
             .(names(col)[1])~'vs'~
               .(names(col)[2])~"cosine similarity"~theta~ '='~.(cosine_matrix_dnm[i]))
         )
-      
+
       if(context == F){ plt = plt + theme(axis.ticks.x = element_blank(),axis.text.x = element_blank()) + labs(x = "")}
 
       extra_plots = append(extra_plots, list(plt))
@@ -215,7 +216,7 @@ plot_similarity_reference <- function(x, reference=NULL, similarity_cutoff = 0.4
     } else{
      plot = extra_plots
     }
-         
+
 }
 
   return(plot)

@@ -17,14 +17,21 @@ cosine.vector <- function(a, b, substitutions = NULL) {
   }
 
   cosine.tot = 0
+  keep_subs = length(substitutions)
   for (ss in substitutions) {
     keep_cols.tmp = grep(ss, colnames(b), value = T)
+
+    if (all(c(a[,keep_cols.tmp], b[,keep_cols.tmp])==0)) {
+      keep_subs = keep_subs - 1
+      next
+    }
+
     num.tmp = sum(a[,keep_cols.tmp] * b[,keep_cols.tmp])
     denomin.tmp = sqrt(sum(a[,keep_cols.tmp]^2)) * sqrt(sum(b[,keep_cols.tmp]^2))
     cosine.tot = cosine.tot + (num.tmp / denomin.tmp)
   }
 
-  return(cosine.tot / length(substitutions))
+  return(cosine.tot / keep_subs)
 }
 
 #-------------------------------------------------------------------------------

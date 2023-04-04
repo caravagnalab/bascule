@@ -12,7 +12,10 @@ plot_exposure <- function(x, sort_by = NULL) {
   alpha <- get_exposure(x, long = TRUE)
 
   # plt <- .plot_exposure(x = alpha)
-  samples_order = alpha$Sample %>% unique %>% gtools::mixedsort()
+  if ("groups" %in% colnames(alpha))
+    samples_order = alpha %>% dplyr::arrange(groups) %>% dplyr::pull(Sample) %>% unique() else
+    samples_order = alpha$Sample %>% unique %>% gtools::mixedsort()
+
   if(!is.null(sort_by))
   {
     samples_order = alpha %>%

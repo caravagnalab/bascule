@@ -156,6 +156,8 @@ fit <- function(x,
       reg_bic = reg_bic
     )
 
+    obj$denovo_signatures = renormalize_denovo_thr(obj$denovo_signatures)
+
     k = k_aux
 
     TIME_it = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"),
