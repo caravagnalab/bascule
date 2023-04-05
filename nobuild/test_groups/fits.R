@@ -63,7 +63,7 @@ py = reticulate::import_from_path(module="pybasilica", path=py_path)
 # py = NULL
 
 sbs.names = c("SBS1","SBS5",
-              "SBS2","SBS6","SBS10a","SBS10b","SBS21",  # CRC
+              "SBS2","SBS6","SBS10a","SBS10b","SBS21","SBS28","SBS44",  # CRC
               "SBS2","SBS3","SBS4","SBS8","SBS13","SBS15","SBS17","SBS18",  # Lung
               "SBS3","SBS8","SBS10","SBS13","SBS17","SBS18","SBS20","SBS26")  # Breast
 
@@ -73,31 +73,83 @@ reference_sub = COSMIC_filtered[intersect(sbs.names, rownames(COSMIC_filtered)),
 # rownames(sbs1.5) = "SBS1.5"
 # reference_sub2 = rbind(reference_sub[!(rownames(reference_sub)%in%c("SBS1","SBS5")),], sbs1.5)
 
-x.nogrps = fit(counts_groups$counts, py=py, k=0:10,
+x.nogrps = fit(x = counts_groups$counts, py=py, k=0:7,
                cohort="GEL.crc_lung",
                input_catalogue=reference_sub[c("SBS1","SBS5"),],
                # input_catalogue=reference_sub["SBS1.5",],
-               reference_catalogue=reference_sub,
-               reg_weight=1., reg_bic=FALSE)
+               reference_catalogue=reference_sub, delta=0.85, phi=0.1,
+               reg_weight=1., reg_bic=TRUE, filtered_cat = TRUE)
 
-x.nogrps.noreg = fit(counts_groups$counts, py=py, k=0:10,
-                     cohort="GEL.crc_lung",
-                     input_catalogue=reference_sub[c("SBS1","SBS5"),],
-                     # input_catalogue=reference_sub["SBS1.5",],
-                     reference_catalogue=reference_sub,
-                     reg_weight=1., reg_bic=FALSE)
+saveRDS(x.nogrps, "./nobuild/test_fit.Rds")
 
-x.nogrps.regbic = fit(counts_groups$counts, py=py, k=0:10,
-                      cohort="GEL.crc_lung",
-                      input_catalogue=reference_sub[c("SBS1","SBS5"),],
-                      # input_catalogue=reference_sub["SBS1.5",],
-                      reference_catalogue=reference_sub,
-                      reg_weight=1., reg_bic=TRUE)
+x.grps = fit(x=counts_groups$counts, py=py, k=0:7,
+             groups=counts_groups$groups_idx,
+             cohort="GEL.crc_lung",
+             input_catalogue=reference_sub[c("SBS1","SBS5"),],
+             # input_catalogue=reference_sub["SBS1.5",],
+             reference_catalogue=reference_sub, delta=0.85, phi=0.1,
+             reg_weight=1., reg_bic=TRUE, filtered_cat = TRUE)
+
+saveRDS(x.nogrps, "./nobuild/test_fit.Rds")
+saveRDS(x.grps, "./nobuild/test_fit.hier.Rds")
+
+# x.nogrps.noreg = fit(counts_groups$counts, py=py, k=0:7,
+#                      cohort="GEL.crc_lung",
+#                      input_catalogue=reference_sub[c("SBS1","SBS5"),],
+#                      # input_catalogue=reference_sub["SBS1.5",],
+#                      reference_catalogue=reference_sub, delta=0.85, phi=0.1,
+#                      reg_weight=0., reg_bic=FALSE, filtered_cat = TRUE)
+#
+# x.nogrps.noregbic = fit(counts_groups$counts, py=py, k=0:7,
+#                       cohort="GEL.crc_lung",
+#                       input_catalogue=reference_sub[c("SBS1","SBS5"),],
+#                       # input_catalogue=reference_sub["SBS1.5",],
+#                       reference_catalogue=reference_sub, delta=0.85, phi=0.1,
+#                       reg_weight=1., reg_bic=FALSE, filtered_cat=TRUE)
+
+pl1 = plot_similarity_reference(x.nogrps, reference = COSMIC_filtered)
+ggplot2::ggsave("./nobuild/prova.png", height = 18, width = 20, bg = "white")
+
+pl1.grps = plot_similarity_reference(x.grps, reference = COSMIC_filtered)
+ggplot2::ggsave("./nobuild/prova.hier.png", height = 18, width = 20, bg = "white")
+
+pl2 = plot_similarity_reference(x.nogrps.noreg, reference = COSMIC_filtered)
+pl3 = plot_similarity_reference(x.nogrps.noregbic, reference = COSMIC_filtered)
+
+pdf("./nobuild/compare.pdf", height = 18, width = 20)
+print(pl1)
+print(pl2)
+print(pl3)
+dev.off()
+
+sid = c("GEL-2498766-11", "GEL-2736989-11")
+muts = counts_groups$counts[sid,]
+plots_muts = function(muts) {
+  return(
+    muts %>%
+      as.data.frame() %>%
+      tibble::rownames_to_column(var="pid") %>%
+      reshape2::melt(id="pid") %>%
+      dplyr::rename(Var1=pid, Var2=variable) %>%
+      dplyr::mutate(substitution=paste0(substr(start=3, stop=3, Var2),">",substr(start=5, stop=5, Var2)),
+                    context=paste0(substr(start=1, stop=1, Var2), "_", substr(start=7, stop=7, Var2))) %>%
+      ggplot() +
+      geom_bar(aes(value, x=context, fill=Var1), stat="identity") +
+      facet_grid(Var1 ~ substitution, scales="free") +
+      my_ggplot_theme() +
+      theme(axis.text.x = element_text(angle=90)) +
+      # theme(axis.ticks.x=element_blank(),axis.text.x=element_blank()) +
+      # scale_fill_manual(values=cls) +
+      guides(fill="none")  +
+      labs(x="Context", y="", title="Number of muts")
+  )
+}
+
 
 
 denovo_list = list("reg"=x.nogrps$fit$denovo_signatures,
                    "noreg"=x.nogrps.noreg$fit$denovo_signatures,
-                   "regbic"=x.nogrps.regbic$fit$denovo_signatures)
+                   "regbic"=x.nogrps.noregbic$fit$denovo_signatures)
 
 cosine.denovo = compute_cosine_denovo(denovo_list, by_subs = F)
 numbers = cosine.denovo %>% round(2)
@@ -110,7 +162,7 @@ x.grps = fit(counts_groups$counts, py=py, groups=counts_groups$groups_idx,
              k=0:10, cohort="GEL.crc_lung.Hier",
              input_catalogue=COSMIC_filtered[c("SBS1","SBS5"),],
              reference_catalogue=reference_sub,
-             reg_weight=1., reg_bic=FALSE)
+             reg_weight=1., reg_bic=TRUE, filtered_cat = TRUE)
 
 
 
