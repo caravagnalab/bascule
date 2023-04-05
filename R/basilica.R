@@ -32,6 +32,7 @@ fit <- function(x,
                 py = NULL,
                 reference_catalogue = basilica::COSMIC_catalogue,
                 input_catalogue = basilica::COSMIC_catalogue["SBS1", ],
+                filtered_cat = FALSE,
                 cohort = "MyCohort",
                 lr = 0.01,
                 steps = 500,
@@ -156,7 +157,8 @@ fit <- function(x,
       reg_bic = reg_bic
     )
 
-    obj$denovo_signatures = renormalize_denovo_thr(obj$denovo_signatures)
+    if (filtered_cat)
+      obj$denovo_signatures = renormalize_denovo_thr(obj$denovo_signatures)
 
     k = k_aux
 
