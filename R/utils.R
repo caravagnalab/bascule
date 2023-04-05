@@ -462,7 +462,7 @@ filter.denovo.QP <-
     if (!is.data.frame(reference_catalogue)) warning("Invalid reference catalogue!")
     if (!is.numeric(delta)) warning("Invalid delta argument!")
 
-    # (Reference - Beta Fixed) ----------------------
+    # (Reference - Beta Fixed) -------------------------------------------------
     if (is.data.frame(beta_fixed)) {
       reference <- dplyr::setdiff(reference_catalogue, beta_fixed)
     } else if (is.null(beta_fixed)) {
@@ -473,7 +473,7 @@ filter.denovo.QP <-
 
     if (nrow(reference)==0) return(list(new_fixed = NULL, reduced_denovo = beta_denovo))
 
-    # BETA DENOVO ---------------------------------
+    # BETA DENOVO --------------------------------------------------------------
     if (is.null(beta_denovo)) return(list(new_fixed = NULL, reduced_denovo = NULL))
 
     if (is.data.frame(beta_denovo)) {
@@ -498,9 +498,9 @@ filter.denovo.QP <-
 
     match_list <- setdiff(match_list, black_list)
     if (length(match_list) == 0) {
-      #col_names <- colnames(reference_catalogue)
-      #df = data.frame(matrix(nrow=0, ncol = length(col_names)))
-      #colnames(df) = col_names
+      # col_names <- colnames(reference_catalogue)
+      # df = data.frame(matrix(nrow=0, ncol = length(col_names)))
+      # colnames(df) = col_names
       return(list(new_fixed = NULL, reduced_denovo = beta_denovo))
     } else {
       if (is.null(res_optimization$denovo_to_include)) {
@@ -530,15 +530,10 @@ solve.quadratic.optimization <-
 
     cmp = nrow(a)
     pb <- progress::progress_bar$new(
-      format = paste0(
-        "  Quadratic programming solver (n = ",
-        cmp,
-        ") [:bar] :percent eta: :eta"
-      ),
+      format = paste0("  Quadratic programming solver (n = ", cmp, ") [:bar] :percent eta: :eta"),
       total = cmp,
       clear = FALSE,
-      width = 90
-    )
+      width = 90)
 
     b_m <- as.matrix(b) %>% t
     Rinv <- solve(chol(t(b_m) %*% b_m))
@@ -548,14 +543,15 @@ solve.quadratic.optimization <-
       FUN = function(i) {
         optim_res <-
           solve.quadratic.optimization.aux(
-            as.matrix(a)[i, ] %>% t(),
-            b_m,
-            Rinv,
+            v = as.matrix(a)[i, ] %>% t(),
+            Z = b_m,
+            Rinv = Rinv,
             filt_pi = filt_pi,
             delta = delta,
-            denovo_name = rownames(a)[i],
-            substitutions = substitutions
-          )
+            a_name = rownames(a)[i],
+            exposures = exposures,
+            thr_exposure = thr_exposure,
+            substitutions = substitutions)
         pb$tick()
         return(optim_res)
       }
@@ -568,6 +564,8 @@ solve.quadratic.optimization <-
       lapply(res, function(x)
         x[[2]]) %>% do.call(c, .)
 
+    if (!is.null(exposures))
+      denovo_to_include = setdiff(rownames(b), denovo_to_include)
 
     return(
       list(
@@ -582,16 +580,15 @@ solve.quadratic.optimization.aux <-
   function(v,
            Z,
            Rinv,
-           denovo_name,
+           a_name,
            filt_pi = 0.05,
            delta = 0.9,
+           exposures = NULL,
+           thr_exposure = 0.05,
            substitutions = NULL) {
     d <- v %*% Z
-
     b <- c(1, rep(0, length(d)))
-
     C <- cbind(rep(1, length(d)), diag(length(d)))
-
     pis <-
       quadprog::solve.QP(
         Dmat = Rinv,
@@ -602,7 +599,6 @@ solve.quadratic.optimization.aux <-
         meq = 1
       )$solution
     pis[pis < filt_pi] <- 0
-
     reconstructed_vector <- Z %*% pis
 
     vec1 = matrix(v)
@@ -610,29 +606,82 @@ solve.quadratic.optimization.aux <-
 
     cos_sim <- cosine.vector(vec1, reconstructed_vector, substitutions = substitutions)
 
-    if (!is.na(cos_sim) && cos_sim > delta) {
-      return(list(colnames(Z)[pis > 0], NULL))
+    # return -> first element is catalogue to include
+    #           second element is denovo to include
+
+    if (is.null(exposures)) {
+      if (!is.na(cos_sim) && cos_sim > delta)
+        return(list(colnames(Z)[pis > 0], NULL))
+      else
+        return(list(NULL, a_name))
     } else {
-      return(list(NULL, denovo_name))
+      if (!is.na(cos_sim) && cos_sim > delta) {
+        if (sum(pis>0) <= 1) return(list(NULL, colnames(Z)[pis > 0]))
+
+        keep.tmp = colnames(Z)[pis > 0]
+        exposures.tmp = exposures[,keep.tmp]
+        exposures.tmp$n_denovo = apply(exposures.tmp > thr_exposure, 1,
+                                       function(x) length(unique(x))==1)
+
+        print(a_name)
+        print(colnames(Z)[pis > 0])
+        print(sum(exposures.tmp$n_denovo))
+
+        if (sum(exposures.tmp$n_denovo) >= nrow(exposures)*0.9)
+          # return the reference that can be explained as a linear comb of denovo
+          return(list(a_name, colnames(Z)[pis > 0]))
+        else
+          return(list(NULL, NULL))
+        } else {
+          return(list(NULL, NULL))
+        }
+    }
+
+
+    if (!is.na(cos_sim) && cos_sim > delta) {
+      if (!is.null(exposures) && sum(pis > 0)>1) {
+
+        print(a_name)
+
+        keep.tmp = colnames(Z)[pis > 0]
+        exposures.tmp = exposures[,keep.tmp]
+        exposures.tmp$n_denovo = apply(exposures.tmp > thr_exposure, 1, function(x) length(unique(x))==1)
+
+        ## if both either are present or not in the same patients (more than 90% of the times)
+        if (sum(exposures.tmp$n_denovo) >= nrow(exposures)*0.9)
+          return(list(colnames(Z)[pis>0],NULL))
+      } else if (!is.null(exposures))
+        return(list(NULL, NULL))
+
+      return(list(colnames(Z)[pis > 0], NULL))
+
+    } else {
+      if (!is.null(exposures)) return(list(NULL, NULL))
+      return(list(NULL, a_name))
     }
 
 }
 
 # Renormalize denovo -----------------------------------------------------------
 
-renormalize_denovo_thr = function(denovo) {
-  denovo.tmp = obj$denovo_signatures
-  denovo.tmp[denovo.tmp<.02] = 0
+renormalize_denovo_thr = function(denovo, thr=0.02) {
+  denovo.tmp = denovo
+  denovo.tmp[denovo.tmp < thr] = 0
   return(denovo.tmp / rowSums(denovo.tmp))
 }
 
 
-# Combine denovo as lincomb of reference ----------------------------------------
+filter.denovo.phi = function(exposures, phi, denovo) {
+  exposures.denovo = exposures[,denovo]
+  sbs_low_exp = (exposures.denovo < phi) %>% colSums()
 
-check_denovo = function(denovo, reference, exposure) {
+  rmv = sbs_low_exp[sbs_low_exp > nrow(exposures.denovo)] %>% names()
+  if (length(rmv) == 0) return(exposures)
 
+  return(
+    exposures %>% dplyr::select(-dplyr::all_of(rmv)) %>% renormalize_denovo_thr(thr=0)
+  )
 }
-
 
 
 

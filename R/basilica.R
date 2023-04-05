@@ -1,6 +1,3 @@
-
-
-
 #' fit basilica model.
 #'
 #' @description fit the model and infer the underlying signatures and their contributions in the mutational catalogue counts.
@@ -184,45 +181,39 @@ fit <- function(x,
     ################### Filter out small-exposure signatures
     cli::cli_h3("Checking ICSs exposure, \u03b1 > \u03A6 ({.field \u03A6 = {phi}}).")
 
-    if (is.null(input_catalogue) || nrow(input_catalogue) == 0) {
+    if (is.null(input_catalogue) || nrow(input_catalogue) == 0)
       cli::cli_alert_danger("No ICSs in this step were used.")
-    }
 
 
     if(!is.null(blacklist)) {
-      # drop non-significant fixed signatures ------------------------------------
+
+      # drop non-significant fixed signatures --------------------------------
       if(!is.null(blacklist) && blacklist == "TMB")
 
-        # drop non-significant fixed signatures -----------------------------------
         if(!is.null(blacklist)) {
-
-          if(blacklist == "TMB") {
+          if(blacklist == "TMB")
             a <- filter.fixed(
               M = x,
               alpha = obj$exposure,
               beta_fixed = input_catalogue,
-              phi = phi
-              )
-          }
+              phi = phi)
 
-          if(!is.null(blacklist) && blacklist == "freq") {
+          if(!is.null(blacklist) && blacklist == "freq")
             a = filter.fixed_minfreq(
               alpha = obj$exposure,
               beta_fixed = input_catalogue,
-              phi = phi
-            )
-          }
+              phi = phi)
+
         } else {
           a = filter.fixed_nofilter( # fake function
             alpha = obj$exposure,
-            beta_fixed = input_catalogue
-          )
+            beta_fixed = input_catalogue)
         }
 
     } else {
       a = filter.fixed_nofilter( # fake function
         alpha = obj$exposure,
-        beta_fixed = input_catalogue )
+        beta_fixed = input_catalogue)
     }
 
 
@@ -253,16 +244,15 @@ fit <- function(x,
         if (n_cat > 0)
           cli::cli_alert_success("No ICSs will be dropped.")
       }
-
     }
 
-    # TEST-----
+    # TEST
     # cat('class(a$dropped_fixed):', class(a$dropped_fixed), '\n')
     # cat('a$dropped_fixed:')
     # print(a$dropped_fixed)
     # cat('class(black_list):', class(black_list), '\n')
     # cat('black_list:', black_list, '\n')
-    # TEST-----
+    # TEST
 
     n_denovo = obj$denovo_signatures %>% nrow
     n_catalogue = reference_catalogue %>% nrow
@@ -276,20 +266,43 @@ fit <- function(x,
       substitutions = get_contexts(obj) %>% dplyr::pull(subs) %>% unique() else
       substitutions = NULL
 
-    b <- filter.denovo.QP(
+    obj$exposure = filter.denovo.phi(exposures = obj$exposure,
+                                      denovo = obj$denovo_signatures %>% rownames(),
+                                      phi = phi) # filter denovo if low exposure in all patients
+
+    # check if reference are linear comb of denovo sigs co-occurring (exp>thr)
+    b_denovo <- filter.denovo.QP(
       reference_catalogue = reference_catalogue,
       beta_fixed = input_catalogue,
       beta_denovo = obj$denovo_signatures,
+      thr_exposure = phi,
+      exposures = obj$exposure,
       black_list = black_list,
       delta = delta,
       filt_pi = filt_pi,
-      substitutions = substitutions
-    )
+      substitutions = substitutions)
 
-    new_fixed <- b$new_fixed  # data.frame / NULL (with labels from reference)
+    if (!is.null(b_denovo$new_fixed))
+      print(b_denovo)
+
+    denovo_filt = b_denovo$reduced_denovo
+
+    # check if denovo are linear comb of reference sigs
+    b_reference <- filter.denovo.QP(
+      reference_catalogue = reference_catalogue,
+      beta_fixed = rbind(input_catalogue, b_denovo$new_fixed),
+      beta_denovo = denovo_filt,
+      black_list = black_list,
+      delta = delta,
+      filt_pi = filt_pi,
+      substitutions = substitutions)
+
+    new_fixed <- rbind(b_denovo$new_fixed, b_reference$new_fixed) %>% unique()
+
+    # if (!is.null(b_denovo$new_fixed))
 
     if (!is.null(new_fixed) && nrow(new_fixed) > 0) {
-      n_denovo_denovo = b$reduced_denovo %>% nrow()
+      n_denovo_denovo = b_reference$reduced_denovo %>% nrow()
       # cli::cli_alert_warning(
       #   "{.field {nrow(new_fixed)}}/{.field {n_denovo}} DNSs were found in the reference catalogue, and will become part of the ICSs!"
       # )
@@ -297,7 +310,7 @@ fit <- function(x,
       # cli::cli_alert_success("No DNSs were found in the reference catalogue!")
     }
 
-    reduced_denovo <- b$reduced_denovo  # data.frame / NULL (remaining denovo signatures)
+    reduced_denovo <- b_reference$reduced_denovo  # data.frame / NULL (remaining denovo signatures)
 
     DNS_trajectories = append(DNS_trajectories, list(reduced_denovo))
 
