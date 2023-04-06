@@ -448,8 +448,8 @@ adjust.denovo.denovo <-
 
 #' @import dplyr
 filter.denovo.QP <-
-  function(reference_catalogue,
-           beta_fixed,
+  function(reference,
+           # beta_fixed,
            beta_denovo = NULL,
            black_list = NULL,
            delta = 0.9,
@@ -459,17 +459,17 @@ filter.denovo.QP <-
            substitutions = NULL) {
     ## if denovo = TRUE -> check also if the denovo have exposure > thr in same samples
 
-    if (!is.data.frame(reference_catalogue)) warning("Invalid reference catalogue!")
+    if (!is.data.frame(reference)) warning("Invalid reference catalogue!")
     if (!is.numeric(delta)) warning("Invalid delta argument!")
 
     # (Reference - Beta Fixed) -------------------------------------------------
-    if (is.data.frame(beta_fixed)) {
-      reference <- dplyr::setdiff(reference_catalogue, beta_fixed)
-    } else if (is.null(beta_fixed)) {
-      reference <- reference_catalogue
-    } else {
-      warning('invalid fixed signatures (beta_fixed) !')
-    }
+    # if (is.data.frame(beta_fixed)) {
+    #   reference <- dplyr::setdiff(reference_catalogue, beta_fixed)
+    # } else if (is.null(beta_fixed)) {
+    #   reference <- reference_catalogue
+    # } else {
+    #   warning('invalid fixed signatures (beta_fixed) !')
+    # }
 
     if (nrow(reference)==0) return(list(new_fixed = NULL, reduced_denovo = beta_denovo))
 

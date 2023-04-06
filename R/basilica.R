@@ -272,8 +272,8 @@ fit <- function(x,
 
     # check if reference are linear comb of denovo sigs co-occurring (exp>thr)
     b_denovo <- filter.denovo.QP(
-      reference_catalogue = reference_catalogue,
-      beta_fixed = input_catalogue,
+      reference = rbind(input_catalogue, reference_catalogue),
+      # beta_fixed = rbind(input_catalogue, reference_catalogue),
       beta_denovo = obj$denovo_signatures,
       thr_exposure = phi,
       exposures = obj$exposure,
@@ -287,10 +287,11 @@ fit <- function(x,
 
     denovo_filt = b_denovo$reduced_denovo
 
+    ref = setdiff(reference_catalogue, rbind(input_catalogue, b_denovo$new_fixed))
     # check if denovo are linear comb of reference sigs
     b_reference <- filter.denovo.QP(
-      reference_catalogue = reference_catalogue,
-      beta_fixed = rbind(input_catalogue, b_denovo$new_fixed),
+      reference = ref,
+      # beta_fixed = rbind(input_catalogue, b_denovo$new_fixed),
       beta_denovo = denovo_filt,
       black_list = black_list,
       delta = delta,

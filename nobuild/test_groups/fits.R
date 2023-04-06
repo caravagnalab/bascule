@@ -64,7 +64,7 @@ py = reticulate::import_from_path(module="pybasilica", path=py_path)
 
 sbs.names = c("SBS1","SBS5",
               "SBS2","SBS6","SBS10a","SBS10b","SBS21","SBS28","SBS44",  # CRC
-              "SBS2","SBS3","SBS4","SBS8","SBS13","SBS15","SBS17","SBS18",  # Lung
+              "SBS2","SBS3","SBS4","SBS8","SBS13","SBS15","SBS17a","SBS17b","SBS18",  # Lung
               "SBS3","SBS8","SBS10","SBS13","SBS17","SBS18","SBS20","SBS26")  # Breast
 
 reference_sub = COSMIC_filtered[intersect(sbs.names, rownames(COSMIC_filtered)),]
@@ -80,7 +80,7 @@ x.nogrps = fit(x = counts_groups$counts, py=py, k=0:7,
                reference_catalogue=reference_sub, delta=0.85, phi=0.1,
                reg_weight=1., reg_bic=TRUE, filtered_cat = TRUE)
 
-saveRDS(x.nogrps, "./nobuild/test_fit.Rds")
+saveRDS(x.nogrps, "./nobuild/test_fit2.Rds")
 
 x.grps = fit(x=counts_groups$counts, py=py, k=0:7,
              groups=counts_groups$groups_idx,
@@ -91,7 +91,7 @@ x.grps = fit(x=counts_groups$counts, py=py, k=0:7,
              reg_weight=1., reg_bic=TRUE, filtered_cat = TRUE)
 
 saveRDS(x.nogrps, "./nobuild/test_fit.Rds")
-saveRDS(x.grps, "./nobuild/test_fit.hier.Rds")
+saveRDS(x.grps, "./nobuild/test_fit.hier2.Rds")
 
 # x.nogrps.noreg = fit(counts_groups$counts, py=py, k=0:7,
 #                      cohort="GEL.crc_lung",
@@ -108,10 +108,10 @@ saveRDS(x.grps, "./nobuild/test_fit.hier.Rds")
 #                       reg_weight=1., reg_bic=FALSE, filtered_cat=TRUE)
 
 pl1 = plot_similarity_reference(x.nogrps, reference = COSMIC_filtered)
-ggplot2::ggsave("./nobuild/prova.png", height = 18, width = 20, bg = "white")
+ggplot2::ggsave("./nobuild/prova2.png", height = 18, width = 20, bg = "white")
 
 pl1.grps = plot_similarity_reference(x.grps, reference = COSMIC_filtered)
-ggplot2::ggsave("./nobuild/prova.hier.png", height = 18, width = 20, bg = "white")
+ggplot2::ggsave("./nobuild/prova.hier2.png", height = 18, width = 20, bg = "white")
 
 pl2 = plot_similarity_reference(x.nogrps.noreg, reference = COSMIC_filtered)
 pl3 = plot_similarity_reference(x.nogrps.noregbic, reference = COSMIC_filtered)
@@ -145,6 +145,7 @@ plots_muts = function(muts) {
   )
 }
 
+x.nogrps %>% plot_exposure(sort_by = "SBS1")
 
 
 denovo_list = list("reg"=x.nogrps$fit$denovo_signatures,
