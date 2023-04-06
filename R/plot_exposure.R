@@ -60,6 +60,7 @@ plot_exposure <- function(x, labels = NULL,sort_by = NULL, thr=0.1){
       title = paste0(x$cohort, ' (n = ', x$n_samples, ')'),
       caption = caption
     )
+  
   # ggplot2::guides(
   #   fill = ggplot2::guide_legend(
   #     nrow = ifelse(x$n_catalogue + x$n_denovo > 8, 2, 1))
