@@ -7,7 +7,7 @@
 #' @export plot_exposure
 #'
 #' @examples
-plot_exposure <- function(x, sort_by = NULL) {
+plot_exposure <- function(x, labels = NULL,sort_by = NULL) {
 
   alpha <- get_exposure(x, long = TRUE)
 
@@ -31,6 +31,12 @@ plot_exposure <- function(x, sort_by = NULL) {
 
   caption = paste0("Sorted by ", sort_by)
   if(is.null(sort_by)) caption = "Sorted by sample"
+  
+  if(!is.null(labels)){
+    
+    alpha = alpha %>% dplyr::select(-groups) %>% full_join(labels, by = "Sample")
+  }
+  
 
   plt = ggplot2::ggplot(
     data = alpha,
@@ -51,8 +57,8 @@ plot_exposure <- function(x, sort_by = NULL) {
   #   fill = ggplot2::guide_legend(
   #     nrow = ifelse(x$n_catalogue + x$n_denovo > 8, 2, 1))
   #   )
-
-  if ("groups" %in% names(x$fit))
+  
+ if ("groups" %in% names(x$fit))
     plt = plt + ggplot2::facet_grid(groups~., scales="free_x")
 
 
