@@ -7,7 +7,9 @@
 #' @export plot_exposure
 #'
 #' @examples
-plot_exposure <- function(x, labels = NULL,sort_by = NULL) {
+
+plot_exposure <- function(x, labels = NULL,sort_by = NULL, thr=0.1){
+
 
   alpha <- get_exposure(x, long = TRUE)
 
@@ -29,6 +31,9 @@ plot_exposure <- function(x, labels = NULL,sort_by = NULL) {
     levels = samples_order
   )
 
+  alpha = alpha %>%
+    dplyr::mutate(Signature=ifelse(Exposure < thr, "Other", Signature))
+
   caption = paste0("Sorted by ", sort_by)
   if(is.null(sort_by)) caption = "Sorted by sample"
   
@@ -38,6 +43,10 @@ plot_exposure <- function(x, labels = NULL,sort_by = NULL) {
   }
   
 
+  keep = alpha$Signature %>% unique()
+
+  other_col = list("Other"="gainsboro") %>% unlist()
+
   plt = ggplot2::ggplot(
     data = alpha,
     ggplot2::aes(x=Sample, y=Exposure, fill=Signature)
@@ -45,7 +54,8 @@ plot_exposure <- function(x, labels = NULL,sort_by = NULL) {
     ggplot2::geom_bar(stat = "identity") +
     my_ggplot_theme() +
     ggplot2::scale_y_continuous(labels=scales::percent) +
-    ggplot2::scale_fill_manual(values = get_signature_colors(x)) +
+    ggplot2::scale_fill_manual(values = c(get_signature_colors(x),other_col),
+                               breaks = keep) +
     ggplot2::theme(
       axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)
     ) +
