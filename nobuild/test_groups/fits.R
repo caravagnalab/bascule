@@ -80,6 +80,10 @@ x.nogrps = fit(x = counts_groups$counts, py=py, k=0:7,
                reference_catalogue=reference_sub, delta=0.85, phi=0.1,
                reg_weight=1., reg_bic=TRUE, filtered_cat = TRUE)
 
+x.nogrps2 = readRDS("~/GitHub/basilica/nobuild/test_fit.Rds")
+x.grps2 = readRDS("./nobuild/test_fit.hier2.Rds")
+
+saveRDS(x.nogrps, "./nobuild/test_fit.Rds")
 saveRDS(x.nogrps, "./nobuild/test_fit2.Rds")
 
 x.grps = fit(x=counts_groups$counts, py=py, k=0:7,
@@ -90,7 +94,6 @@ x.grps = fit(x=counts_groups$counts, py=py, k=0:7,
              reference_catalogue=reference_sub, delta=0.85, phi=0.1,
              reg_weight=1., reg_bic=TRUE, filtered_cat = TRUE)
 
-saveRDS(x.nogrps, "./nobuild/test_fit.Rds")
 saveRDS(x.grps, "./nobuild/test_fit.hier2.Rds")
 
 # x.nogrps.noreg = fit(counts_groups$counts, py=py, k=0:7,
