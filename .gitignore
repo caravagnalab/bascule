@@ -5,6 +5,5 @@
 docs
 R/run.R
 R/test.R
-*.rds
 inst/doc
 **.DS_Store
