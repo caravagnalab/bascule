@@ -26,12 +26,8 @@ plot_exposure <- function(x, labels = NULL,sort_by = NULL, thr=0.1){
       dplyr::pull(Sample)
   }
 
-  alpha$Sample = factor(
-    alpha$Sample,
-    levels = samples_order
-  )
 
-  alpha = alpha %>%
+ alpha = alpha %>%
     dplyr::mutate(Signature=ifelse(Exposure < thr, "Other", Signature))
 
   caption = paste0("Sorted by ", sort_by)
@@ -40,7 +36,8 @@ plot_exposure <- function(x, labels = NULL,sort_by = NULL, thr=0.1){
   if(!is.null(labels)){
     
     alpha = alpha %>% dplyr::select(-groups) %>% full_join(labels, by = "Sample")
-  }
+    
+}
   
 
   keep = alpha$Signature %>% unique()
@@ -49,7 +46,7 @@ plot_exposure <- function(x, labels = NULL,sort_by = NULL, thr=0.1){
 
   plt = ggplot2::ggplot(
     data = alpha,
-    ggplot2::aes(x=Sample, y=Exposure, fill=Signature)
+    ggplot2::aes(x=factor(Sample,levels = samples_order), y=Exposure, fill=Signature)
   ) +
     ggplot2::geom_bar(stat = "identity") +
     my_ggplot_theme() +
