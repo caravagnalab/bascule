@@ -286,8 +286,15 @@ fit <- function(x,
       print(b_denovo)
 
     denovo_filt = b_denovo$reduced_denovo
-
-    ref = setdiff(reference_catalogue, rbind(input_catalogue, b_denovo$new_fixed))
+    
+    
+    if (!is.null(rbind(input_catalogue, b_denovo$new_fixed))) {
+      ref = setdiff(reference_catalogue,
+                    rbind(input_catalogue, b_denovo$new_fixed))
+    } else{
+      ref = reference_catalogue
+    }
+    
     # check if denovo are linear comb of reference sigs
     b_reference <- filter.denovo.QP(
       reference = ref,
