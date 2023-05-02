@@ -672,7 +672,8 @@ renormalize_denovo_thr = function(denovo, thr=0.02) {
 
 
 filter.denovo.phi = function(exposures, phi, denovo) {
-  exposures.denovo = exposures[,denovo]
+  exposures.denovo = exposures[,denovo] %>% as.data.frame()
+  colnames(exposures.denovo) = denovo
   sbs_low_exp = (exposures.denovo < phi) %>% colSums()
 
   rmv = sbs_low_exp[sbs_low_exp > nrow(exposures.denovo)] %>% names()
