@@ -5,7 +5,7 @@
 #' @param sample_name 
 #' @param levels
 #' @param cls
-#'  @param flip_coord
+#' @param flip_coord
 #' @return plot
 #' @export plot_exposure
 #'
