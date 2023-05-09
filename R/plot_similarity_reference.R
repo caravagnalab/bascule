@@ -7,7 +7,7 @@
 #' @export
 #'
 #' @examples
-plot_similarity_reference <- function(x, reference=NULL, similarity_cutoff = 0.4, by_subs=FALSE, context = T,add_pheatmap = T) {
+plot_similarity_reference <- function(x, reference=NULL, similarity_cutoff = 0.4, by_subs=FALSE, context = T, add_pheatmap = T) {
 
   if (!is.null(reference))
     x$input$reference_catalogue = reference
@@ -18,19 +18,19 @@ plot_similarity_reference <- function(x, reference=NULL, similarity_cutoff = 0.4
       x$input$reference_catalogue,
       x %>% get_signatures()
     ) else {
-      cosine_matrix.tmp = cosine.matrix(x$input$reference_catalogue, x %>% get_signatures(), substitutions = get_contexts(x)$subs %>% unique())
-      cosine_matrix.tmp = lapply(get_contexts(x)$subs %>% unique(), function(ss)
-        cosine.matrix(x$input$reference_catalogue, x %>% get_signatures(), substitutions = ss)
-      )
+      cosine_matrix = cosine.matrix(x$input$reference_catalogue, x %>% get_signatures(), substitutions = get_contexts(x)$subs %>% unique())
+      # cosine_matrix.tmp = lapply(get_contexts(x)$subs %>% unique(), function(ss)
+      #   cosine.matrix(x$input$reference_catalogue, x %>% get_signatures(), substitutions = ss)
+      # ) %>% setNames(get_contexts(x)$subs %>% unique())
 
-      all.df = data.frame(matrix(0, nrow(x$input$reference_catalogue), nrow(x %>% get_signatures())))
-      rownames(all.df) <- rownames(x$input$reference_catalogue)
-      colnames(all.df) <- rownames(x %>% get_signatures())
-
-      for (ss in names(cosine_matrix.tmp))
-        all.df = all.df + cosine_matrix.tmp[[ss]]
-
-      cosine_matrix = all.df / length(cosine_matrix.tmp)
+      # all.df = data.frame(matrix(0, nrow(x$input$reference_catalogue), nrow(x %>% get_signatures())))
+      # rownames(all.df) <- rownames(x$input$reference_catalogue)
+      # colnames(all.df) <- rownames(x %>% get_signatures())
+      #
+      # for (ss in names(cosine_matrix.tmp))
+      #   all.df = all.df + cosine_matrix.tmp[[ss]]
+      #
+      # cosine_matrix = all.df / length(cosine_matrix.tmp)
 
     }
 
@@ -52,7 +52,7 @@ plot_similarity_reference <- function(x, reference=NULL, similarity_cutoff = 0.4
   numbers[numbers < similarity_cutoff] = ''
 
   # Blacklist
-  if(x$iterations$blacklist %>% sapply(length) %>% sum() > 0)
+  if(!is.null(x$iterations$blacklist) && (x$iterations$blacklist %>% sapply(length) %>% sum() > 0))
   {
     BList = x$iterations$blacklist %>%
       seq_along() %>%
@@ -82,30 +82,33 @@ plot_similarity_reference <- function(x, reference=NULL, similarity_cutoff = 0.4
     BList = color_BList = NULL
   }
 
-  # Entry list -- exists
-  EList = x$iterations$ICS %>%
-    seq_along() %>%
-    lapply(function(i){
-      x$iterations$ICS[[i]] %>%
-        rownames() %>%
-        as.data.frame() %>%
-        mutate(iteration = i)
-    }) %>%
-    Reduce(f = bind_rows)
+  if (!is.null(x$iterations)) {
+    # Entry list -- exists
+    EList = x$iterations$ICS %>%
+      seq_along() %>%
+      lapply(function(i){
+        x$iterations$ICS[[i]] %>%
+          rownames() %>%
+          as.data.frame() %>%
+          mutate(iteration = i)
+      }) %>%
+      Reduce(f = bind_rows)
 
-  colnames(EList)[1] = "Signature"
+    colnames(EList)[1] = "Signature"
 
-  EList = EList %>%
-    group_by(Signature) %>%
-    arrange(iteration) %>%
-    filter(row_number() == 1) %>%
-    as.data.frame()
+    EList = EList %>%
+      group_by(Signature) %>%
+      arrange(iteration) %>%
+      filter(row_number() == 1) %>%
+      as.data.frame()
 
-  rownames(EList) = EList$Signature
-  EList = EList[, -2, drop = FALSE]
-  colnames(EList) = 'detection'
+    rownames(EList) = EList$Signature
+    EList = EList[, -2, drop = FALSE]
+    colnames(EList) = 'detection'
+  } else EList = NULL
 
   if(
+    !is.null(EList) &&
     RColorBrewer::brewer.pal.info["Greens", ]$maxcolors >=
     EList$detection %>% unique %>% length()
     )
@@ -115,7 +118,7 @@ plot_similarity_reference <- function(x, reference=NULL, similarity_cutoff = 0.4
       "Greens"
     )
     names(color_EList) = EList$detection %>% unique %>% sort
-  } else{
+  } else if (!is.null(EList)) {
     tmp_g = RColorBrewer::brewer.pal(3, "Greens")
 
     color_EList = colorRampPalette(c(tmp_g[1], tmp_g[3]))
@@ -123,9 +126,17 @@ plot_similarity_reference <- function(x, reference=NULL, similarity_cutoff = 0.4
     names(color_EList) = EList$detection %>% unique %>% sort
   }
 
+  cluster_rows = cluster_cols = TRUE
+  if (dim(cosine_matrix)[1]==1)
+    cluster_rows = FALSE
+  if (dim(cosine_matrix)[2]==1)
+    cluster_cols = FALSE
+
   # The world is a better place now that I can pheatmap -> ggplot
   ggp = pheatmap::pheatmap(
     mat = cosine_matrix,
+    cluster_rows = cluster_rows,
+    cluster_cols = cluster_cols,
     color = color_gradient,
     breaks = color_breaks,
     border_color = 'white',
@@ -217,7 +228,8 @@ plot_similarity_reference <- function(x, reference=NULL, similarity_cutoff = 0.4
      plot = extra_plots
     }
 
-}
+  } else
+    plot = ggp
 
   return(plot)
 }

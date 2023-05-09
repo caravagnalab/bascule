@@ -28,7 +28,9 @@ cosine.vector <- function(a, b, substitutions = NULL) {
 
     num.tmp = sum(a[,keep_cols.tmp] * b[,keep_cols.tmp])
     denomin.tmp = sqrt(sum(a[,keep_cols.tmp]^2)) * sqrt(sum(b[,keep_cols.tmp]^2))
-    cosine.tot = cosine.tot + (num.tmp / denomin.tmp)
+
+    if (num.tmp != 0 && denomin.tmp != 0)
+      cosine.tot = cosine.tot + (num.tmp / denomin.tmp)
   }
 
   return(cosine.tot / keep_subs)
@@ -62,9 +64,6 @@ cosine.matrix <- function(a, b, substitutions=NULL) {
       df[i,j] <- score
     }
   }
-
-  print(df)
-
 
   return(df)
 }
