@@ -11,10 +11,6 @@ An object of class \code{data.frame} with 5 rows and 96 columns.
 data(example_input)
 }
 \description{
-Example input SBS data (synthetic)
-}
-\examples{
-data(example_input)
-print(example_input)
+Description
 }
 \keyword{datasets}

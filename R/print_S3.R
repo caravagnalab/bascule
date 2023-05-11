@@ -7,8 +7,7 @@
 #'
 #' @exportS3Method print basilica_obj
 #' @export print.basilica_obj
-#'
-#' @examples
+
 print.basilica_obj = function(x, ...)
 {
   stopifnot(inherits(x, "basilica_obj"))

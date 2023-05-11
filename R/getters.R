@@ -6,8 +6,7 @@
 #'
 #' @return a data.frame where rows are samples and columns are inferred signature profiles
 #' @export get_exposure
-#'
-#' @examples
+
 get_exposure <- function(x, long = FALSE) {
 
   stopifnot(inherits(x, "basilica_obj"))
@@ -53,8 +52,7 @@ get_exposure <- function(x, long = FALSE) {
 #'
 #' @return a data.frame where rows are inferred signatures (included in reference catalogue) and columns are 96 substitution bases.
 #' @export get_catalogue_signatures
-#'
-#' @examples
+
 get_catalogue_signatures <- function(x, long = FALSE) {
   stopifnot(inherits(x, "basilica_obj"))
 
@@ -79,8 +77,7 @@ get_catalogue_signatures <- function(x, long = FALSE) {
 #'
 #' @return a data.frame where rows are inferred signatures (not included in reference catalogue) and columns are 96 substitution bases.
 #' @export get_denovo_signatures
-#'
-#' @examples
+
 get_denovo_signatures <- function(x,  long = FALSE) {
   stopifnot(inherits(x, "basilica_obj"))
 
@@ -108,8 +105,7 @@ get_denovo_signatures <- function(x,  long = FALSE) {
 #'
 #' @return a data.frame where rows are inferred signatures (not included in reference catalogue) and columns are 96 substitution bases.
 #' @export get_denovo_signatures
-#'
-#' @examples
+
 get_signatures <- function(x,  long = FALSE) {
   stopifnot(inherits(x, "basilica_obj"))
 

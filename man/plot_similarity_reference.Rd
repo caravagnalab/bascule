@@ -2,18 +2,36 @@
 % Please edit documentation in R/plot_similarity_reference.R
 \name{plot_similarity_reference}
 \alias{plot_similarity_reference}
-\title{Title}
+\title{Function to visualize the similarity of denovo and reference signatures.}
 \usage{
 plot_similarity_reference(
   x,
   reference = NULL,
   similarity_cutoff = 0.4,
-  by_subs = FALSE
+  by_subs = FALSE,
+  context = T,
+  add_pheatmap = T
 )
 }
 \arguments{
-\item{similarity_cutoff}{}
+\item{x}{Basilica object.}
+
+\item{reference}{External reference catalogue to compare the denovo with.}
+
+\item{similarity_cutoff}{add}
+
+\item{by_subs}{Logical. If set to \code{TRUE}, the similarity is computed
+separately for each substitution.}
+
+\item{context}{Logical. If set to \code{TRUE}, the context labels are
+reported on the x axis.}
+
+\item{add_pheatmap}{Logical. If set to \code{TRUE}, the heatmap with the
+similarity values among signatures will be reported.}
+}
+\value{
+add
 }
 \description{
-Title
+Function to visualize the similarity of denovo and reference signatures.
 }

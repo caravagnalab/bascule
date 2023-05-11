@@ -2,16 +2,21 @@
 % Please edit documentation in R/plot_signatures.R
 \name{plot_signatures}
 \alias{plot_signatures}
-\title{plot signatures}
+\title{Plot signatures}
 \usage{
-plot_signatures(x, Type = c("De novo", "Catalogue"), highlight = 0.05)
+plot_signatures(x, what = "SBS", context = T, cls = NULL, signatures = NULL)
 }
 \arguments{
 \item{x}{basilica object}
+
+\item{what}{add}
+
+\item{cls}{add}
 }
 \value{
 plot
 }
 \description{
-creates bar plot of inferred signature profiles, where x-axis are 96 substitution bases and y-axis are their relative contribution.
+creates bar plot of inferred signature profiles,
+where x-axis are 96 substitution bases and y-axis are their relative contribution.
 }

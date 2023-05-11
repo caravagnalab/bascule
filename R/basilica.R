@@ -13,16 +13,14 @@
 #' @param groups vector of discrete labels with one entry per sample, it defines the groups that will be considered by basilica
 #' @param input_catalogue input signature profiles, NULL by default
 #' @param enforce_sparsity use Laplace prior over exposure weights (bayesian LASSO)
-#' @param cohort
-#' @param max_iterations
-#' @param blacklist
-#' @param lambda_rate
-#' @param sigma
+#' @param cohort add
+#' @param max_iterations add
+#' @param blacklist add
+#' @param lambda_rate add
+#' @param sigma add
 #'
 #' @return inferred exposure matrix, inferred signatures from reference catalogue and inferred de novo (not from reference catalogue) signatures
 #' @export fit
-#'
-#' @examples
 
 fit <- function(x,
                 k,
@@ -286,15 +284,15 @@ fit <- function(x,
       print(b_denovo)
 
     denovo_filt = b_denovo$reduced_denovo
-    
-    
+
+
     if (!is.null(rbind(input_catalogue, b_denovo$new_fixed))) {
       ref = setdiff(reference_catalogue,
                     rbind(input_catalogue, b_denovo$new_fixed))
     } else{
       ref = reference_catalogue
     }
-    
+
     # check if denovo are linear comb of reference sigs
     b_reference <- filter.denovo.QP(
       reference = ref,

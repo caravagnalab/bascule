@@ -1,13 +1,20 @@
-#' Title
+#' Function to visualize the similarity of denovo and reference signatures.
 #'
-#' @param x
-#' @param similarity_cutoff
+#' @param x Basilica object.
+#' @param similarity_cutoff add
+#' @param reference External reference catalogue to compare the denovo with.
+#' @param by_subs Logical. If set to \code{TRUE}, the similarity is computed
+#'                separately for each substitution.
+#' @param context Logical. If set to \code{TRUE}, the context labels are
+#'                reported on the x axis.
+#' @param add_pheatmap Logical. If set to \code{TRUE}, the heatmap with the
+#'                     similarity values among signatures will be reported.
 #'
-#' @return
-#' @export
-#'
-#' @examples
-plot_similarity_reference <- function(x, reference=NULL, similarity_cutoff = 0.4, by_subs=FALSE, context = T, add_pheatmap = T) {
+#' @return add
+#' @export plot_similarity_reference
+
+plot_similarity_reference <- function(x, reference = NULL, similarity_cutoff = 0.4,
+                                      by_subs = FALSE, context = T, add_pheatmap = T) {
 
   if (!is.null(reference))
     x$input$reference_catalogue = reference
@@ -17,22 +24,10 @@ plot_similarity_reference <- function(x, reference=NULL, similarity_cutoff = 0.4
     cosine_matrix <- cosine.matrix(
       x$input$reference_catalogue,
       x %>% get_signatures()
-    ) else {
-      cosine_matrix = cosine.matrix(x$input$reference_catalogue, x %>% get_signatures(), substitutions = get_contexts(x)$subs %>% unique())
-      # cosine_matrix.tmp = lapply(get_contexts(x)$subs %>% unique(), function(ss)
-      #   cosine.matrix(x$input$reference_catalogue, x %>% get_signatures(), substitutions = ss)
-      # ) %>% setNames(get_contexts(x)$subs %>% unique())
-
-      # all.df = data.frame(matrix(0, nrow(x$input$reference_catalogue), nrow(x %>% get_signatures())))
-      # rownames(all.df) <- rownames(x$input$reference_catalogue)
-      # colnames(all.df) <- rownames(x %>% get_signatures())
-      #
-      # for (ss in names(cosine_matrix.tmp))
-      #   all.df = all.df + cosine_matrix.tmp[[ss]]
-      #
-      # cosine_matrix = all.df / length(cosine_matrix.tmp)
-
-    }
+    ) else
+      cosine_matrix = cosine.matrix(x$input$reference_catalogue,
+                                    x %>% get_signatures(),
+                                    substitutions = get_contexts(x)$subs %>% unique())
 
   # cosine_matrix_ldf = reshape2::melt(cosine_matrix %>% as.matrix()) %>%
   #   dplyr::rename(

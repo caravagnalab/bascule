@@ -5,16 +5,12 @@
 \alias{Degasperi_catalogue}
 \title{Degasperi catalogue (version XXXX)}
 \format{
-....
+add
 }
 \usage{
 data(Degasperi_catalogue)
 }
 \description{
-D......
-}
-\examples{
-data(Degasperi_catalogue)
-print(Degasperi_catalogue)
+Description
 }
 \keyword{datasets}

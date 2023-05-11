@@ -5,16 +5,12 @@
 \alias{COSMIC_catalogue}
 \title{COSMIC catalogue (version XXXX)}
 \format{
-....
+add
 }
 \usage{
 data(COSMIC_catalogue)
 }
 \description{
-D......
-}
-\examples{
-data(COSMIC_catalogue)
-print(COSMIC_catalogue)
+COSMIC catalogue (version XXXX)
 }
 \keyword{datasets}

@@ -11,13 +11,8 @@ An object of class \code{list} of length 21.
 data(Degasperi_SBS_GEL_PCAWG_HW)
 }
 \description{
-SBS data released with the paper
-
-Substitution mutational signatures in whole-genome–sequenced cancers in the UK population.
+SBS data released with the paper "Substitution mutational signatures in
+whole-genome–sequenced cancers in the UK population."
 Degasperi et al.Science 376, Issue 6591, 2022. PMID: 35949260
-}
-\examples{
-data(Degasperi_SBS_GEL_PCAWG_HW)
-print(Degasperi_SBS_GEL_PCAWG_HW)
 }
 \keyword{datasets}

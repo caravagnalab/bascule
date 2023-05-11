@@ -7,7 +7,14 @@
 plot_compare_fits(x, y, similarity_cutoff = 0.4)
 }
 \arguments{
-\item{similarity_cutoff}{}
+\item{x}{add}
+
+\item{y}{add}
+
+\item{similarity_cutoff}{add}
+}
+\value{
+add
 }
 \description{
 Title
