@@ -16,26 +16,11 @@ knitr::opts_chunk$set(
 
 
 ```{r setup}
-#library(basilica)
+# library(basilica)
+# catalogue <- COSMIC_catalogue
+# input <- example_input
+# res <- fit(input, 5)
+# res
+```
 
-setwd("~/work/Trieste/r_packages/basilica")
-devtools::load_all(".")
-catalogue <- basilica::COSMIC_catalogue
-input <- basilica::example_input
-res <- basilica::fit(input , 5)
-res
-```
-```{r}
-catalogue <- basilica::COSMIC_catalogue
-input <- basilica::example_input
-
-```
-```{r}
-
-res <- basilica::fit(input , 5)
-res
-```
-```{r}
-res
-```
 
