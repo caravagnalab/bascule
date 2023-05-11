@@ -10,6 +10,12 @@
     <loc>https://caravagnalab.github.io/basilica/LICENSE.html</loc>
   </url>
   <url>
+    <loc>https://caravagnalab.github.io/basilica/articles/Tutorial.html</loc>
+  </url>
+  <url>
+    <loc>https://caravagnalab.github.io/basilica/articles/index.html</loc>
+  </url>
+  <url>
     <loc>https://caravagnalab.github.io/basilica/authors.html</loc>
   </url>
   <url>
@@ -19,7 +25,22 @@
     <loc>https://caravagnalab.github.io/basilica/reference/COSMIC_catalogue.html</loc>
   </url>
   <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/COSMIC_filtered.html</loc>
+  </url>
+  <url>
     <loc>https://caravagnalab.github.io/basilica/reference/Degasperi_SBS_GEL_PCAWG_HW.html</loc>
+  </url>
+  <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/Degasperi_catalogue.html</loc>
+  </url>
+  <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/basilica-package.html</loc>
+  </url>
+  <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/configure_environment.html</loc>
+  </url>
+  <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/example_input.html</loc>
   </url>
   <url>
     <loc>https://caravagnalab.github.io/basilica/reference/fit.html</loc>
@@ -34,12 +55,48 @@
     <loc>https://caravagnalab.github.io/basilica/reference/get_exposure.html</loc>
   </url>
   <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/get_signatures.html</loc>
+  </url>
+  <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/have_loaded_env.html</loc>
+  </url>
+  <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/have_python_deps.html</loc>
+  </url>
+  <url>
     <loc>https://caravagnalab.github.io/basilica/reference/index.html</loc>
   </url>
   <url>
-    <loc>https://caravagnalab.github.io/basilica/reference/plot_exposure.html</loc>
+    <loc>https://caravagnalab.github.io/basilica/reference/load_conda_env.html</loc>
+  </url>
+  <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/plot.basilica_obj.html</loc>
+  </url>
+  <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/plot_cohort_prevalence.html</loc>
+  </url>
+  <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/plot_compare_fits.html</loc>
+  </url>
+  <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/plot_data.html</loc>
+  </url>
+  <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/plot_exposures.html</loc>
+  </url>
+  <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/plot_mutations.html</loc>
   </url>
   <url>
     <loc>https://caravagnalab.github.io/basilica/reference/plot_signatures.html</loc>
+  </url>
+  <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/plot_similarity_reference.html</loc>
+  </url>
+  <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/print.basilica_obj.html</loc>
+  </url>
+  <url>
+    <loc>https://caravagnalab.github.io/basilica/reference/which_conda_env.html</loc>
   </url>
 </urlset>
