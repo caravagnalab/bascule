@@ -69,16 +69,16 @@ plot_mutations = function(x, sampleIDs = NULL, by_sig = FALSE) {
   xx = x$fit$x
   xx_s = xx %>% tibble::rownames_to_column(var="sampleID") %>% dplyr::mutate(sig="")
 
-  # if (by_sig)
-  #   xx_s = lapply(rownames(get_signatures(x)),
-  #                 function(sname) {
-  #                  ((as.matrix(x$fit$exposure[,sname], ncol=1) %*%
-  #                      as.matrix(get_signatures(x)[sname,], nrow=1)) *
-  #                     xx) %>%
-  #                  dplyr::mutate(sig=sname) %>%
-  #                  tibble::rownames_to_column(var="sampleID")
-  #                 }
-  #   ) %>% do.call(what=rbind, args=.)
+  if (by_sig)
+    xx_s = lapply(rownames(get_signatures(x)),
+                  function(sname) {
+                   ((as.matrix(x$fit$exposure[,sname], ncol=1) %*%
+                       as.matrix(get_signatures(x)[sname,], nrow=1)) *
+                      xx) %>%
+                   dplyr::mutate(sig=sname) %>%
+                   tibble::rownames_to_column(var="sampleID")
+                  }
+    ) %>% do.call(what=rbind, args=.)
 
   xx_s = xx_s %>%
     dplyr::filter(sampleID %in% sampleIDs) %>%
@@ -92,16 +92,16 @@ plot_mutations = function(x, sampleIDs = NULL, by_sig = FALSE) {
     dplyr::summarise(tot_muts=sum(mut_count)) %>%
     dplyr::ungroup()
 
-  # if (by_sig)
-  #   return(
-  #     xx_s %>%
-  #       ggplot() +
-  #       geom_histogram(aes(x=context, y=tot_muts, fill=sig), stat="identity", position="stack") +
-  #       facet_grid(~subs) +
-  #       ylab("Number of mutations") + xlab("") +
-  #       theme_bw() + theme(axis.text.x=element_text(angle=90)) +
-  #       scale_fill_manual(values=get_signature_colors(x))
-  #   )
+  if (by_sig)
+    return(
+      xx_s %>%
+        ggplot() +
+        geom_histogram(aes(x=context, y=tot_muts, fill=sig), stat="identity", position="stack") +
+        facet_grid(~subs) +
+        ylab("Number of mutations") + xlab("") +
+        theme_bw() + theme(axis.text.x=element_text(angle=90)) +
+        scale_fill_manual(values=get_signature_colors(x))
+    )
 
   return(
     xx_s %>%

@@ -1,27 +1,24 @@
 if (Sys.getenv("GITHUB_PATH") == "") path=paste0("~/dati_elenab/signatures/") else path=Sys.getenv("GITHUB_PATH")
 
-
 # header = read.csv("./nobuild/test_groups/counts_all.tsv", header=F, sep="\t", nrows=1) %>% setNames(NULL)
 # counts = read.csv("./nobuild/test_groups/counts_all.tsv", header=T, row.names=1, sep="\t")
 # colnames(counts) = header
 
-
-source("~/GitHub/basilica/nobuild/linear_regression/functions.R")
 py = reticulate::import_from_path(module="pybasilica", path="~/GitHub/pybasilica/")
 devtools::load_all()
 library(ggplot2)
 
-simul = readRDS("/Users/elenab/GitHub/simbasilica/simulations/simul.N350.G2.s1.Rds")
+simul = readRDS("/Users/elenab/GitHub/simbasilica/nobuild/simulations/simulations_elena/simul.N350.G2.s1.Rds")
 x.true = create_basilica_obj_simul(simul)
 
 # fit with the old model
 # simul.fit = readRDS("/Users/elenab/GitHub/simbasilica/simulations/fit.N350.G2.s1.Rds")
 
 counts = simul$x[[1]]
-x = two_step_inference(counts, k_list=1:7,
-                       input_catalogue=COSMIC_filtered,
-                       enforce_sparsity1=TRUE,
-                       enforce_sparsity2=FALSE)
+x = two_steps_inference(counts, k_list=0:7,
+                        input_catalogue=COSMIC_filtered,
+                        enforce_sparsity1=TRUE,
+                        enforce_sparsity2=FALSE)
 
 x$tot %>% plot_exposures()
 x$tot %>% plot_signatures()
