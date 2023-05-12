@@ -1,6 +1,6 @@
 two_steps_inference = function(counts,
                                k_list,
-                               enforce_sparsity1=FALSE,
+                               enforce_sparsity1=TRUE,
                                enforce_sparsity2=FALSE,
                                min_exposure=0.2,
                                input_catalogue=COSMIC_filtered,
@@ -36,7 +36,8 @@ two_steps_inference = function(counts,
     reg_bic = TRUE,
     compile = FALSE,
     enforce_sparsity = enforce_sparsity2,
-    stage = ""
+    stage = "",
+    regul_compare = xx1 %>% filter_exposures(min_exp=min_exposure) %>% get_signatures()
   )
   xx2 = create_basilica_obj(x2, input_catalogue=NULL, cohort=cohort)
 
@@ -44,9 +45,13 @@ two_steps_inference = function(counts,
   x_tot$n_denovo = xx2$n_denovo
   x_tot$fit$denovo_signatures = xx2$fit$denovo_signatures
 
-  resid_expos = 1 - rowSums(x_tot$fit$exposure)
-  denovo_norm = xx2$fit$exposure / rowSums(xx2$fit$exposure) * resid_expos
-  x_tot$fit$exposure = cbind(x_tot$fit$exposure, denovo_norm)
+  if (x_tot$n_denovo == 0)
+    x_tot$fit$exposure = normalize_exposures(xx1 %>% filter_exposures(min_exp=min_exposure)) %>% get_exposure()
+  else {
+    resid_expos = 1 - rowSums(x_tot$fit$exposure)
+    denovo_norm = xx2$fit$exposure / rowSums(xx2$fit$exposure) * resid_expos
+    x_tot$fit$exposure = cbind(x_tot$fit$exposure, denovo_norm)
+  }
 
   return(list("tot"=x_tot,
               "step1"=xx1,

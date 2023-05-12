@@ -13,7 +13,7 @@ x.true = create_basilica_obj_simul(simul)
 
 # fit with the old model
 # simul.fit = readRDS("/Users/elenab/GitHub/simbasilica/simulations/fit.N350.G2.s1.Rds")
-
+sigs_true = x.true %>% get_signatures() %>% rownames()
 counts = simul$x[[1]]
 x = two_steps_inference(counts, k_list=0:7,
                         input_catalogue=COSMIC_filtered,
@@ -26,38 +26,71 @@ x$tot %>% plot_similarity_reference()
 x$tot %>% plot_mutations()
 
 
-x.nosparse = two_step_inference(counts, k_list=1:7,
-                                input_catalogue=COSMIC_filtered[rownames(COSMIC_filtered)!="SBS17b",],
-                                enforce_sparsity1=FALSE,
-                                enforce_sparsity2=FALSE)
+x.nosparse = two_steps_inference(counts, k_list=0:7,
+                                 input_catalogue=COSMIC_filtered,
+                                 enforce_sparsity1=FALSE,
+                                 enforce_sparsity2=FALSE)
 x.nosparse$tot %>% plot_exposures()
 x.nosparse$tot %>% plot_signatures()
-x.nosparse$tot %>% plot_similarity_reference(reference=COSMIC_filtered["SBS17b",])
+x.nosparse$tot %>% plot_similarity_reference()
 
+
+
+sigs_fit = x$tot %>% get_signatures() %>% rownames()
+wrong = sigs_fit[!grepl(paste(sigs_true, collapse="|"), sigs_fit)]
+tot_sigs = unique(c(sigs_fit, sigs_true))
+sigs_colors = gen_palette(n=length(tot_sigs)) %>% setNames(tot_sigs)
 
 muts_simul = x.true %>% plot_mutations() + labs(title="Mutations")
-alpha_simul = x.true %>% plot_exposures()
-sigs_simul = x.true %>% plot_signatures()
+alpha_simul = x.true %>% plot_exposures(sample_name = F, cls=sigs_colors) +
+  theme(legend.position="bottom")
+sigs_simul = x.true %>% plot_signatures(cls=sigs_colors)
 plots_simul = patchwork::wrap_plots(sigs_simul + (muts_simul/alpha_simul))
 
 
 muts_fit = x$tot %>% plot_mutations() + labs(title="Mutations")
-alpha_fit = x$tot %>% plot_exposures()
-sigs_fit = x$tot %>% plot_signatures()
+alpha_fit = x$tot %>% plot_exposures(sample_name = F, cls=sigs_colors) +
+  theme(legend.position="bottom")
+sigs_fit = x$tot %>% plot_signatures(cls=sigs_colors)
 plots_fit = patchwork::wrap_plots(sigs_fit + (muts_fit/alpha_fit))
 
 
-
-
-idd = x$tot$fit$exposure[x$tot$fit$exposure[,c("SBS6")] > 0.2, ] %>% rownames()
-sigs = colnames(x$tot$fit$exposure)[x$tot$fit$exposure[idd,] > 0.001]
+# patients with missing signature's exposure higher than 0.1
+idd = x$tot$fit$exposure[x$tot$fit$exposure[, wrong] > 0.1, ] %>% rownames()
+sigs = colnames(x$tot$fit$exposure)[colSums(x$tot$fit$exposure[idd,] > 0.001) > 0]
 x$tot$fit$x[idd, ]
 
-p1 = plot_mutations(x$tot, sampleIDs=c(idd))
-plot_mutations(x$tot, by_sig=T)
-p2 = plot_exposures(x$tot, sampleIDs=c(idd), muts = T)
-p3 = plot_signatures(x$tot, signatures = sigs)
-patchwork::wrap_plots(p3 + (p1 / p2))
+p_tot = lapply(idd, function(pid) {
+  p1 = plot_mutations(x$tot, sampleIDs=c(pid))
+  p2 = plot_exposures(x$tot, sampleIDs=c(pid), muts = T, cls=sigs_colors)
+  p2_true = plot_exposures(x.true, sampleIDs=c(pid), muts = T, cls=sigs_colors) +
+    labs(title="True exposure")
+  p3 = plot_signatures(x$tot, cls = sigs_colors)
+  patchwork::wrap_plots(p3 + (p1 / (p2+p2_true))) + patchwork::plot_annotation(title=paste0("Patient ", pid))
+  })
+
+
+
+idd_low = x$tot$fit$exposure[x$tot$fit$exposure[, wrong] < 0.1, ] %>% rownames() %>% sample(1)
+sigs_low = colnames(x$tot$fit$exposure)
+x$tot$fit$x[idd_low, ]
+
+p_tot_low = lapply(idd_low, function(pid) {
+  p1 = plot_mutations(x$tot, sampleIDs=c(pid))
+  p2 = plot_exposures(x$tot, sampleIDs=c(pid), muts = T, cls=sigs_colors)
+  p2_true = plot_exposures(x.true, sampleIDs=c(pid), muts = T, cls=sigs_colors) +
+    labs(title="True exposure")
+  p3 = plot_signatures(x$tot, cls=sigs_colors)
+  patchwork::wrap_plots(p3 + (p1 / (p2+p2_true))) + patchwork::plot_annotation(title=paste0("Patient ", pid))
+})
+
+
+pdf("~/GitHub/basilica/nobuild/linear_regression/simulated_fits.pdf", height = 12, width = 18)
+plots_simul + patchwork::plot_annotation(title="Simulated (true) values")
+plots_fit + patchwork::plot_annotation(title="Estimated values")
+p_tot
+p_tot_low
+dev.off()
 
 
 

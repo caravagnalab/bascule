@@ -20,8 +20,7 @@ plot_exposures = function(x, sample_name = T, levels = NULL, cls = NULL,
 
   b = x$fit$exposure
 
-  if (muts)
-    b = b * rowSums(x$fit$x)
+  if (muts) b = b * rowSums(x$fit$x)
 
   b = b[sampleIDs,]
 
@@ -30,7 +29,7 @@ plot_exposures = function(x, sample_name = T, levels = NULL, cls = NULL,
     names(cls) = colnames(b)
   }
 
-  if(is.null(levels)){ levels =   colnames(b) }
+  if(is.null(levels)) levels = sort(colnames(b))
 
   p = ggplot(data = b %>% as.data.frame() %>% mutate(sample = rownames(b)) %>%
                reshape2::melt() %>% dplyr::rename(Signature = variable),

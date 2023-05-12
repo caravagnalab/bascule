@@ -18,6 +18,7 @@ pyfit <- function(x,
                   exp_rate = 3,
                   store_parameters = FALSE,
                   regularizer = "cosine",
+                  regul_compare = NULL,
                   reg_weight = 1,
                   reg_bic = FALSE) {
   if (is.null(py))
@@ -44,7 +45,8 @@ pyfit <- function(x,
       regularizer = regularizer,
       reg_weight = reg_weight,
       reg_bic = reg_bic,
-      stage = stage
+      stage = stage,
+      regul_compare = regul_compare
     )
   # lambda_rate=lambda_rate,
   # sigma=sigma)
