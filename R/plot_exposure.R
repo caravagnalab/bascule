@@ -12,11 +12,10 @@
 #' @return plot
 #' @export plot_exposures
 
-plot_exposures = function(x, sample_name = T, levels = NULL, cls = NULL,
-                          flip_coord = F, muts = FALSE, sampleIDs = NULL) {
+plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
+                          flip_coord=F, muts=FALSE, sampleIDs=NULL, sort_by=NULL) {
 
-  if (is.null(sampleIDs))
-    sampleIDs = rownames(x$fit$exposure)
+  if (is.null(sampleIDs)) sampleIDs = rownames(x$fit$exposure)
 
   b = x$fit$exposure
 
@@ -24,17 +23,23 @@ plot_exposures = function(x, sample_name = T, levels = NULL, cls = NULL,
 
   b = b[sampleIDs,]
 
-  if(is.null(cls)) {
-    cls = ggsci::pal_simpsons()(ncol(b))
-    names(cls) = colnames(b)
-  }
+  if(is.null(cls)) cls = gen_palette(ncol(b)) %>% setNames(colnames(b))
 
-  if(is.null(levels)) levels = sort(colnames(b))
+  if(is.null(sigs_levels)) sigs_levels = sort(colnames(b))
 
-  p = ggplot(data = b %>% as.data.frame() %>% mutate(sample = rownames(b)) %>%
-               reshape2::melt() %>% dplyr::rename(Signature = variable),
-             aes(x = sample, y  = value,
-                 fill = factor(Signature,levels = levels))) +
+  if (!is.null(sort_by))
+    sample_levels = b %>% as.data.frame() %>%
+      tibble::rownames_to_column(var="sample") %>%
+      reshape2::melt(id="sample", variable.name="Signature", value.name="alpha") %>%
+      dplyr::filter(Signature==sort_by) %>%
+      dplyr::arrange(desc(alpha)) %>% dplyr::pull(sample) else sample_levels = rownames(b)
+
+  p = b %>% as.data.frame() %>%
+    tibble::rownames_to_column(var="sample") %>%
+    reshape2::melt(id="sample", variable.name="Signature", value.name="alpha") %>%
+    dplyr::mutate(sample=factor(sample, levels=sample_levels)) %>%
+
+    ggplot(aes(x=sample, y=alpha, fill=factor(Signature, levels=sigs_levels))) +
     geom_bar(stat = "identity") +
     ggplot2::scale_fill_manual(values = cls) +
     labs(title = "Exposure", x = "") +
@@ -43,7 +48,7 @@ plot_exposures = function(x, sample_name = T, levels = NULL, cls = NULL,
     guides(fill=guide_legend(title="Signatures")) + ylab("")
 
   if (!sample_name)
-    p =  p + theme(axis.ticks.x = element_blank(), axis.text.x = element_blank()) + labs(x = "")
+    p = p + theme(axis.ticks.x = element_blank(), axis.text.x = element_blank()) + labs(x = "")
 
   if(flip_coord)
     p =  p + coord_flip()

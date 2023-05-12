@@ -45,8 +45,9 @@ fit <- function(x,
                 store_parameters = FALSE,
                 regularizer="cosine",
                 reg_weight = 1,
-                reg_bic = FALSE,
-                cosine_by_subs = FALSE)
+                reg_bic = TRUE,
+                cosine_by_subs = FALSE,
+                stage="")
 
 {
 
@@ -149,7 +150,8 @@ fit <- function(x,
       store_parameters = store_parameters,
       regularizer = regularizer,
       reg_weight = reg_weight,
-      reg_bic = reg_bic
+      reg_bic = reg_bic,
+      stage = stage
     )
 
     if (filtered_cat)

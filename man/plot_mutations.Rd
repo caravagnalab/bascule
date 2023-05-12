@@ -4,7 +4,7 @@
 \alias{plot_mutations}
 \title{Function to plot the overall mutation profile}
 \usage{
-plot_mutations(x, sampleIDs = NULL, by_sig = FALSE)
+plot_mutations(x, sampleIDs = NULL, by_sig = FALSE, reconstructed = FALSE)
 }
 \arguments{
 \item{x}{Basilica object.}
@@ -14,6 +14,8 @@ If set to \code{NULL}, all samples will be considered.}
 
 \item{by_sig}{Logical, if set to \code{TRUE} each context will report
 its signatures contribution.}
+
+\item{reconstructed}{whether to plot the reconstructed or input matrix}
 }
 \value{
 ggplot object

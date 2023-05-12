@@ -14,8 +14,13 @@ rm_sigs = list(
 
 COSMIC_merged = readRDS("~/GitHub/basilica/nobuild/catalogue_curation/COSMIC_merged.rds")
 
-keep = rownames(COSMIC_merged)[!grepl(paste(rm_sigs$not_validated, collapse="|"), rownames(COSMIC_merged))]
-catalogue = rbind(COSMIC_catalogue["SBS5",], COSMIC_merged[keep,])
+keep = lapply(rownames(COSMIC_merged), function(sname) {
+  snames = strsplit(sname, " ")[[1]]
+  if (any(!snames %in% c(rm_sigs$not_validated, "SBS5"))) return(sname)
+}) %>% unlist()
+
+# keep = rownames(COSMIC_merged)[!grepl(paste(rm_sigs$not_validated, collapse="|"), rownames(COSMIC_merged))]
+catalogue = COSMIC_merged[keep,]
 
 thr = c(0.01, 0.02)
 p = c(0.3, 0.5)
@@ -26,10 +31,10 @@ catalogue_long.filt = catalogue_long %>%
 
 
 ## Export filtered catalogue - thr = 0.02 #####
-COSMIC_filtered = (catalogue_long.filt %>% dplyr::filter(type=="filt_thr_0.02") %>% long_to_wide())$filt_thr_0.02
-COSMIC_filtered["SBS5",] = catalogue["SBS5",]
-usethis::use_data(COSMIC_filtered)
-save(COSMIC_filtered, file="~/GitHub/basilica/nobuild/catalogue_curation/COSMIC_filtered.rda")
+COSMIC_filt_merged = (catalogue_long.filt %>% dplyr::filter(type=="filt_thr_0.02") %>% long_to_wide())$filt_thr_0.02
+# COSMIC_filt_merged["SBS5",] = catalogue["SBS5",]
+usethis::use_data(COSMIC_filt_merged, overwrite=T)
+save(COSMIC_filt_merged, file="~/GitHub/basilica/nobuild/catalogue_curation/COSMIC_filt_merged.rda")
 
 
 cosine.all = compute_similarity(catalogue)

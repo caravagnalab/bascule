@@ -20,7 +20,8 @@ pyfit <- function(x,
                   regularizer = "cosine",
                   regul_compare = NULL,
                   reg_weight = 1,
-                  reg_bic = FALSE) {
+                  reg_bic = FALSE
+                  ) {
   if (is.null(py))
     py <- reticulate::import("pybasilica")
 

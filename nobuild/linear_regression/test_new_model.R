@@ -42,14 +42,14 @@ tot_sigs = unique(c(sigs_fit, sigs_true))
 sigs_colors = gen_palette(n=length(tot_sigs)) %>% setNames(tot_sigs)
 
 muts_simul = x.true %>% plot_mutations() + labs(title="Mutations")
-alpha_simul = x.true %>% plot_exposures(sample_name = F, cls=sigs_colors) +
+alpha_simul = x.true %>% plot_exposures(sample_name = F, cls=sigs_colors, sort_by = "SBS2") +
   theme(legend.position="bottom")
 sigs_simul = x.true %>% plot_signatures(cls=sigs_colors)
 plots_simul = patchwork::wrap_plots(sigs_simul + (muts_simul/alpha_simul))
 
 
-muts_fit = x$tot %>% plot_mutations() + labs(title="Mutations")
-alpha_fit = x$tot %>% plot_exposures(sample_name = F, cls=sigs_colors) +
+muts_fit = x$tot %>% plot_mutations(reconstructed=TRUE) + labs(title="Mutations")
+alpha_fit = x$tot %>% plot_exposures(sample_name = F, cls=sigs_colors, sort_by = "SBS2") +
   theme(legend.position="bottom")
 sigs_fit = x$tot %>% plot_signatures(cls=sigs_colors)
 plots_fit = patchwork::wrap_plots(sigs_fit + (muts_fit/alpha_fit))
@@ -63,7 +63,7 @@ x$tot$fit$x[idd, ]
 p_tot = lapply(idd, function(pid) {
   p1 = plot_mutations(x$tot, sampleIDs=c(pid))
   p2 = plot_exposures(x$tot, sampleIDs=c(pid), muts = T, cls=sigs_colors)
-  p2_true = plot_exposures(x.true, sampleIDs=c(pid), muts = T, cls=sigs_colors) +
+  p2_true = plot_exposures(x.true, sampleIDs=c(pid), muts = T, cls=sigs_colors, sort_by = "SBS2") +
     labs(title="True exposure")
   p3 = plot_signatures(x$tot, cls = sigs_colors)
   patchwork::wrap_plots(p3 + (p1 / (p2+p2_true))) + patchwork::plot_annotation(title=paste0("Patient ", pid))
@@ -78,14 +78,14 @@ x$tot$fit$x[idd_low, ]
 p_tot_low = lapply(idd_low, function(pid) {
   p1 = plot_mutations(x$tot, sampleIDs=c(pid))
   p2 = plot_exposures(x$tot, sampleIDs=c(pid), muts = T, cls=sigs_colors)
-  p2_true = plot_exposures(x.true, sampleIDs=c(pid), muts = T, cls=sigs_colors) +
+  p2_true = plot_exposures(x.true, sampleIDs=c(pid), muts = T, cls=sigs_colors, sort_by = "SBS2") +
     labs(title="True exposure")
   p3 = plot_signatures(x$tot, cls=sigs_colors)
   patchwork::wrap_plots(p3 + (p1 / (p2+p2_true))) + patchwork::plot_annotation(title=paste0("Patient ", pid))
 })
 
 
-pdf("~/GitHub/basilica/nobuild/linear_regression/simulated_fits.pdf", height = 12, width = 18)
+pdf("~/GitHub/basilica/nobuild/linear_regression/simulated_fits.pdf", height = 10, width = 18)
 plots_simul + patchwork::plot_annotation(title="Simulated (true) values")
 plots_fit + patchwork::plot_annotation(title="Estimated values")
 p_tot

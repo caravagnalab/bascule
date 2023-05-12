@@ -45,6 +45,13 @@ plot_data = function(x, sample_ids = NULL, what = "SBS", context = T) {
 }
 
 
+get_data = function(x, reconstructed=FALSE) {
+  if(reconstructed)
+    return((as.matrix(rowSums(x$fit$x) * get_exposure(x)) %*% as.matrix(get_signatures(x))) %>% as.data.frame())
+  return(x$fit$x)
+}
+
+
 
 #' Function to plot the overall mutation profile
 #'
@@ -53,11 +60,12 @@ plot_data = function(x, sample_ids = NULL, what = "SBS", context = T) {
 #'                  If set to \code{NULL}, all samples will be considered.
 #' @param by_sig Logical, if set to \code{TRUE} each context will report
 #'               its signatures contribution.
+#' @param reconstructed whether to plot the reconstructed or input matrix
 #'
 #' @return ggplot object
 #' @export plot_mutations
 
-plot_mutations = function(x, sampleIDs = NULL, by_sig = FALSE) {
+plot_mutations = function(x, sampleIDs = NULL, by_sig = FALSE, reconstructed = FALSE) {
   if (is.null(sampleIDs)) sampleIDs = rownames(x$fit$x)
 
   if (by_sig) {
@@ -66,7 +74,7 @@ plot_mutations = function(x, sampleIDs = NULL, by_sig = FALSE) {
     by_sig = FALSE
   }
 
-  xx = x$fit$x
+  xx = get_data(x, reconstructed=reconstructed)
   xx_s = xx %>% tibble::rownames_to_column(var="sampleID") %>% dplyr::mutate(sig="")
 
   if (by_sig)

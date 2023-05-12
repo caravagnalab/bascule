@@ -6,12 +6,13 @@
 \usage{
 plot_exposures(
   x,
-  sample_name = T,
-  levels = NULL,
+  sample_name = F,
+  sigs_levels = NULL,
   cls = NULL,
   flip_coord = F,
   muts = FALSE,
-  sampleIDs = NULL
+  sampleIDs = NULL,
+  sort_by = NULL
 )
 }
 \arguments{
@@ -20,11 +21,11 @@ plot_exposures(
 \item{sample_name}{Logical. If set to \code{TRUE}, the sample IDs will be
 reported on the x axis.}
 
-\item{levels}{add}
-
 \item{cls}{add}
 
 \item{flip_coord}{add}
+
+\item{levels}{add}
 }
 \value{
 plot
