@@ -16,13 +16,28 @@
 #' For each signature (besides SBS5) the contexts with probability mass below 0.02 are set to 0
 #' and the probabilities are re-normalized over contexts.
 #'
-#' @usage data(COSMIC_catalogue)
+#' @usage data(COSMIC_filtered)
 #'
 #' @format add
 #'
 #' @keywords datasets
 
 "COSMIC_filtered"
+
+#' COSMIC catalogue (version XXXX)
+#'
+#' Filtered version of the COSMIC catalogue. Only validated signatures are present.
+#' For each signature (besides SBS5) the contexts with probability mass below 0.02 are set to 0
+#' and the probabilities are re-normalized over contexts.
+#' Moreover, all signatures with high cosine similarity are merged.
+#'
+#' @usage data(COSMIC_filt_merged)
+#'
+#' @format add
+#'
+#' @keywords datasets
+
+"COSMIC_filt_merged"
 
 #' Degasperi catalogue (version XXXX)
 #'
