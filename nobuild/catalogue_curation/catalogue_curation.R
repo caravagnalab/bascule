@@ -12,7 +12,10 @@ rm_sigs = list(
   seq_artifacts = paste0("SBS", c(27,43:60,95))
 )
 
-catalogue = COSMIC_catalogue[!rownames(COSMIC_catalogue)%in%rm_sigs$not_validated,]
+COSMIC_merged = readRDS("~/GitHub/basilica/nobuild/catalogue_curation/COSMIC_merged.rds")
+
+keep = rownames(COSMIC_merged)[!grepl(paste(rm_sigs$not_validated, collapse="|"), rownames(COSMIC_merged))]
+catalogue = rbind(COSMIC_catalogue["SBS5",], COSMIC_merged[keep,])
 
 thr = c(0.01, 0.02)
 p = c(0.3, 0.5)
@@ -143,4 +146,5 @@ plots = lapply(sigsnames, function(ss) {
 pdf(paste0("./nobuild/catalogue_curation/catalogue_cur.pdf"), height = 10, width = 12)
 print(plots)
 dev.off()
+
 
