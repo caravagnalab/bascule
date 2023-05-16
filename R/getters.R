@@ -118,7 +118,7 @@ get_signatures <- function(x,  long = FALSE) {
   return(sigs)
 }
 
-get_reference_signatures <- function(x,  long = FALSE) {
+get_reference_signatures <- function(x, long = FALSE) {
   stopifnot(inherits(x, "basilica_obj"))
 
   sigs = x$input$reference_catalogue
@@ -134,5 +134,23 @@ get_reference_signatures <- function(x,  long = FALSE) {
     dplyr::mutate(Type = 'Reference')
 
   return(sigs)
+}
+
+
+have_groups = function(x) {
+  if ("groups" %in% names(x) && !is.null(x[["groups"]])) return(TRUE)
+  return(FALSE)
+}
+
+
+have_color_palette = function(x) {
+  if ("color_palette" %in% names(x)) return(TRUE)
+  return(FALSE)
+}
+
+
+get_color_palette = function(x) {
+  if ("color_palette" %in% names(x)) return(x[["color_palette"]])
+  return(NULL)
 }
 

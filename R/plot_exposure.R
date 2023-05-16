@@ -23,20 +23,27 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
 
   b = b[sampleIDs,]
 
-  if(is.null(cls)) cls = gen_palette(ncol(b)) %>% setNames(colnames(b))
+  if(is.null(cls) && !have_color_palette(x)) cls = gen_palette(ncol(b)) %>% setNames(colnames(b))
+  else if (have_color_palette(x)) cls = get_color_palette(x)
 
   if(is.null(sigs_levels)) sigs_levels = sort(colnames(b))
+
+  idcols = c("sample")
+  if (have_groups(x)) {
+    idcols = c("sample","groups")
+    b$groups = x$groups
+  }
 
   if (!is.null(sort_by))
     sample_levels = b %>% as.data.frame() %>%
       tibble::rownames_to_column(var="sample") %>%
-      reshape2::melt(id="sample", variable.name="Signature", value.name="alpha") %>%
+      reshape2::melt(cols=idcols, variable.name="Signature", value.name="alpha") %>%
       dplyr::filter(Signature==sort_by) %>%
       dplyr::arrange(desc(alpha)) %>% dplyr::pull(sample) else sample_levels = rownames(b)
 
   p = b %>% as.data.frame() %>%
     tibble::rownames_to_column(var="sample") %>%
-    reshape2::melt(id="sample", variable.name="Signature", value.name="alpha") %>%
+    reshape2::melt(id=idcols, variable.name="Signature", value.name="alpha") %>%
     dplyr::mutate(sample=factor(sample, levels=sample_levels)) %>%
 
     ggplot(aes(x=sample, y=alpha, fill=factor(Signature, levels=sigs_levels))) +
@@ -50,8 +57,11 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
   if (!sample_name)
     p = p + theme(axis.ticks.x = element_blank(), axis.text.x = element_blank()) + labs(x = "")
 
-  if(flip_coord)
-    p =  p + coord_flip()
+  if (flip_coord)
+    p = p + coord_flip()
+
+  if (have_groups(x))
+    p = p + facet_grid(~groups, scales="free_x")
 
   return(p)
 }

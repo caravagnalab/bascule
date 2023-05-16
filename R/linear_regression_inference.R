@@ -3,8 +3,9 @@ two_steps_inference = function(counts,
                                enforce_sparsity1=TRUE,
                                enforce_sparsity2=FALSE,
                                min_exposure=0.2,
-                               input_catalogue=COSMIC_filtered,
-                               cohort="MyCohort") {
+                               input_catalogue=COSMIC_filt_merged,
+                               cohort="MyCohort",
+                               py=NULL) {
   x1 = pyfit(
     x = counts,
     py = py,
@@ -75,6 +76,12 @@ create_basilica_obj_simul = function(simul, cohort="MySimul") {
                 "denovo_signatures"=simul$exp_denovo[[1]],
                 "exposure"=simul$exp_exposure[[1]],
                 "x"=simul$x[[1]])
+
+  if (!is.null(simul$groups))
+    ss$groups = simul$groups[[1]]
+
+  ss$color_palette = gen_palette(get_signatures(ss) %>% nrow()) %>%
+    setNames(rownames(get_signatures(ss)))
 
   return(ss)
 }

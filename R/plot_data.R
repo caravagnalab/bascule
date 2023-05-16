@@ -75,7 +75,8 @@ plot_mutations = function(x, sampleIDs = NULL, by_sig = FALSE, reconstructed = F
   }
 
   xx = get_data(x, reconstructed=reconstructed)
-  xx_s = xx %>% tibble::rownames_to_column(var="sampleID") %>% dplyr::mutate(sig="")
+  if (have_groups(x)) gid = x$groups else gid = 1
+  xx_s = xx %>% tibble::rownames_to_column(var="sampleID") %>% dplyr::mutate(sig="", groups=gid)
 
   if (by_sig)
     xx_s = lapply(rownames(get_signatures(x)),
@@ -83,43 +84,42 @@ plot_mutations = function(x, sampleIDs = NULL, by_sig = FALSE, reconstructed = F
                    ((as.matrix(x$fit$exposure[,sname], ncol=1) %*%
                        as.matrix(get_signatures(x)[sname,], nrow=1)) *
                       xx) %>%
-                   dplyr::mutate(sig=sname) %>%
+                   dplyr::mutate(sig=sname, groups=gid) %>%
                    tibble::rownames_to_column(var="sampleID")
                   }
     ) %>% do.call(what=rbind, args=.)
 
   xx_s = xx_s %>%
     dplyr::filter(sampleID %in% sampleIDs) %>%
-    reshape2::melt(variable.name="subs", value.name="mut_count") %>%
+    reshape2::melt(id=c("sampleID","groups","sig"), variable.name="subs", value.name="mut_count") %>%
     dplyr::filter(mut_count>0) %>%
     tidyr::separate("subs", into=c("n1","subs.n2"), sep="[[]") %>%
     tidyr::separate("subs.n2", into=c("subs","n2"), sep="]") %>%
     dplyr::mutate(context=paste0(n1,"_",n2)) %>%
 
-    dplyr::group_by(sig, context, subs) %>%
+    dplyr::group_by(sig, context, subs, groups) %>%
     dplyr::summarise(tot_muts=sum(mut_count)) %>%
     dplyr::ungroup()
 
   if (by_sig)
-    return(
-      xx_s %>%
-        ggplot() +
-        geom_histogram(aes(x=context, y=tot_muts, fill=sig), stat="identity", position="stack") +
-        facet_grid(~subs) +
-        ylab("Number of mutations") + xlab("") +
-        theme_bw() + theme(axis.text.x=element_text(angle=90)) +
-        scale_fill_manual(values=get_signature_colors(x))
-    )
-
-  return(
-    xx_s %>%
+    p = xx_s %>%
+      ggplot() +
+      geom_histogram(aes(x=context, y=tot_muts, fill=sig), stat="identity", position="stack") +
+      facet_grid(~subs) +
+      ylab("Number of mutations") + xlab("") +
+      theme_bw() + theme(axis.text.x=element_text(angle=90)) +
+      scale_fill_manual(values=get_signature_colors(x))
+  else
+    p = xx_s %>%
       ggplot() +
       geom_histogram(aes(x=context, y=tot_muts), stat="identity") +
       facet_grid(~subs) +
       ylab("Number of mutations") + xlab("") +
       theme_bw() + theme(axis.text.x=element_text(angle=90))
-  )
 
+  if (have_groups(x)) return(p + facet_grid(groups~subs))
+
+  return(p)
 }
 
 
