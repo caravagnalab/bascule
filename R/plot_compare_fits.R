@@ -1,13 +1,12 @@
 #' Title
 #'
-#' @param x
-#' @param y
-#' @param similarity_cutoff
+#' @param x add
+#' @param y add
+#' @param similarity_cutoff add
 #'
-#' @return
-#' @export
-#'
-#' @examples
+#' @return add
+#' @export plot_compare_fits
+
 plot_compare_fits <- function(x, y, similarity_cutoff = 0.4) {
   # Similarity to the reference
   cosine_matrix <- cosine.matrix(x %>% get_signatures(),

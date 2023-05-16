@@ -13,22 +13,20 @@
 #' @param groups vector of discrete labels with one entry per sample, it defines the groups that will be considered by basilica
 #' @param input_catalogue input signature profiles, NULL by default
 #' @param enforce_sparsity use Laplace prior over exposure weights (bayesian LASSO)
-#' @param cohort
-#' @param max_iterations
-#' @param blacklist
-#' @param lambda_rate
-#' @param sigma
+#' @param cohort add
+#' @param max_iterations add
+#' @param blacklist add
+#' @param lambda_rate add
+#' @param sigma add
 #'
 #' @return inferred exposure matrix, inferred signatures from reference catalogue and inferred de novo (not from reference catalogue) signatures
 #' @export fit
-#'
-#' @examples
 
 fit <- function(x,
                 k,
                 py = NULL,
-                reference_catalogue = basilica::COSMIC_catalogue,
-                input_catalogue = basilica::COSMIC_catalogue["SBS1", ],
+                reference_catalogue = COSMIC_filtered,
+                input_catalogue = COSMIC_filtered["SBS1", ],
                 filtered_cat = FALSE,
                 cohort = "MyCohort",
                 lr = 0.01,
@@ -47,8 +45,9 @@ fit <- function(x,
                 store_parameters = FALSE,
                 regularizer="cosine",
                 reg_weight = 1,
-                reg_bic = FALSE,
-                cosine_by_subs = FALSE)
+                reg_bic = TRUE,
+                cosine_by_subs = FALSE,
+                stage="")
 
 {
 
@@ -151,7 +150,8 @@ fit <- function(x,
       store_parameters = store_parameters,
       regularizer = regularizer,
       reg_weight = reg_weight,
-      reg_bic = reg_bic
+      reg_bic = reg_bic,
+      stage = stage
     )
 
     if (filtered_cat)
@@ -286,15 +286,15 @@ fit <- function(x,
       print(b_denovo)
 
     denovo_filt = b_denovo$reduced_denovo
-    
-    
+
+
     if (!is.null(rbind(input_catalogue, b_denovo$new_fixed))) {
       ref = setdiff(reference_catalogue,
                     rbind(input_catalogue, b_denovo$new_fixed))
     } else{
       ref = reference_catalogue
     }
-    
+
     # check if denovo are linear comb of reference sigs
     b_reference <- filter.denovo.QP(
       reference = ref,

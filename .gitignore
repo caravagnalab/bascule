@@ -7,3 +7,4 @@ R/run.R
 R/test.R
 inst/doc
 **.DS_Store
+pkgdown/

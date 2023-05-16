@@ -6,6 +6,7 @@ pyfit <- function(x,
                   k_list,
                   lr,
                   n_steps,
+                  stage,
                   py = NULL,
                   groups = NULL,
                   input_catalogue = NULL,
@@ -14,10 +15,13 @@ pyfit <- function(x,
                   CUDA = FALSE,
                   compile = FALSE,
                   enforce_sparsity = FALSE,
+                  exp_rate = 3,
                   store_parameters = FALSE,
                   regularizer = "cosine",
+                  regul_compare = NULL,
                   reg_weight = 1,
-                  reg_bic = FALSE) {
+                  reg_bic = FALSE
+                  ) {
   if (is.null(py))
     py <- reticulate::import("pybasilica")
 
@@ -41,7 +45,9 @@ pyfit <- function(x,
       store_parameters = store_parameters,
       regularizer = regularizer,
       reg_weight = reg_weight,
-      reg_bic = reg_bic
+      reg_bic = reg_bic,
+      stage = stage,
+      regul_compare = regul_compare
     )
   # lambda_rate=lambda_rate,
   # sigma=sigma)
@@ -50,11 +56,10 @@ pyfit <- function(x,
   # save python object data in a list
   data <- list()
 
-  #data$x <- x
-  #data$groups <- groups
-  #data$input_catalogue <- input_catalogue
-  #data$lr <- lr
-  #data$steps <- n_steps
+  data$x <- x
+  data$input_catalogue <- input_catalogue
+  data$lr <- lr
+  data$steps <- n_steps
   data$exposure <- obj$alpha
   data$denovo_signatures = obj$beta_denovo
   data$bic = obj$bic
@@ -364,7 +369,7 @@ adjust.denovo.fixed <-
     }
 
     cos_matrix <-
-      basilica:::cosine.matrix(denovo_signatures, fixed_signatures)
+      cosine.matrix(denovo_signatures, fixed_signatures)
     while (TRUE) {
       max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
       if (cos_matrix[max] < limit) {
@@ -405,7 +410,7 @@ adjust.denovo.denovo <-
       return(list(exposure = alpha, denovo_signatures = denovo_signatures))
     }
     cos_matrix <-
-      basilica:::cosine.matrix(denovo_signatures, denovo_signatures)
+      cosine.matrix(denovo_signatures, denovo_signatures)
     for (i in 1:nrow(cos_matrix)) {
       cos_matrix[i, i] <- 0
     }

@@ -1,11 +1,10 @@
 #' Title
 #'
-#' @param x
+#' @param x add
 #'
-#' @return
-#' @export
-#'
-#' @examples
+#' @return add
+#' @export plot_cohort_prevalence
+
 plot_cohort_prevalence <- function(x) {
 
   alpha <- get_exposure(x, long = TRUE) %>%

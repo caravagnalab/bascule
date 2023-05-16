@@ -8,8 +8,9 @@ fit(
   x,
   k,
   py = NULL,
-  reference_catalogue = basilica::COSMIC_catalogue,
-  input_catalogue = basilica::COSMIC_catalogue["SBS1", ],
+  reference_catalogue = COSMIC_filtered,
+  input_catalogue = COSMIC_filtered["SBS1", ],
+  filtered_cat = FALSE,
   cohort = "MyCohort",
   lr = 0.01,
   steps = 500,
@@ -40,9 +41,15 @@ fit(
 
 \item{input_catalogue}{input signature profiles, NULL by default}
 
+\item{cohort}{add}
+
 \item{lr}{stochastic variational inference learning rate}
 
 \item{steps}{number of gradient steps}
+
+\item{max_iterations}{add}
+
+\item{blacklist}{add}
 
 \item{phi}{threshold to discard the signature based on its value in exposure matrix}
 
@@ -52,7 +59,9 @@ fit(
 
 \item{groups}{vector of discrete labels with one entry per sample, it defines the groups that will be considered by basilica}
 
-\item{sigma}{}
+\item{lambda_rate}{add}
+
+\item{sigma}{add}
 
 \item{enforce_sparsity}{use Laplace prior over exposure weights (bayesian LASSO)}
 }
