@@ -33,6 +33,7 @@ catalogue_long.filt = catalogue_long %>%
 ## Export filtered catalogue - thr = 0.02 #####
 COSMIC_filt_merged = (catalogue_long.filt %>% dplyr::filter(type=="filt_thr_0.02") %>% long_to_wide())$filt_thr_0.02
 # COSMIC_filt_merged["SBS5",] = catalogue["SBS5",]
+COSMIC_filt_merged["SBS40 SBS3 SBS5",] = COSMIC_merged["SBS40 SBS3 SBS5",]
 usethis::use_data(COSMIC_filt_merged, overwrite=T)
 save(COSMIC_filt_merged, file="~/GitHub/basilica/nobuild/catalogue_curation/COSMIC_filt_merged.rda")
 
