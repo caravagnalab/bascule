@@ -154,7 +154,7 @@ fit <- function(x,
       stage = stage
     )
 
-    if (filtered_cat && nrow(obj$denovo_signatures)>0)
+    if (filtered_cat && !is.null(obj$denovo_signatures) && nrow(obj$denovo_signatures)>0)
       obj$denovo_signatures = renormalize_denovo_thr(obj$denovo_signatures)
 
     k = k_aux
@@ -295,15 +295,16 @@ fit <- function(x,
       ref = reference_catalogue
     }
 
+    if (!is.null(denovo_filt) && nrow(denovo_filt) > 0)
     # check if denovo are linear comb of reference sigs
-    b_reference <- filter.denovo.QP(
-      reference = ref,
-      # beta_fixed = rbind(input_catalogue, b_denovo$new_fixed),
-      beta_denovo = denovo_filt,
-      black_list = black_list,
-      delta = delta,
-      filt_pi = filt_pi,
-      substitutions = substitutions)
+      b_reference <- filter.denovo.QP(
+        reference = ref,
+        # beta_fixed = rbind(input_catalogue, b_denovo$new_fixed),
+        beta_denovo = denovo_filt,
+        black_list = black_list,
+        delta = delta,
+        filt_pi = filt_pi,
+        substitutions = substitutions) else b_reference = list("new_fixed"=NULL, "reduced_denovo"=NULL)
 
     new_fixed <- rbind(b_denovo$new_fixed, b_reference$new_fixed) %>% unique()
 

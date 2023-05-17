@@ -44,14 +44,18 @@ two_steps_inference = function(counts,
 
   x_tot = xx1 %>% filter_exposures(min_exp=min_exposure)
   x_tot$n_denovo = xx2$n_denovo
-  x_tot$fit$denovo_signatures = xx2$fit$denovo_signatures
+  x_tot$fit$denovo_signatures = NULL
 
   if (x_tot$n_denovo == 0)
     x_tot$fit$exposure = normalize_exposures(xx1 %>% filter_exposures(min_exp=min_exposure)) %>% get_exposure()
   else {
     resid_expos = 1 - rowSums(x_tot$fit$exposure)
     denovo_norm = xx2$fit$exposure / rowSums(xx2$fit$exposure) * resid_expos
-    x_tot$fit$exposure = cbind(x_tot$fit$exposure, denovo_norm)
+
+    if (max(denovo_norm) > 0.1) {
+      x_tot$fit$exposure = cbind(x_tot$fit$exposure, denovo_norm)
+      x_tot$fit$denovo_signatures = xx2$fit$denovo_signatures
+    }
   }
 
   x_tot$color_palette = gen_palette(get_signatures(x_tot) %>% nrow()) %>%

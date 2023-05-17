@@ -92,7 +92,7 @@ plot_mutations = function(x, sampleIDs = NULL, by_sig = FALSE, reconstructed = F
   xx_s = xx_s %>%
     dplyr::filter(sampleID %in% sampleIDs) %>%
     reshape2::melt(id=c("sampleID","groups","sig"), variable.name="subs", value.name="mut_count") %>%
-    dplyr::filter(mut_count>0) %>%
+    # dplyr::filter(mut_count>0) %>%
     tidyr::separate("subs", into=c("n1","subs.n2"), sep="[[]") %>%
     tidyr::separate("subs.n2", into=c("subs","n2"), sep="]") %>%
     dplyr::mutate(context=paste0(n1,"_",n2)) %>%

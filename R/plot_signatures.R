@@ -102,7 +102,7 @@ plot_signatures = function(x, what = "SBS", context = T, cls = NULL, signatures 
   if("denovo_signatures" %in% names(x$fit)) a = rbind(x$fit$denovo_signatures, a)
 
   if(is.null(cls) && !have_color_palette(x)) cls = gen_palette(nrow(a)) %>% setNames(rownames(a))
-  else if (have_color_palette(x)) cls = get_color_palette(x)
+  else if (is.null(cls) && have_color_palette(x)) cls = get_color_palette(x)
 
   # if(is.null(cls)) {
   #   cls = ggsci::pal_simpsons()(nrow(a))

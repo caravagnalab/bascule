@@ -24,7 +24,7 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
   b = b[sampleIDs,]
 
   if(is.null(cls) && !have_color_palette(x)) cls = gen_palette(ncol(b)) %>% setNames(colnames(b))
-  else if (have_color_palette(x)) cls = get_color_palette(x)
+  else if (is.null(cls) && have_color_palette(x)) cls = get_color_palette(x)
 
   if(is.null(sigs_levels)) sigs_levels = sort(colnames(b))
 
