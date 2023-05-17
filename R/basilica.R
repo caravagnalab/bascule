@@ -154,7 +154,7 @@ fit <- function(x,
       stage = stage
     )
 
-    if (filtered_cat && nrow(obj$denovo_signatures))
+    if (filtered_cat && nrow(obj$denovo_signatures)>0)
       obj$denovo_signatures = renormalize_denovo_thr(obj$denovo_signatures)
 
     k = k_aux

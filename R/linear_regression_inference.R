@@ -54,6 +54,9 @@ two_steps_inference = function(counts,
     x_tot$fit$exposure = cbind(x_tot$fit$exposure, denovo_norm)
   }
 
+  x_tot$color_palette = gen_palette(get_signatures(x_tot) %>% nrow()) %>%
+    setNames(sort(rownames(get_signatures(x_tot))))
+
   return(list("tot"=x_tot,
               "step1"=xx1,
               "step1_filt"=xx1 %>% filter_exposures(min_exp=min_exposure),
@@ -81,7 +84,7 @@ create_basilica_obj_simul = function(simul, cohort="MySimul") {
     ss$groups = simul$groups[[1]]
 
   ss$color_palette = gen_palette(get_signatures(ss) %>% nrow()) %>%
-    setNames(rownames(get_signatures(ss)))
+    setNames(sort(rownames(get_signatures(ss))))
 
   return(ss)
 }
