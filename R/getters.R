@@ -143,6 +143,12 @@ have_groups = function(x) {
 }
 
 
+have_epsilon = function(x) {
+  if ("eps_var" %in% names(x$fit)) return(TRUE)
+  return(FALSE)
+}
+
+
 have_color_palette = function(x) {
   if ("color_palette" %in% names(x)) return(TRUE)
   return(FALSE)

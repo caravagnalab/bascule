@@ -62,6 +62,7 @@ pyfit <- function(x,
   data$steps <- n_steps
   data$exposure <- obj$alpha
   data$denovo_signatures = obj$beta_denovo
+  data$eps_var = obj$eps_var
   data$bic = obj$bic
   data$losses = obj$losses
   data$train_params = get_train_params(obj)

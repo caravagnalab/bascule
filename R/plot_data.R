@@ -52,6 +52,22 @@ get_data = function(x, reconstructed=FALSE) {
 }
 
 
+get_epsilon = function(x) {
+  if (have_epsilon(x))
+    return(
+      sapply(colnames(x$fit$eps_var), function(cc)
+        lapply(rownames(x$fit$eps_var), function(nn)
+          rhalfnorm(1, theta=sd2theta(x$fit$eps_var[nn, cc])) %>% round()) %>%
+          setNames(rownames(x$fit$eps_var)) %>% unlist()
+        ) %>% as_tibble()
+      )
+
+  tmp = get_data(x)
+  tmp[tmp > 0] = 0
+  return(tmp)
+}
+
+
 
 #' Function to plot the overall mutation profile
 #'
@@ -65,7 +81,7 @@ get_data = function(x, reconstructed=FALSE) {
 #' @return ggplot object
 #' @export plot_mutations
 
-plot_mutations = function(x, sampleIDs = NULL, by_sig = FALSE, reconstructed = FALSE) {
+plot_mutations = function(x, sampleIDs = NULL, by_sig = FALSE, reconstructed = FALSE, epsilon = FALSE) {
   if (is.null(sampleIDs)) sampleIDs = rownames(x$fit$x)
 
   if (by_sig) {
@@ -76,7 +92,12 @@ plot_mutations = function(x, sampleIDs = NULL, by_sig = FALSE, reconstructed = F
 
   xx = get_data(x, reconstructed=reconstructed)
   if (have_groups(x)) gid = x$groups else gid = 1
-  xx_s = xx %>% tibble::rownames_to_column(var="sampleID") %>% dplyr::mutate(sig="", groups=gid)
+
+  x_eps = get_data(x); x_eps[x_eps > 0] = 0
+  if (epsilon) x_eps = get_epsilon(x)
+  x_eps = x_eps %>% tibble::rownames_to_column(var="sampleID") %>% dplyr::mutate(sig="epsilon", groups=gid)
+
+  xx_s = xx %>% tibble::rownames_to_column(var="sampleID") %>% dplyr::mutate(sig="s1", groups=gid)
 
   if (by_sig)
     xx_s = lapply(rownames(get_signatures(x)),
@@ -99,7 +120,17 @@ plot_mutations = function(x, sampleIDs = NULL, by_sig = FALSE, reconstructed = F
 
     dplyr::group_by(sig, context, subs, groups) %>%
     dplyr::summarise(tot_muts=sum(mut_count)) %>%
-    dplyr::ungroup()
+    dplyr::ungroup() %>%
+
+    dplyr::add_row(
+      x_eps %>%
+        dplyr::filter(sampleID %in% sampleIDs) %>%
+        reshape2::melt(id=c("sampleID","groups","sig"), variable.name="subs", value.name="tot_muts") %>%
+
+        tidyr::separate("subs", into=c("n1","subs.n2"), sep="[[]") %>%
+        tidyr::separate("subs.n2", into=c("subs","n2"), sep="]") %>%
+        dplyr::mutate(context=paste0(n1,"_",n2)) %>% dplyr::select(sig, context, subs, groups, tot_muts)
+    )
 
   if (by_sig)
     p = xx_s %>%
@@ -108,14 +139,16 @@ plot_mutations = function(x, sampleIDs = NULL, by_sig = FALSE, reconstructed = F
       facet_grid(~subs) +
       ylab("Number of mutations") + xlab("") +
       theme_bw() + theme(axis.text.x=element_text(angle=90)) +
-      scale_fill_manual(values=get_signature_colors(x))
+      scale_fill_manual(values=c(get_signature_colors(x), "epsilon"="gainsboro"))
   else
     p = xx_s %>%
       ggplot() +
-      geom_histogram(aes(x=context, y=tot_muts), stat="identity") +
+      geom_histogram(aes(x=context, y=tot_muts, fill=sig), stat="identity") +
       facet_grid(~subs) +
       ylab("Number of mutations") + xlab("") +
-      theme_bw() + theme(axis.text.x=element_text(angle=90))
+      theme_bw() + theme(axis.text.x=element_text(angle=90)) +
+      scale_fill_manual(values=c("epsilon"="gainsboro", "s1"="grey5")) +
+      guides(fill="none")
 
   if (have_groups(x)) return(p + facet_grid(groups~subs))
 
