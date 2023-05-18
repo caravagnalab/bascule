@@ -81,7 +81,7 @@ get_epsilon = function(x) {
 #' @return ggplot object
 #' @export plot_mutations
 
-plot_mutations = function(x, sampleIDs = NULL, by_sig = FALSE, reconstructed = FALSE, epsilon = FALSE) {
+plot_mutations = function(x, sampleIDs=NULL, by_sig=FALSE, reconstructed=FALSE, epsilon=FALSE, what="SBS") {
   if (is.null(sampleIDs)) sampleIDs = rownames(x$fit$x)
 
   if (by_sig) {
@@ -95,9 +95,9 @@ plot_mutations = function(x, sampleIDs = NULL, by_sig = FALSE, reconstructed = F
 
   x_eps = get_data(x); x_eps[x_eps > 0] = 0
   if (epsilon) x_eps = get_epsilon(x)
-  x_eps = x_eps %>% tibble::rownames_to_column(var="sampleID") %>% dplyr::mutate(sig="epsilon", groups=gid)
+  x_eps = x_eps %>% tibble::rownames_to_column(var="sampleID") %>% dplyr::mutate(sbs="epsilon", groups=gid)
 
-  xx_s = xx %>% tibble::rownames_to_column(var="sampleID") %>% dplyr::mutate(sig="s1", groups=gid)
+  xx_s = xx %>% tibble::rownames_to_column(var="sampleID") %>% dplyr::mutate(sbs="s1", groups=gid)
 
   if (by_sig)
     xx_s = lapply(rownames(get_signatures(x)),
@@ -105,38 +105,43 @@ plot_mutations = function(x, sampleIDs = NULL, by_sig = FALSE, reconstructed = F
                    ((as.matrix(x$fit$exposure[,sname], ncol=1) %*%
                        as.matrix(get_signatures(x)[sname,], nrow=1)) *
                       xx) %>%
-                   dplyr::mutate(sig=sname, groups=gid) %>%
+                   dplyr::mutate(sbs=sname, groups=gid) %>%
                    tibble::rownames_to_column(var="sampleID")
                   }
     ) %>% do.call(what=rbind, args=.)
 
   xx_s = xx_s %>%
     dplyr::filter(sampleID %in% sampleIDs) %>%
-    reshape2::melt(id=c("sampleID","groups","sig"), variable.name="subs", value.name="mut_count") %>%
+    reshape2::melt(id=c("sampleID","groups","sbs"), variable.name="variable", value.name="mut_count") %>%
+    reformat_contexts(what=what) %>%
+    dplyr::rename(sig=Var1) %>%
     # dplyr::filter(mut_count>0) %>%
-    tidyr::separate("subs", into=c("n1","subs.n2"), sep="[[]") %>%
-    tidyr::separate("subs.n2", into=c("subs","n2"), sep="]") %>%
-    dplyr::mutate(context=paste0(n1,"_",n2)) %>%
+    # tidyr::separate("subs", into=c("n1","subs.n2"), sep="[[]") %>%
+    # tidyr::separate("subs.n2", into=c("subs","n2"), sep="]") %>%
+    # dplyr::mutate(context=paste0(n1,"_",n2)) %>%
 
-    dplyr::group_by(sig, context, subs, groups) %>%
+    dplyr::group_by(substitution, context, sig, groups) %>%
     dplyr::summarise(tot_muts=sum(mut_count)) %>%
     dplyr::ungroup() %>%
 
     dplyr::add_row(
       x_eps %>%
         dplyr::filter(sampleID %in% sampleIDs) %>%
-        reshape2::melt(id=c("sampleID","groups","sig"), variable.name="subs", value.name="tot_muts") %>%
+        reshape2::melt(id=c("sampleID","groups","sbs"), variable.name="variable", value.name="tot_muts") %>%
+        reformat_contexts(what=what) %>%
+        dplyr::rename(sig=Var1) %>%
+        dplyr::select(substitution, context, sig, groups, tot_muts)
 
-        tidyr::separate("subs", into=c("n1","subs.n2"), sep="[[]") %>%
-        tidyr::separate("subs.n2", into=c("subs","n2"), sep="]") %>%
-        dplyr::mutate(context=paste0(n1,"_",n2)) %>% dplyr::select(sig, context, subs, groups, tot_muts)
+        # tidyr::separate("subs", into=c("n1","subs.n2"), sep="[[]") %>%
+        # tidyr::separate("subs.n2", into=c("subs","n2"), sep="]") %>%
+        # dplyr::mutate(context=paste0(n1,"_",n2)) %>% dplyr::select(sig, context, subs, groups, tot_muts)
     )
 
   if (by_sig)
     p = xx_s %>%
       ggplot() +
       geom_histogram(aes(x=context, y=tot_muts, fill=sig), stat="identity", position="stack") +
-      facet_grid(~subs) +
+      facet_grid(~substitution) +
       ylab("Number of mutations") + xlab("") +
       theme_bw() + theme(axis.text.x=element_text(angle=90)) +
       scale_fill_manual(values=c(get_signature_colors(x), "epsilon"="gainsboro"))
@@ -144,13 +149,13 @@ plot_mutations = function(x, sampleIDs = NULL, by_sig = FALSE, reconstructed = F
     p = xx_s %>%
       ggplot() +
       geom_histogram(aes(x=context, y=tot_muts, fill=sig), stat="identity") +
-      facet_grid(~subs) +
+      facet_grid(~substitution) +
       ylab("Number of mutations") + xlab("") +
       theme_bw() + theme(axis.text.x=element_text(angle=90)) +
       scale_fill_manual(values=c("epsilon"="gainsboro", "s1"="grey5")) +
       guides(fill="none")
 
-  if (have_groups(x)) return(p + facet_grid(groups~subs))
+  if (have_groups(x)) return(p + facet_grid(groups~substitution))
 
   return(p)
 }
@@ -159,7 +164,7 @@ plot_mutations = function(x, sampleIDs = NULL, by_sig = FALSE, reconstructed = F
 
 
 reformat_contexts = function(a, what) {
-  if(what == 'SBS') {
+  if(what == "SBS") {
     a = a %>% dplyr::rename(Var1 = sbs, Var2 = variable) %>%
       mutate(substitution=paste0(substr(start=3, stop=3, Var2), ">", substr(start=5, stop=5, Var2)),
              context=paste0(substr(start=1, stop=1, Var2), '_', substr(start=7, stop=7, Var2)))

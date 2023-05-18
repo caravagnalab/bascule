@@ -34,16 +34,19 @@ print.basilica_obj = function(x, ...)
     )))
 
 
-  cli::cli_h3("De novo signatures (5 columns shown max)"%>% crayon::yellow())
+  if (!is.null(x$fit$denovo_signatures)) {
+    cli::cli_h3("De novo signatures (5 columns shown max)"%>% crayon::yellow())
 
-  writeLines(paste0("\t", capture.output(
-    x$fit$denovo_signatures[, 1:ncol] %>% print()
-  )))
+    writeLines(paste0("\t", capture.output(
+      x$fit$denovo_signatures[, 1:ncol] %>% print()
+    )))
 
-  cat('\n')
-  cli::cli_h3("Most-frequent signatures")
-  bar_print_console(x)
-  cat('\n')
+    cat('\n')
+    cli::cli_h3("Most-frequent signatures")
+    bar_print_console(x)
+    cat('\n')
+  }
+
 }
 
 

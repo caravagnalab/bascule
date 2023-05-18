@@ -4,12 +4,14 @@ two_steps_inference = function(counts,
                                enforce_sparsity2=FALSE,
                                min_exposure=0.2,
                                input_catalogue=COSMIC_filt_merged,
+                               keep_sigs=c("SBS1", "SBS40 SBS3 SBS5"),
                                lr=0.05,
                                n_steps=500,
                                groups=NULL,
                                compile=FALSE,
                                cohort="MyCohort",
                                regularizer="KL",
+                               run_on_resid=TRUE,
                                py=NULL) {
   x1 = pyfit(
     x = counts,
@@ -27,8 +29,18 @@ two_steps_inference = function(counts,
     stage = "random_noise"
   )
   xx1 = create_basilica_obj(x1, input_catalogue, cohort=cohort)
+  xx1_filt = xx1 %>% filter_exposures(min_exp=min_exposure, keep_sigs=keep_sigs)
 
-  resid_counts = compute_residuals(xx1, min_exp=min_exposure)
+
+  resid_counts = counts; catalogue2 = get_signatures(xx1_filt); regul_compare = NULL
+  if (run_on_resid) {
+    resid_counts = compute_residuals(xx1,
+                                     min_exp=min_exposure,
+                                     keep_sigs=keep_sigs)
+    regul_compare = catalogue2
+    catalogue2 = NULL
+  }
+
   x2 = pyfit(
     x = round(resid_counts),
     py = py,
@@ -36,23 +48,29 @@ two_steps_inference = function(counts,
     n_steps = n_steps,
     k_list = k_list,
     groups = NULL,
-    input_catalogue = NULL,
+    input_catalogue = catalogue2,
     regularizer = regularizer,
     reg_weight = 1,
     reg_bic = TRUE,
     compile = compile,
     enforce_sparsity = enforce_sparsity2,
     stage = "",
-    regul_compare = xx1 %>% filter_exposures(min_exp=min_exposure) %>% get_signatures()
+    regul_compare = regul_compare
   )
   xx2 = create_basilica_obj(x2, input_catalogue=NULL, cohort=cohort)
 
-  x_tot = xx1 %>% filter_exposures(min_exp=min_exposure)
+  if (!run_on_resid)
+    return(list("tot"=xx2,
+                "step1"=xx1,
+                "step1_filt"=xx1_filt,
+                "step2"=xx2))
+
+  x_tot = xx1 %>% filter_exposures(min_exp=min_exposure, keep_sigs=keep_sigs)
   x_tot$n_denovo = xx2$n_denovo
   x_tot$fit$denovo_signatures = NULL
 
   if (x_tot$n_denovo == 0)
-    x_tot$fit$exposure = normalize_exposures(xx1 %>% filter_exposures(min_exp=min_exposure)) %>% get_exposure()
+    x_tot$fit$exposure = normalize_exposures(xx1_filt) %>% get_exposure()
   else {
     resid_expos = 1 - rowSums(x_tot$fit$exposure)
     denovo_norm = xx2$fit$exposure / rowSums(xx2$fit$exposure) * resid_expos
@@ -68,7 +86,7 @@ two_steps_inference = function(counts,
 
   return(list("tot"=x_tot,
               "step1"=xx1,
-              "step1_filt"=xx1 %>% filter_exposures(min_exp=min_exposure),
+              "step1_filt"=xx1_filt,
               "step2"=xx2))
 }
 
@@ -105,7 +123,7 @@ normalize_exposures = function(x) {
 }
 
 
-filter_exposures = function(x, min_exp=0.15) {
+filter_exposures = function(x, min_exp=0.15, keep_sigs=NULL) {
   sbs_keep = x$fit$exposure %>%
     tibble::rownames_to_column(var="sample") %>%
     reshape2::melt(id="sample", value.name="alpha", variable.name="sigs") %>%
@@ -113,6 +131,8 @@ filter_exposures = function(x, min_exp=0.15) {
     dplyr::mutate(alpha=ifelse(alpha < min_exp, 0, alpha)) %>%
     dplyr::filter(alpha > 0) %>%
     dplyr::pull(sigs) %>% unique() %>% as.character()
+
+  if (!is.null(keep_sigs)) sbs_keep = c(sbs_keep, keep_sigs) %>% unique()
 
   x$fit$input_catalogue = x$fit$input_catalogue[sbs_keep,]
   x$fit$catalogue_signatures = x$fit$catalogue_signatures[sbs_keep,]
@@ -158,8 +178,8 @@ create_basilica_obj = function(fit, input_catalogue, cohort="MyCohort") {
 }
 
 
-compute_residuals = function(x, min_exp=0.2) {
-  xf = x %>% filter_exposures(min_exp=min_exp)
+compute_residuals = function(x, min_exp=0.2, keep_sigs=NULL) {
+  xf = x %>% filter_exposures(min_exp=min_exp, keep_sigs=keep_sigs)
   sigs_order = rownames(xf$fit$input_catalogue)
 
   orig_counts = xf$input$counts
