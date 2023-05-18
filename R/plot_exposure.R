@@ -67,6 +67,24 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
 }
 
 
+
+plot_sigs_prevalence = function(x, delta=0.2) {
+  expos = get_exposure(x, long = T)
+
+  expos %>%
+    dplyr::group_by(Signature) %>%
+    dplyr::arrange(Signature, Exposure) %>%
+    dplyr::mutate(nnn=1, cs=cumsum(nnn)/x$n_samples) %>%
+    ggplot(aes(x=Exposure, y=cs, color=Signature)) +
+    geom_point(size=.5) +
+    geom_line() +
+    scale_color_manual(values=x$color_palette) +
+    theme_bw() + ylab("Fraction of samples")
+
+}
+
+
+
 # plot_exposure <- function(x, labels = NULL,sort_by = NULL, thr=0.1){
 #
 #

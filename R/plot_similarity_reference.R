@@ -14,33 +14,40 @@
 #' @export plot_similarity_reference
 
 plot_similarity_reference <- function(x, reference = NULL, similarity_cutoff = 0.4,
-                                      by_subs = FALSE, context = T, add_pheatmap = T) {
+                                      by_subs = FALSE, context = T, add_pheatmap = T,
+                                      similarity = "cosine") {
 
   if (!is.null(reference))
     x$input$reference_catalogue = reference
 
-  if (!by_subs)
-    # Similarity to the reference
-    cosine_matrix <- cosine.matrix(
-      x$input$reference_catalogue,
-      x %>% get_signatures()
-    ) else
-      cosine_matrix = cosine.matrix(x$input$reference_catalogue,
-                                    x %>% get_signatures(),
-                                    substitutions = get_contexts(x)$subs %>% unique())
+  if (similarity == "cosine") {
+    if (!by_subs)
+      # Similarity to the reference
+      cosine_matrix <- cosine.matrix(
+        x$input$reference_catalogue,
+        x %>% get_signatures()
+      ) else
+        cosine_matrix = cosine.matrix(x$input$reference_catalogue,
+                                      x %>% get_signatures(),
+                                      substitutions = get_contexts(x)$subs %>% unique())
+  } else if (similarity == "KL") {
+    cosine_matrix = sapply(rownames(x$input$reference_catalogue), function(s1) {
+      sapply(rownames(get_signatures(x)), function(s2) {
+        sigs = as.matrix(rbind(x$input$reference_catalogue[s1,],
+                               get_signatures(x)[s2,]))
+        suppressMessages(philentropy::KL(sigs, unit="log"))
+      }) %>% setNames(rownames(get_signatures(x)))
+    })
+  } else { cli::cli_alert_danger("Parameter `similarity` must be either `cosine` or `KL`"); stop() }
 
-  # cosine_matrix_ldf = reshape2::melt(cosine_matrix %>% as.matrix()) %>%
-  #   dplyr::rename(
-  #     Target = Var1,
-  #     Reference = Var2,
-  #     Cosine = value
-  #   ) %>%
-  #   dplyr::as_tibble()
+  cosine_matrix = cosine_matrix[sort(rownames(cosine_matrix)), sort(colnames(cosine_matrix))]
 
   # Nice colors
   color_gradient = (RColorBrewer::brewer.pal(10, 'Spectral')) %>% rev
   color_gradient[1:5] = color_gradient[1:5] %>% ggplot2::alpha(0.7)
   color_breaks = seq(0, 1, 0.1)
+
+  if (similarity == "KL") color_breaks = seq(0, max(cosine_matrix), length.out=10)
 
   # Numbers where worth
   numbers = cosine_matrix %>% round(2)
