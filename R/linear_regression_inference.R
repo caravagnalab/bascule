@@ -75,10 +75,10 @@ two_steps_inference = function(counts,
     resid_expos = 1 - rowSums(x_tot$fit$exposure)
     denovo_norm = xx2$fit$exposure / rowSums(xx2$fit$exposure) * resid_expos
 
-    if (max(denovo_norm) > 0.1) {
-      x_tot$fit$exposure = cbind(x_tot$fit$exposure, denovo_norm)
-      x_tot$fit$denovo_signatures = xx2$fit$denovo_signatures
-    }
+    # if (max(denovo_norm) > 0.1) {
+    x_tot$fit$exposure = cbind(x_tot$fit$exposure, denovo_norm)
+    x_tot$fit$denovo_signatures = xx2$fit$denovo_signatures
+    # }
   }
 
   x_tot$color_palette = gen_palette(get_signatures(x_tot) %>% nrow()) %>%
@@ -173,6 +173,9 @@ create_basilica_obj = function(fit, input_catalogue, cohort="MyCohort") {
   fit$catalogue_signatures = fit$input_catalogue
 
   obj$fit = fit
+
+  obj$color_palette = gen_palette(get_signatures(obj) %>% nrow()) %>%
+    setNames(sort(rownames(get_signatures(obj))))
 
   return(obj)
 }

@@ -68,7 +68,7 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
 
 
 
-plot_sigs_prevalence = function(x, delta=0.2) {
+plot_sigs_prevalence = function(x) {
   expos = get_exposure(x, long = T)
 
   expos %>%
@@ -79,7 +79,8 @@ plot_sigs_prevalence = function(x, delta=0.2) {
     geom_point(size=.5) +
     geom_line() +
     scale_color_manual(values=x$color_palette) +
-    theme_bw() + ylab("Fraction of samples")
+    theme_bw() + ylab("Fraction of samples") +
+    xlim(0,1) + ylim(0,1)
 
 }
 
