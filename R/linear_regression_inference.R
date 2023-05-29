@@ -35,7 +35,7 @@ two_steps_inference = function(counts,
     xx1_filt = xx1 %>% filter_exposures(min_exp=min_exposure, keep_sigs=keep_sigs)
 
     catalogue2 = get_signatures(xx1_filt)
-  } else catalogue2 = NULL
+  } else { catalogue2 = NULL; run_on_resid = FALSE }
 
   resid_counts = counts; regul_compare = NULL
 

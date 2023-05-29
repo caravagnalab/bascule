@@ -52,9 +52,13 @@ pyfit <- function(x,
   # lambda_rate=lambda_rate,
   # sigma=sigma)
 
-
-  bestRun = obj[[1]]
-  secondBest = obj[[2]]
+  if (is.list(obj)) {
+    bestRun = obj[[1]]
+    secondBest = obj[[2]]
+  } else {
+    bestRun = obj
+    secondBest = NULL
+  }
 
   # save python object data in a list
   data <- list()
@@ -63,6 +67,7 @@ pyfit <- function(x,
   data$input_catalogue <- input_catalogue
   data$lr <- lr
   data$steps <- n_steps
+
   data$exposure <- bestRun$alpha
   data$denovo_signatures = bestRun$beta_denovo
   data$eps_var = bestRun$eps_var
@@ -70,7 +75,7 @@ pyfit <- function(x,
   data$losses = bestRun$losses
   data$train_params = get_train_params(bestRun)
   data$groups = bestRun$groups
-  data$seed = bestRun$seed
+  try(expr = {data$seed = bestRun$seed})
 
   data$secondBest = secondBest
 
