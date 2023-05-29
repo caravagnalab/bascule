@@ -13,26 +13,32 @@ two_steps_inference = function(counts,
                                regularizer="KL",
                                run_on_resid=TRUE,
                                py=NULL) {
-  x1 = pyfit(
-    x = counts,
-    py = py,
-    lr = lr,
-    n_steps = n_steps,
-    k_list = 0,
-    groups = NULL,
-    input_catalogue = input_catalogue,
-    regularizer = regularizer,
-    reg_weight = 1,
-    reg_bic = TRUE,
-    compile = compile,
-    enforce_sparsity = enforce_sparsity1,
-    stage = "random_noise"
-  )
-  xx1 = create_basilica_obj(x1, input_catalogue, cohort=cohort)
-  xx1_filt = xx1 %>% filter_exposures(min_exp=min_exposure, keep_sigs=keep_sigs)
 
+  xx1 = NULL; xx1_filt = NULL
+  if (!is.null(input_catalogue)) {
+    x1 = pyfit(
+      x = counts,
+      py = py,
+      lr = lr,
+      n_steps = n_steps,
+      k_list = 0,
+      groups = NULL,
+      input_catalogue = input_catalogue,
+      regularizer = regularizer,
+      reg_weight = 1,
+      reg_bic = TRUE,
+      compile = compile,
+      enforce_sparsity = enforce_sparsity1,
+      stage = "random_noise"
+    )
+    xx1 = create_basilica_obj(x1, input_catalogue, cohort=cohort)
+    xx1_filt = xx1 %>% filter_exposures(min_exp=min_exposure, keep_sigs=keep_sigs)
 
-  resid_counts = counts; catalogue2 = get_signatures(xx1_filt); regul_compare = NULL
+    catalogue2 = get_signatures(xx1_filt)
+  } else catalogue2 = NULL
+
+  resid_counts = counts; regul_compare = NULL
+
   if (run_on_resid) {
     resid_counts = compute_residuals(xx1,
                                      min_exp=min_exposure,

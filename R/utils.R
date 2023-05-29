@@ -53,6 +53,9 @@ pyfit <- function(x,
   # sigma=sigma)
 
 
+  bestRun = obj[[1]]
+  secondBest = obj[[2]]
+
   # save python object data in a list
   data <- list()
 
@@ -60,20 +63,16 @@ pyfit <- function(x,
   data$input_catalogue <- input_catalogue
   data$lr <- lr
   data$steps <- n_steps
-  data$exposure <- obj$alpha
-  data$denovo_signatures = obj$beta_denovo
-  data$eps_var = obj$eps_var
-  data$bic = obj$bic
-  data$losses = obj$losses
-  data$train_params = get_train_params(obj)
-  data$groups = obj$groups
+  data$exposure <- bestRun$alpha
+  data$denovo_signatures = bestRun$beta_denovo
+  data$eps_var = bestRun$eps_var
+  data$bic = bestRun$bic
+  data$losses = bestRun$losses
+  data$train_params = get_train_params(bestRun)
+  data$groups = bestRun$groups
+  data$seed = bestRun$seed
 
-  # output
-  # ---------------------------------:
-  # exposure          --> data.frame
-  # denovo_signatures --> data.frame
-  # bic               --> numeric
-  # losses            --> numeric
+  data$secondBest = secondBest
 
   return(data)
 }

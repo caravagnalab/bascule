@@ -37,12 +37,49 @@ sbs.fit1 = two_steps_inference(as.data.frame(counts_sbs),
                                run_on_resid=TRUE,
                                regularizer="KL")
 sbs1 = sbs.fit1$tot
-make_plots(sbs1, what="SBS", epsilon=TRUE)
+make_plots(sbs1, what="SBS", epsilon=TRUE, sample_name=TRUE)
 patchwork::wrap_plots(plot_exposures(sbs1, sampleIDs = "UPN06_REL"),
                       plot_mutations(sbs1, sampleIDs="UPN06_REL"),
                       plot_signatures(sbs1), design="AABBBB
                                                       ##CCCC
                                                       ##CCCC")
+
+
+sbs.fit1b = two_steps_inference(as.data.frame(counts_sbs),
+                                k_list=0:5,
+                                enforce_sparsity1=T,
+                                enforce_sparsity2=F,
+                                input_catalogue=COSMIC_filt_merged[c("SBS1","SBS40 SBS3 SBS5"),],
+                                keep_sigs=c("SBS1","SBS40 SBS3 SBS5"),
+                                py=py,
+                                run_on_resid=FALSE,
+                                regularizer="KL")
+sbs1b = sbs.fit1b$tot
+make_plots(sbs1b, what="SBS", epsilon=TRUE, sample_name=TRUE)
+patchwork::wrap_plots(plot_exposures(sbs1, sampleIDs = "UPN06_REL"),
+                      plot_mutations(sbs1, sampleIDs="UPN06_REL"),
+                      plot_signatures(sbs1), design="AABBBB
+                                                      ##CCCC
+                                                      ##CCCC")
+
+
+sbs.fit1c = two_steps_inference(as.data.frame(counts_sbs),
+                                k_list=0:5,
+                                enforce_sparsity1=T,
+                                enforce_sparsity2=F,
+                                input_catalogue=COSMIC_filt_merged[c("SBS1","SBS40 SBS3 SBS5"),],
+                                keep_sigs=c("SBS1","SBS40 SBS3 SBS5"),
+                                py=py,
+                                run_on_resid=FALSE,
+                                regularizer="cosine")
+sbs1c = sbs.fit1c$tot
+make_plots(sbs1c, what="SBS", epsilon=TRUE, sample_name=TRUE, sort_by="D1")
+patchwork::wrap_plots(plot_exposures(sbs1c, sampleIDs = "UPN06_REL"),
+                      plot_mutations(sbs1c, sampleIDs="UPN06_REL"),
+                      plot_signatures(sbs1c), design="AABBBB
+                                                      ##CCCC
+                                                      ##CCCC")
+
 
 ## Only SBS1,5
 sbs.fit2 = two_steps_inference(as.data.frame(counts_sbs),
