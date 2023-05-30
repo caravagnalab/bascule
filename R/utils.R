@@ -23,6 +23,8 @@ pyfit <- function(x,
                   reg_bic = FALSE,
                   verbose = FALSE
                   ) {
+  TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
+
   if (is.null(py))
     py <- reticulate::import("pybasilica")
 
@@ -51,8 +53,8 @@ pyfit <- function(x,
       regul_compare = regul_compare,
       verbose = verbose
     )
-  # lambda_rate=lambda_rate,
-  # sigma=sigma)
+
+  TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
 
   if (is.list(obj)) {
     bestRun = obj[[1]]
@@ -80,6 +82,7 @@ pyfit <- function(x,
   try(expr = {data$seed = bestRun$seed})
 
   data$secondBest = secondBest
+  data$time = TIME
 
   return(data)
 }

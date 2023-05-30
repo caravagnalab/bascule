@@ -32,9 +32,10 @@ sbs.fit1 = two_steps_inference(as.data.frame(counts_sbs),
                                enforce_sparsity1=T,
                                enforce_sparsity2=F,
                                input_catalogue=COSMIC_filt_merged,
-                               keep_sigs=c("SBS1","SBS40 SBS3 SBS5"),
+                               keep_sigs=c("SBS1","SBS5"),
                                py=py,
-                               run_on_resid=TRUE,
+                               residues=TRUE,
+                               reg_weight=0,
                                regularizer="KL")
 sbs1 = sbs.fit1$tot
 make_plots(sbs1, what="SBS", epsilon=TRUE, sample_name=TRUE)

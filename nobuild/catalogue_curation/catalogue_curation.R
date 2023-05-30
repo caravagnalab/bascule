@@ -16,7 +16,7 @@ COSMIC_merged = readRDS("~/GitHub/basilica/nobuild/catalogue_curation/COSMIC_mer
 
 keep = lapply(rownames(COSMIC_merged), function(sname) {
   snames = strsplit(sname, " ")[[1]]
-  if (any(!snames %in% c(rm_sigs$not_validated, "SBS5"))) return(sname)
+  if (any(!snames %in% c(rm_sigs$not_validated, rm_sigs$seq_artifacts, "SBS5"))) return(sname)
 }) %>% unlist()
 
 # keep = rownames(COSMIC_merged)[!grepl(paste(rm_sigs$not_validated, collapse="|"), rownames(COSMIC_merged))]
@@ -33,7 +33,9 @@ catalogue_long.filt = catalogue_long %>%
 ## Export filtered catalogue - thr = 0.02 #####
 COSMIC_filt_merged = (catalogue_long.filt %>% dplyr::filter(type=="filt_thr_0.02") %>% long_to_wide())$filt_thr_0.02
 # COSMIC_filt_merged["SBS5",] = catalogue["SBS5",]
-COSMIC_filt_merged["SBS40 SBS3 SBS5",] = COSMIC_merged["SBS40 SBS3 SBS5",]
+COSMIC_filt_merged["SBS5",] = COSMIC_catalogue["SBS5",]
+COSMIC_filt_merged = COSMIC_filt_merged[!rownames(COSMIC_filt_merged) %in% "SBS40 SBS3 SBS5",]
+
 usethis::use_data(COSMIC_filt_merged, overwrite=T)
 save(COSMIC_filt_merged, file="~/GitHub/basilica/nobuild/catalogue_curation/COSMIC_filt_merged.rda")
 

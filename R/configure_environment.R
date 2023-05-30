@@ -18,38 +18,73 @@ configure_environment = function(envname="basilica-env") {
   envname = check_conda_env(envname=envname)
 
   # check if the required python packages are installed in the environment
-  check_python_deps(envname=envname)
+  check_python_deps(envname=envname, pip=TRUE)
 }
 
 
-check_conda = function() {
+check_conda = function(use_default=F) {
   if (!have_conda()) {
-    cat("It is not possibe to find a Anaconda or Miniconda version installed.\n A Miniconda installation will be prompted.")
-    install_miniconda_lineagt()
+    cat("It is not prossibe to find a Anaconda or Miniconda version installed.\n")
+
+    if (use_default) answ = "yes"
+    else {
+      cli::cli_alert_warning("The Miniconda installer will be downloaded and used to install Miniconda. Proceed? (yes/no)\n")
+      answ = readline()
+    }
+
+    if (answ == "yes") {
+      install_miniconda_lineagt()
+      create_conda_env()
+      load_conda_env()
+    }
+    else { cli::cli_alert_info("Miniconda will not be installed."); return() }
   }
+
 }
 
 
-check_conda_env = function(envname="basilica-env") {
+
+check_conda_env = function(envname="basilica-env", use_default=F) {
   if (have_loaded_env()) {
     envname = sapply(reticulate::conda_list()$name, grepl, reticulate::py_discover_config()$python) %>%
       which() %>% names()
+    cli::cli_alert_warning(paste0("The '", envname, "' environment is already loaded!"))
     return(envname)
   }
 
   if (!have_conda_env("basilica-env")) {
-    cat("The environment 'basilica-env' is not present.\n")
+    cli::cli_alert_info("The environment 'basilica-env' is not present.\n")
+
+    if (use_default) answ = "create" else {
+      cli::cli_alert_warning("Do you want to load an existing environment, to create a new one named 'basilica-env' or to cancel? (load/create/cancel)\n")
+      answ = readline()
+    }
+
+    if (answ == "create") {
+      envname = "basilica-env"
+      create_conda_env()
+    } else if (answ == "load") {
+      cli::cli_alert_info("Insert the environment name: ")
+      envname = readline()
+    } else {
+      cli::cli_alert_info("No environment will be loaded nor created.")
+      return()
+    }
+
+  } else {
+    cli::cli_alert_info("The environment 'basilica-env' is already present and will be loaded!\n")
     envname = "basilica-env"
-    create_conda_env(envname=envname)
   }
 
-  load_conda_env(envname)
+  if (!have_loaded_env())
+    load_conda_env(envname)
 
   return(envname)
 }
 
 
-check_python_deps = function(envname="basilica-env") {
-  try(install_python_deps(envname), silent=T)
+
+check_python_deps = function(envname="basilica-env", pip=FALSE) {
+  install_python_deps(envname, pip=pip)
 }
 

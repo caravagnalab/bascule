@@ -77,8 +77,13 @@ which_conda_env = function() {
 load_conda_env = function(envname="basilica-env") {
   Sys.unsetenv("RETICULATE_PYTHON")
   tryCatch(
-    expr = reticulate::use_condaenv(envname, required=TRUE),
+    expr = {
+      cli::cli_process_start(paste0("Loading the `", envname, "` environment."))
+      reticulate::use_condaenv(envname, required=TRUE)
+      cli::cli_process_done()
+      },
     error = function(e) {
+      cli::cli_alert_warning(paste0("The `", which_conda_env(), "` environment is already loaded!)"))
       cli::cli_alert_warning("To change the loaded environment, you need to restart the R session!")
     }
   )
@@ -100,6 +105,7 @@ have_conda = function() {
 
 
 create_conda_env = function(envname="basilica-env") {
+  cli::cli_alert_warning(paste0("A new conda environment named `", envname, "` is being installed."))
   reticulate::conda_create(envname=envname, python_version="3.9")
 }
 
@@ -110,11 +116,31 @@ using_conda_env = function(envname="basilica-env") {
 }
 
 
-install_miniconda_lineagt = function() {
+install_miniconda_basilica = function() {
   reticulate::install_miniconda()
 }
 
 
-install_python_deps = function(envname="basilica-env") {
-  reticulate::conda_install(envname=envname, packages=c("pybasilica"), pip=TRUE)
+install_python_deps = function(envname="basilica-env", pip=FALSE, packages=c("pybasilica")) {
+  if (pip) {
+    cli::cli_process_start("Installing the `pybasilica` package from PyPI.")
+    reticulate::conda_install(envname=envname, packages=packages, pip=TRUE)
+    cli::cli_process_done()
+    return()
+  }
+
+  if (have_python_deps(envname=envname, py_pkgs=packages)) {
+    cli::cli_process_start("Uninstalling previously installed packages to reinstall the last version.")
+    system(paste0(reticulate::py_config()$python,
+                  " -m pip uninstall -y ", packages))
+    cli::cli_process_done()
+  }
+
+  cli::cli_process_start("Installing the `pybasilica` package from GitHub. Insert the branch to use: ")
+  branch = readline()
+  system(paste0(reticulate::py_config()$python,
+                " -m pip install git+https://github.com/caravagnalab/pybasilica@",
+                branch))
+  cli::cli_process_done()
+
 }

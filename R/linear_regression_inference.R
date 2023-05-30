@@ -4,97 +4,109 @@ two_steps_inference = function(counts,
                                enforce_sparsity2=FALSE,
                                min_exposure=0.2,
                                input_catalogue=COSMIC_filt_merged,
-                               keep_sigs=c("SBS1", "SBS40 SBS3 SBS5"),
+                               keep_sigs=c("SBS1", "SBS5"),
                                lr=0.05,
                                n_steps=500,
                                groups=NULL,
                                compile=FALSE,
                                cohort="MyCohort",
                                regularizer="KL",
-                               run_on_resid=TRUE,
-                               py=NULL) {
+                               residues=TRUE,
+                               py=NULL,
+                               reg_weight=0.,
+                               CUDA = FALSE,
+                               verbose = FALSE) {
 
-  xx1 = NULL; xx1_filt = NULL
-  if (!is.null(input_catalogue)) {
-    x1 = pyfit(
+  TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
+
+  if (is.null(input_catalogue)) {
+    x_ref = x_ref_filt = catalogue2 = NULL
+    residues = FALSE
+  } else {
+    x_ref = pyfit(
       x = counts,
       py = py,
       lr = lr,
       n_steps = n_steps,
       k_list = 0,
-      groups = NULL,
+      groups = groups,
       input_catalogue = input_catalogue,
       regularizer = regularizer,
-      reg_weight = 1,
+      reg_weight = reg_weight,
       reg_bic = TRUE,
       compile = compile,
+      CUDA = CUDA,
+      verbose = verbose,
       enforce_sparsity = enforce_sparsity1,
       stage = "random_noise"
-    )
-    xx1 = create_basilica_obj(x1, input_catalogue, cohort=cohort)
-    xx1_filt = xx1 %>% filter_exposures(min_exp=min_exposure, keep_sigs=keep_sigs)
+    ) %>% create_basilica_obj(input_catalogue, cohort=cohort)
 
-    catalogue2 = get_signatures(xx1_filt)
-  } else { catalogue2 = NULL; run_on_resid = FALSE }
-
-  resid_counts = counts; regul_compare = NULL
-
-  if (run_on_resid) {
-    resid_counts = compute_residuals(xx1,
-                                     min_exp=min_exposure,
-                                     keep_sigs=keep_sigs)
-    regul_compare = catalogue2
-    catalogue2 = NULL
+    x_ref_filt = x_ref %>% filter_exposures(min_exp=min_exposure, keep_sigs=keep_sigs)
+    catalogue2 = get_signatures(x_ref_filt)
   }
 
-  x2 = pyfit(
+  if (residues) {
+    resid_counts = compute_residuals(x_ref, min_exp=min_exposure, keep_sigs=keep_sigs)
+    regul_compare = catalogue2
+    catalogue2 = NULL
+  } else {
+    resid_counts = counts
+    regul_compare = NULL
+  }
+
+  x_dn = pyfit(
     x = round(resid_counts),
     py = py,
     lr = lr,
     n_steps = n_steps,
     k_list = k_list,
-    groups = NULL,
+    groups = groups,
     input_catalogue = catalogue2,
     regularizer = regularizer,
-    reg_weight = 1,
+    reg_weight = reg_weight,
     reg_bic = TRUE,
     compile = compile,
+    CUDA = CUDA,
+    verbose = verbose,
     enforce_sparsity = enforce_sparsity2,
     stage = "",
     regul_compare = regul_compare
-  )
-  xx2 = create_basilica_obj(x2, input_catalogue=NULL, cohort=cohort)
+  ) %>% create_basilica_obj(input_catalogue=NULL, cohort=cohort)
 
-  if (!run_on_resid)
-    return(list("tot"=xx2,
-                "step1"=xx1,
-                "step1_filt"=xx1_filt,
-                "step2"=xx2))
+  TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
 
-  x_tot = xx1 %>% filter_exposures(min_exp=min_exposure, keep_sigs=keep_sigs)
-  x_tot$n_denovo = xx2$n_denovo
-  x_tot$fit$denovo_signatures = NULL
+  if (!residues) merged = x_dn
+  else merged = merge_fits(x_ref, x_dn, x_ref_filt, min_exposure, keep_sigs)
 
-  if (x_tot$n_denovo == 0)
-    x_tot$fit$exposure = normalize_exposures(xx1_filt) %>% get_exposure()
+  merged$time = TIME
+
+  return(list("tot"=merged, "step1"=x_ref, "step1_filt"=x_ref_filt, "step2"=x_dn))
+}
+
+
+
+merge_fits = function(x1, x2, x1_filt, min_exposure, keep_sigs) {
+
+  merged = x1 %>% filter_exposures(min_exp=min_exposure, keep_sigs=keep_sigs)
+  merged$n_denovo = x2$n_denovo
+  merged$fit$denovo_signatures = NULL
+
+  if (merged$n_denovo == 0)
+    merged$fit$exposure = normalize_exposures(x1_filt) %>% get_exposure()
   else {
-    resid_expos = 1 - rowSums(x_tot$fit$exposure)
-    denovo_norm = xx2$fit$exposure / rowSums(xx2$fit$exposure) * resid_expos
+    resid_expos = 1 - rowSums(merged$fit$exposure)
+    denovo_norm = x2$fit$exposure / rowSums(x2$fit$exposure) * resid_expos
 
-    # if (max(denovo_norm) > 0.1) {
-    x_tot$fit$exposure = cbind(x_tot$fit$exposure, denovo_norm)
-    x_tot$fit$denovo_signatures = xx2$fit$denovo_signatures
-    # }
+    merged$fit$exposure = cbind(merged$fit$exposure, denovo_norm)
+    merged$fit$denovo_signatures = x2$fit$denovo_signatures
   }
 
-  x_tot$color_palette = gen_palette(get_signatures(x_tot) %>% nrow()) %>%
-    setNames(sort(rownames(get_signatures(x_tot))))
+  merged$color_palette = gen_palette(get_signatures(merged) %>% nrow()) %>%
+    setNames(sort(rownames(get_signatures(merged))))
 
-  return(list("tot"=x_tot,
-              "step1"=xx1,
-              "step1_filt"=xx1_filt,
-              "step2"=xx2))
+  return(merged)
 }
+
 
 
 create_basilica_obj_simul = function(simul, cohort="MySimul") {
@@ -182,6 +194,8 @@ create_basilica_obj = function(fit, input_catalogue, cohort="MyCohort") {
 
   obj$color_palette = gen_palette(get_signatures(obj) %>% nrow()) %>%
     setNames(sort(rownames(get_signatures(obj))))
+
+  obj$time = fit$time
 
   return(obj)
 }
