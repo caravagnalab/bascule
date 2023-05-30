@@ -35,7 +35,7 @@ fit <- function(x,
                 blacklist = NULL,
                 phi = 0.05,
                 delta = 0.9,
-                filt_pi =0.1,
+                filt_pi = 0.1,
                 groups = NULL,
                 lambda_rate = NULL,
                 sigma = FALSE,
@@ -47,7 +47,9 @@ fit <- function(x,
                 reg_weight = 1,
                 reg_bic = TRUE,
                 cosine_by_subs = FALSE,
-                stage="")
+                stage="",
+                verbose = TRUE
+                )
 
 {
 
@@ -151,7 +153,8 @@ fit <- function(x,
       regularizer = regularizer,
       reg_weight = reg_weight,
       reg_bic = reg_bic,
-      stage = stage
+      stage = stage,
+      verbose = verbose
     )
 
     if (filtered_cat && !is.null(obj$denovo_signatures) && nrow(obj$denovo_signatures)>0)
@@ -442,6 +445,8 @@ fit <- function(x,
   fit$cohort = cohort
 
   fit$n_samples = x %>% nrow()
+
+  fit$time = TIME
 
   #### CHECK ########
   # cat_expo = obj$denovo_signatures %>% rownames()

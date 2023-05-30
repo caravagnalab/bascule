@@ -20,7 +20,8 @@ pyfit <- function(x,
                   regularizer = "cosine",
                   regul_compare = NULL,
                   reg_weight = 1,
-                  reg_bic = FALSE
+                  reg_bic = FALSE,
+                  verbose = FALSE
                   ) {
   if (is.null(py))
     py <- reticulate::import("pybasilica")
@@ -47,7 +48,8 @@ pyfit <- function(x,
       reg_weight = reg_weight,
       reg_bic = reg_bic,
       stage = stage,
-      regul_compare = regul_compare
+      regul_compare = regul_compare,
+      verbose = verbose
     )
   # lambda_rate=lambda_rate,
   # sigma=sigma)
