@@ -81,14 +81,12 @@ get_epsilon = function(x) {
 #' @return ggplot object
 #' @export plot_mutations
 
-plot_mutations = function(x, sampleIDs=NULL, by_sig=FALSE, reconstructed=FALSE, epsilon=FALSE, what="SBS") {
+plot_mutations = function(x, sampleIDs=NULL, by_sig=FALSE,
+                          reconstructed=FALSE, epsilon=FALSE,
+                          what="SBS", cls=NULL) {
   if (is.null(sampleIDs)) sampleIDs = rownames(x$fit$x)
-
-  if (by_sig) {
-    cli::cli_alert_warning("Not implemented with mutations count by signature.
-                           {.code by_sig} set to {.code FALSE}.")
-    by_sig = FALSE
-  }
+  if (is.null(cls) && have_color_palette(x)) cls = get_color_palette(x)
+  if (is.null(cls) && !have_color_palette(x)) cls = get_signature_colors(x)
 
   xx = get_data(x, reconstructed=reconstructed)
   if (have_groups(x)) gid = x$groups else gid = 1
@@ -99,16 +97,17 @@ plot_mutations = function(x, sampleIDs=NULL, by_sig=FALSE, reconstructed=FALSE, 
 
   xx_s = xx %>% tibble::rownames_to_column(var="sampleID") %>% dplyr::mutate(sbs="s1", groups=gid)
 
-  if (by_sig)
+  if (by_sig) {
     xx_s = lapply(rownames(get_signatures(x)),
                   function(sname) {
-                   ((as.matrix(x$fit$exposure[,sname], ncol=1) %*%
-                       as.matrix(get_signatures(x)[sname,], nrow=1)) *
-                      xx) %>%
-                   dplyr::mutate(sbs=sname, groups=gid) %>%
-                   tibble::rownames_to_column(var="sampleID")
+                    ((as.matrix(x$fit$exposure[, sname], ncol=1) %*%
+                        as.matrix(get_signatures(x)[sname,], nrow=1)) * rowSums(x$fit$x)) %>%
+                      as.data.frame() %>%
+                      dplyr::mutate(sbs=sname, groups=gid) %>%
+                      tibble::rownames_to_column(var="sampleID")
                   }
     ) %>% do.call(what=rbind, args=.)
+  }
 
   xx_s = xx_s %>%
     dplyr::filter(sampleID %in% sampleIDs) %>%
@@ -144,7 +143,7 @@ plot_mutations = function(x, sampleIDs=NULL, by_sig=FALSE, reconstructed=FALSE, 
       facet_grid(~substitution) +
       ylab("Number of mutations") + xlab("") +
       theme_bw() + theme(axis.text.x=element_text(angle=90)) +
-      scale_fill_manual(values=c(get_signature_colors(x), "epsilon"="gainsboro"))
+      scale_fill_manual(values=c(cls, "epsilon"="gainsboro"))
   else
     p = xx_s %>%
       ggplot() +
