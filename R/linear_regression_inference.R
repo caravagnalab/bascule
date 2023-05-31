@@ -38,8 +38,9 @@ two_steps_inference = function(counts,
       CUDA = CUDA,
       verbose = verbose,
       enforce_sparsity = enforce_sparsity1,
-      stage = "random_noise"
-    ) %>% create_basilica_obj(input_catalogue, cohort=cohort)
+      stage = "random_noise") %>%
+
+      create_basilica_obj(input_catalogue, cohort=cohort)
 
     x_ref_filt = x_ref %>% filter_exposures(min_exp=min_exposure, keep_sigs=keep_sigs)
     catalogue2 = get_signatures(x_ref_filt)

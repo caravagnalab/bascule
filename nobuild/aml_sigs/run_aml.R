@@ -2,25 +2,9 @@ library(lsa)
 library(dplyr)
 library(ggplot2)
 source("~/GitHub/simbasilica/nobuild/script_test/helper_fns.R")
-py = reticulate::import_from_path("pybasilica","~/GitHub/pybasilica/")
+# py = reticulate::import_from_path("pybasilica","~/GitHub/pybasilica/")
 devtools::load_all("~/GitHub/basilica/")
 devtools::load_all("~/GitHub/simbasilica/")
-
-# DBS ####
-counts_dbs = readRDS("~/Desktop/DBS_counts.rds")
-catalogue_dbs = readRDS("~/Desktop/DBS_cosmic_catalogue.rds")
-
-dbs.fit = two_steps_inference(counts_dbs, k_list=0:5,
-                              enforce_sparsity1=T,
-                              enforce_sparsity2=F,
-                              input_catalogue=catalogue_dbs,
-                              py=py,
-                              regularizer="KL")
-dbs1 = dbs.fit$tot
-dbs1 %>% plot_mutations(epsilon = T)
-make_plots(dbs1, what="DBS", epsilon=TRUE)
-
-
 
 
 # SBS ####
@@ -33,7 +17,7 @@ sbs.fit1 = two_steps_inference(as.data.frame(counts_sbs),
                                enforce_sparsity2=F,
                                input_catalogue=COSMIC_filt_merged,
                                keep_sigs=c("SBS1","SBS5"),
-                               py=py,
+                               py=NULL,
                                residues=TRUE,
                                reg_weight=0,
                                regularizer="KL")
@@ -227,5 +211,20 @@ for (i in 1:nrow(reference))
 -2*(sum(ll2)+kl*22*96) + k2*log(22)
 
 
+
+
+# DBS ####
+counts_dbs = readRDS("~/Desktop/DBS_counts.rds")
+catalogue_dbs = readRDS("~/Desktop/DBS_cosmic_catalogue.rds")
+
+dbs.fit = two_steps_inference(counts_dbs, k_list=0:5,
+                              enforce_sparsity1=T,
+                              enforce_sparsity2=F,
+                              input_catalogue=catalogue_dbs,
+                              py=py,
+                              regularizer="KL")
+dbs1 = dbs.fit$tot
+dbs1 %>% plot_mutations(epsilon = T)
+make_plots(dbs1, what="DBS", epsilon=TRUE)
 
 
