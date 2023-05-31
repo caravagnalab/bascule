@@ -85,6 +85,9 @@ check_conda_env = function(envname="basilica-env", use_default=F) {
 
 
 check_python_deps = function(envname="basilica-env", pip=FALSE) {
-  install_python_deps(envname, pip=pip)
+  tryCatch(
+    expr = install_python_deps(envname, pip=pip),
+    error = function(e) cli::cli_alert_warning("Not able to install the Python package.")
+  )
 }
 

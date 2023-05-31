@@ -121,26 +121,17 @@ install_miniconda_basilica = function() {
 }
 
 
-install_python_deps = function(envname="basilica-env", pip=FALSE, packages=c("pybasilica")) {
+install_python_deps = function(envname="basilica-env", pip=TRUE) {
   if (pip) {
     cli::cli_process_start("Installing the `pybasilica` package from PyPI.")
-    reticulate::conda_install(envname=envname, packages=packages, pip=TRUE)
-    cli::cli_process_done()
-    return()
+    pkg = "pybasilica"
+  } else {
+    cli::cli_process_start("Installing the `pybasilica` package from GitHub. Insert the branch to use: ")
+    branch = readline()
+    pkg = paste0("git+https://github.com/caravagnalab/pybasilica@", branch)
   }
 
-  if (have_python_deps(envname=envname, py_pkgs=packages)) {
-    cli::cli_process_start("Uninstalling previously installed packages to reinstall the last version.")
-    system(paste0(reticulate::py_config()$python,
-                  " -m pip uninstall -y ", packages))
-    cli::cli_process_done()
-  }
+  system(paste0(reticulate::py_config()$python, " -m pip install ", pkg, " --upgrade"))
 
-  cli::cli_process_start("Installing the `pybasilica` package from GitHub. Insert the branch to use: ")
-  branch = readline()
-  system(paste0(reticulate::py_config()$python,
-                " -m pip install git+https://github.com/caravagnalab/pybasilica@",
-                branch))
   cli::cli_process_done()
-
 }

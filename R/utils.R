@@ -28,11 +28,8 @@ pyfit <- function(x,
   if (is.null(py))
     py <- reticulate::import("pybasilica")
 
-  if (length(k_list) > 1)
-    k_list <- reticulate::r_to_py(as.integer(k_list))
-  else
+  if (length(k_list) > 1) k_list <- reticulate::r_to_py(as.integer(k_list)) else
     k_list <- reticulate::r_to_py(list(as.integer(k_list)))
-
 
   obj <-
     py$fit(
@@ -65,27 +62,35 @@ pyfit <- function(x,
   }
 
   # save python object data in a list
-  data <- list()
-
-  data$x <- x
-  data$input_catalogue <- input_catalogue
-  data$lr <- lr
-  data$steps <- n_steps
-
-  data$exposure <- bestRun$alpha
-  data$denovo_signatures = bestRun$beta_denovo
-  data$eps_var = bestRun$eps_var
-  data$bic = bestRun$bic
-  data$losses = bestRun$losses
-  data$train_params = get_train_params(bestRun)
-  data$groups = bestRun$groups
-  try(expr = {data$seed = bestRun$seed})
-
-  data$secondBest = secondBest
+  data = get_list_from_py(bestRun, x, input_catalogue, lr, n_steps)
+  data$secondBest = get_list_from_py(secondBest, x, input_catalogue, lr, n_steps)
   data$time = TIME
 
   return(data)
 }
+
+
+get_list_from_py = function(obj, counts, input_catalogue, lr, n_steps) {
+  if (is.null(obj)) return(NULL)
+
+  x = list()
+  x$x <- counts
+  x$input_catalogue <- input_catalogue
+  x$lr <- lr
+  x$steps <- n_steps
+
+  x$exposure <- obj$alpha
+  x$denovo_signatures = obj$beta_denovo
+  x$eps_var = obj$eps_var
+  x$bic = obj$bic
+  x$losses = obj$losses
+  x$train_params = get_train_params(obj)
+  x$groups = obj$groups
+  try(expr = {x$seed = obj$seed})
+
+  return(x)
+}
+
 
 
 get_train_params = function(obj) {
