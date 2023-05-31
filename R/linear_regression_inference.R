@@ -1,9 +1,9 @@
-two_steps_inference = function(counts,
-                               k_list,
+two_steps_inference = function(x,
+                               k,
                                enforce_sparsity1=TRUE,
                                enforce_sparsity2=FALSE,
                                min_exposure=0.2,
-                               input_catalogue=COSMIC_filt_merged,
+                               reference_catalogue=COSMIC_filt_merged,
                                keep_sigs=c("SBS1", "SBS5"),
                                lr=0.05,
                                n_steps=500,
@@ -19,18 +19,18 @@ two_steps_inference = function(counts,
 
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
 
-  if (is.null(input_catalogue)) {
+  if (is.null(reference_catalogue)) {
     x_ref = x_ref_filt = catalogue2 = NULL
     residues = FALSE
   } else {
     x_ref = pyfit(
-      x = counts,
+      x = x,
       py = py,
       lr = lr,
       n_steps = n_steps,
       k_list = 0,
       groups = groups,
-      input_catalogue = input_catalogue,
+      input_catalogue = reference_catalogue,
       regularizer = regularizer,
       reg_weight = reg_weight,
       reg_bic = TRUE,
@@ -40,7 +40,7 @@ two_steps_inference = function(counts,
       enforce_sparsity = enforce_sparsity1,
       stage = "random_noise") %>%
 
-      create_basilica_obj(input_catalogue, cohort=cohort)
+      create_basilica_obj(reference_catalogue, cohort=cohort)
 
     x_ref_filt = x_ref %>% filter_exposures(min_exp=min_exposure, keep_sigs=keep_sigs)
     catalogue2 = get_signatures(x_ref_filt)
@@ -51,7 +51,7 @@ two_steps_inference = function(counts,
     regul_compare = catalogue2
     catalogue2 = NULL
   } else {
-    resid_counts = counts
+    resid_counts = x
     regul_compare = NULL
   }
 
@@ -60,7 +60,7 @@ two_steps_inference = function(counts,
     py = py,
     lr = lr,
     n_steps = n_steps,
-    k_list = k_list,
+    k_list = k,
     groups = groups,
     input_catalogue = catalogue2,
     regularizer = regularizer,
