@@ -19,8 +19,6 @@ plot_data = function(x, sample_ids = NULL, what = "SBS", context = T) {
     reshape2::melt() %>%
     reformat_contexts(what=what)
 
-  # library(CNAqc)
-
   if(!is.null(sample_ids)) a = a %>% filter(Var1 %in% samples_ids)
 
   all_plot = lapply(a$Var1 %>% unique(), function(var) {
