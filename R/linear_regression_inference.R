@@ -193,7 +193,7 @@ create_basilica_obj = function(fit, input_catalogue, reference_catalogue, cohort
     obj$n_denovo = nrow(fit$denovo_signatures) else
       obj$n_denovo = 0
 
-  if (filtered_catalogue)
+  if (filtered_catalogue && obj$n_denovo > 0)
     fit$denovo_signatures = renormalize_denovo_thr(fit$denovo_signatures)
 
   obj$input = list("counts"=fit$x,

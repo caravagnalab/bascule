@@ -679,7 +679,6 @@ solve.quadratic.optimization.aux <-
       if (!is.null(exposures)) return(list(NULL, NULL))
       return(list(NULL, a_name))
     }
-
 }
 
 # Renormalize denovo -----------------------------------------------------------
