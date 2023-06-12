@@ -7,7 +7,7 @@
 #' @return a data.frame where rows are samples and columns are inferred signature profiles
 #' @export get_exposure
 
-get_exposure <- function(x, long = FALSE, groups = FALSE) {
+get_exposure <- function(x, long = FALSE, add_groups = FALSE) {
 
   stopifnot(inherits(x, "basilica_obj"))
 
@@ -19,11 +19,10 @@ get_exposure <- function(x, long = FALSE, groups = FALSE) {
                         x$fit$denovo_signatures %>% rownames())
   }
 
-  if (groups && "groups" %in% names(x$fit))
-    alpha$groups = x$fit$groups
+  if (add_groups && have_groups(x))
+    alpha$groups = x$groups
 
   if (long) {
-
     is_denovo = function(n){
       n %in% (x$fit$denovo_signatures %>% rownames())
     }

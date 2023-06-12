@@ -4,6 +4,7 @@ two_steps_inference = function(x,
                                enforce_sparsity2=FALSE,
                                min_exposure=0.2,
                                reference_catalogue=COSMIC_filt_merged,
+                               filtered_catalogue=TRUE,
                                keep_sigs=c("SBS1", "SBS5"),
                                lr=0.05,
                                n_steps=500,
@@ -72,7 +73,9 @@ two_steps_inference = function(x,
     enforce_sparsity = enforce_sparsity2,
     stage = "",
     regul_compare = regul_compare
-  ) %>% create_basilica_obj(input_catalogue=NULL, cohort=cohort)
+  ) %>% create_basilica_obj(input_catalogue=NULL,
+                            cohort=cohort,
+                            filtered_catalogue=filtered_catalogue)
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
 
@@ -174,7 +177,7 @@ map_groups = function(groups) {
 }
 
 
-create_basilica_obj = function(fit, input_catalogue, cohort="MyCohort") {
+create_basilica_obj = function(fit, input_catalogue, cohort="MyCohort", filtered_catalogue=FALSE) {
   obj = list()
   class(obj) = "basilica_obj"
 
@@ -185,6 +188,9 @@ create_basilica_obj = function(fit, input_catalogue, cohort="MyCohort") {
     obj$n_denovo = nrow(fit$denovo_signatures) else
       obj$n_denovo = 0
 
+  if (filtered_catalogue)
+    fit$denovo_signatures = renormalize_denovo_thr(fit$denovo_signatures)
+
   obj$input = list("counts"=fit$x,
                    "reference_catalogue"=COSMIC_filtered,
                    "input_catalogue"=fit$input_catalogue)
@@ -192,6 +198,8 @@ create_basilica_obj = function(fit, input_catalogue, cohort="MyCohort") {
   fit$catalogue_signatures = fit$input_catalogue
 
   obj$fit = fit
+
+  obj$groups = fit$groups
 
   obj$color_palette = gen_palette(get_signatures(obj) %>% nrow()) %>%
     setNames(sort(rownames(get_signatures(obj))))
