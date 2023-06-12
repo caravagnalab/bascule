@@ -20,10 +20,7 @@ two_steps_inference = function(x,
 
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
 
-  if (is.null(reference_catalogue)) {
-    x_ref = x_ref_filt = catalogue2 = NULL
-    residues = FALSE
-  } else {
+  if (!is.null(reference_catalogue)) {
     x_ref = pyfit(
       x = x,
       py = py,
@@ -41,10 +38,15 @@ two_steps_inference = function(x,
       enforce_sparsity = enforce_sparsity1,
       stage = "random_noise") %>%
 
-      create_basilica_obj(reference_catalogue, cohort=cohort)
+      create_basilica_obj(input_catalogue=reference_catalogue,
+                          cohort=cohort,
+                          filtered_catalogue=filtered_catalogue)
 
     x_ref_filt = x_ref %>% filter_exposures(min_exp=min_exposure, keep_sigs=keep_sigs)
     catalogue2 = get_signatures(x_ref_filt)
+  } else {
+    x_ref = x_ref_filt = catalogue2 = NULL
+    residues = FALSE
   }
 
   if (residues) {
@@ -79,9 +81,8 @@ two_steps_inference = function(x,
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
 
-  if (!residues) merged = x_dn
-  else merged = merge_fits(x_ref, x_dn, x_ref_filt, min_exposure, keep_sigs)
-
+  # if (!residues) merged = x_dn
+  merged = merge_fits(x_ref, x_dn, x_ref_filt, min_exposure, keep_sigs)
   merged$time = TIME
 
   return(list("tot"=merged, "step1"=x_ref, "step1_filt"=x_ref_filt, "step2"=x_dn))
@@ -90,6 +91,8 @@ two_steps_inference = function(x,
 
 
 merge_fits = function(x1, x2, x1_filt, min_exposure, keep_sigs) {
+  if (is.null(x1))
+    return(x2)
 
   merged = x1 %>% filter_exposures(min_exp=min_exposure, keep_sigs=keep_sigs)
   merged$n_denovo = x2$n_denovo
@@ -177,7 +180,7 @@ map_groups = function(groups) {
 }
 
 
-create_basilica_obj = function(fit, input_catalogue, cohort="MyCohort", filtered_catalogue=FALSE) {
+create_basilica_obj = function(fit, input_catalogue, cohort="MyCohort", filtered_catalogue=TRUE) {
   obj = list()
   class(obj) = "basilica_obj"
 
