@@ -85,15 +85,15 @@ two_steps_inference = function(x,
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
 
   # if (!residues) merged = x_dn
-  merged = merge_fits(x_ref, x_dn, x_ref_filt, min_exposure, keep_sigs)
+  merged = merge_fits(x_ref, x_dn, x_ref_filt, min_exposure, keep_sigs, residues)
   merged$time = TIME
 
   return(list("tot"=merged, "step1"=x_ref, "step1_filt"=x_ref_filt, "step2"=x_dn))
 }
 
 
-merge_fits = function(x1, x2, x1_filt, min_exposure, keep_sigs) {
-  if (is.null(x1))
+merge_fits = function(x1, x2, x1_filt, min_exposure, keep_sigs, residues) {
+  if (!residues)
     return(x2)
 
   merged = x1 %>% filter_exposures(min_exp=min_exposure, keep_sigs=keep_sigs)
@@ -159,6 +159,7 @@ filter_exposures = function(x, min_exp=0.15, keep_sigs=NULL) {
     dplyr::pull(sigs) %>% unique() %>% as.character()
 
   if (!is.null(keep_sigs)) sbs_keep = c(sbs_keep, keep_sigs) %>% unique()
+  if (length(sbs_keep) == 0) return(x)
 
   x$fit$input_catalogue = x$fit$input_catalogue[sbs_keep,]
   x$fit$catalogue_signatures = x$fit$catalogue_signatures[sbs_keep,]
