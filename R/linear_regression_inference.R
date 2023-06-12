@@ -15,8 +15,9 @@ two_steps_inference = function(x,
                                residues=FALSE,
                                py=NULL,
                                reg_weight=0.,
-                               CUDA = FALSE,
-                               verbose = FALSE) {
+                               reg_bic=TRUE,
+                               CUDA=FALSE,
+                               verbose=FALSE) {
 
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
 
@@ -31,14 +32,15 @@ two_steps_inference = function(x,
       input_catalogue = reference_catalogue,
       regularizer = regularizer,
       reg_weight = reg_weight,
-      reg_bic = TRUE,
+      reg_bic = reg_bic,
       compile = compile,
       CUDA = CUDA,
       verbose = verbose,
       enforce_sparsity = enforce_sparsity1,
       stage = "random_noise") %>%
 
-      create_basilica_obj(input_catalogue=reference_catalogue,
+      create_basilica_obj(input_catalogue=reference_catalogue[keep_sigs, ],
+                          reference_catalogue=reference_catalogue,
                           cohort=cohort,
                           filtered_catalogue=filtered_catalogue)
 
@@ -68,14 +70,15 @@ two_steps_inference = function(x,
     input_catalogue = catalogue2,
     regularizer = regularizer,
     reg_weight = reg_weight,
-    reg_bic = TRUE,
+    reg_bic = reg_bic,
     compile = compile,
     CUDA = CUDA,
     verbose = verbose,
     enforce_sparsity = enforce_sparsity2,
     stage = "",
     regul_compare = regul_compare
-  ) %>% create_basilica_obj(input_catalogue=NULL,
+  ) %>% create_basilica_obj(input_catalogue=reference_catalogue[keep_sigs,],
+                            reference_catalogue=reference_catalogue,
                             cohort=cohort,
                             filtered_catalogue=filtered_catalogue)
 
@@ -87,7 +90,6 @@ two_steps_inference = function(x,
 
   return(list("tot"=merged, "step1"=x_ref, "step1_filt"=x_ref_filt, "step2"=x_dn))
 }
-
 
 
 merge_fits = function(x1, x2, x1_filt, min_exposure, keep_sigs) {
@@ -113,7 +115,6 @@ merge_fits = function(x1, x2, x1_filt, min_exposure, keep_sigs) {
 
   return(merged)
 }
-
 
 
 create_basilica_obj_simul = function(simul, cohort="MySimul") {
@@ -180,7 +181,8 @@ map_groups = function(groups) {
 }
 
 
-create_basilica_obj = function(fit, input_catalogue, cohort="MyCohort", filtered_catalogue=TRUE) {
+create_basilica_obj = function(fit, input_catalogue, reference_catalogue, cohort="MyCohort", filtered_catalogue=TRUE) {
+  # fit is the output of "pyfit"
   obj = list()
   class(obj) = "basilica_obj"
 
@@ -195,13 +197,12 @@ create_basilica_obj = function(fit, input_catalogue, cohort="MyCohort", filtered
     fit$denovo_signatures = renormalize_denovo_thr(fit$denovo_signatures)
 
   obj$input = list("counts"=fit$x,
-                   "reference_catalogue"=COSMIC_filtered,
+                   "reference_catalogue"=reference_catalogue,
                    "input_catalogue"=fit$input_catalogue)
 
   fit$catalogue_signatures = fit$input_catalogue
 
   obj$fit = fit
-
   obj$groups = fit$groups
 
   obj$color_palette = gen_palette(get_signatures(obj) %>% nrow()) %>%
