@@ -492,6 +492,8 @@ fit <- function(x,
 
   fit$fit = obj
 
+  fit$k_list = k
+
 
   return(fit)
 }

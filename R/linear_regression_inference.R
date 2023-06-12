@@ -87,6 +87,7 @@ two_steps_inference = function(x,
   # if (!residues) merged = x_dn
   merged = merge_fits(x_ref, x_dn, x_ref_filt, min_exposure, keep_sigs, residues)
   merged$time = TIME
+  merged$k_list = k
 
   return(list("tot"=merged, "step1"=x_ref, "step1_filt"=x_ref_filt, "step2"=x_dn))
 }
