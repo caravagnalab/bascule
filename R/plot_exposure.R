@@ -31,7 +31,7 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
   idcols = c("sample")
   if (have_groups(x)) {
     idcols = c("sample","groups")
-    b$groups = x$groups[sampleIDs]
+    b$groups = x$groups[as.integer(sampleIDs)]
   }
 
   if (!is.null(sort_by))

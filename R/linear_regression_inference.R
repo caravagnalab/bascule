@@ -140,6 +140,13 @@ create_basilica_obj_simul = function(simul, cohort="MySimul") {
   ss$color_palette = gen_palette(get_signatures(ss) %>% nrow()) %>%
     setNames(sort(rownames(get_signatures(ss))))
 
+  ss$private_sigs = list()
+  if ("private_rare" %in% colnames(simul))
+    ss$private_sigs[["private_rare"]] = simul$private_rare[[1]]
+
+  if ("private_common" %in% colnames(simul))
+    ss$private_sigs[["private_common"]] = simul$private_common[[1]]
+
   return(ss)
 }
 

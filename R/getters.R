@@ -98,6 +98,27 @@ get_denovo_signatures <- function(x,  long = FALSE) {
 }
 
 
+get_fixed_signatures <- function(x,  long = FALSE) {
+  stopifnot(inherits(x, "basilica_obj"))
+
+  sigs = x$fit$input_catalogue
+
+  if(is.null(sigs)) return(NULL)
+
+  if(long)
+    sigs = reshape2::melt(sigs %>% as.matrix()) %>%
+    dplyr::rename(
+      Signature = Var1,
+      Feature = Var2,
+      Value = value
+    ) %>%
+    dplyr::as_tibble() %>%
+    dplyr::mutate(Type = 'De novo')
+
+  return(sigs)
+}
+
+
 #' get de novo and catalouge signatures
 #'
 #' @param x basilica object
@@ -159,3 +180,62 @@ get_color_palette = function(x) {
   return(NULL)
 }
 
+
+subset_catalogue = function(catalogue, rm_sigs=NULL, keep_sigs=NULL) {
+  if (is.null(rm_sigs) && is.null(keep_sigs))
+    return(catalogue)
+
+  if (is.null(rm_sigs))
+    return(catalogue[keep_sigs,])
+
+  if (is.null(keep_sigs))
+    return(catalogue[!rownames(catalogue) %in% rm_sigs, ])
+
+  keep_fin = intersect(which(!rownames(catalogue) %in% rm_sigs), which(rownames(catalogue) %in% keep_sigs)) %>% unique()
+  return(catalogue[keep_fin])
+}
+
+
+get_groups_with_sigs = function(x, sigs, thr=0) {
+  if (!have_groups(x))
+    return()
+
+  return(
+    get_exposure(x, add_groups=T, long=T) %>%
+      dplyr::filter(Signature %in% sigs) %>%
+      dplyr::group_by(groups, Signature) %>%
+      dplyr::reframe(is_present=any(Exposure > 0)) %>%
+      dplyr::ungroup() %>% dplyr::filter(is_present) %>%
+      dplyr::select(groups, Signature) %>%
+      tidyr::nest(data=groups)
+  )
+}
+
+
+get_group = function(x, groupIDs) {
+  if (!have_groups(x))
+    return()
+  return(
+    x %>% get_data() %>% dplyr::mutate(groups=x$groups) %>%
+      dplyr::filter(groups %in% groupIDs) %>%
+      dplyr::select(-groups)
+  )
+}
+
+
+add_groups = function(x, groups) {
+  x$groups = groups
+  return(x)
+}
+
+get_dn_signames = function(x) {
+  return(rownames(get_denovo_signatures(x)))
+}
+
+get_fixed_signames = function(x) {
+  return(rownames(get_fixed_signatures(x)))
+}
+
+get_signames = function(x) {
+  return(rownames(get_signatures(x)))
+}

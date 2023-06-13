@@ -44,8 +44,12 @@ plot_data = function(x, sample_ids = NULL, what = "SBS", context = T) {
 
 
 get_data = function(x, reconstructed=FALSE) {
-  if(reconstructed)
-    return((as.matrix(rowSums(x$fit$x) * get_exposure(x)) %*% as.matrix(get_signatures(x))) %>% as.data.frame())
+  if(reconstructed) {
+    sigs = get_signatures(x)
+    expos = get_exposure(x)
+    sorted_names = get_signames(x) %>% sort
+    return((as.matrix(rowSums(x$fit$x) * expos[,sorted_names]) %*% as.matrix(sigs[sorted_names,])) %>% as.data.frame())
+  }
   return(x$fit$x)
 }
 
