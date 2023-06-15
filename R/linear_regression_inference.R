@@ -14,20 +14,26 @@ two_steps_inference = function(x,
                                regularizer="cosine",
                                residues=FALSE,
                                py=NULL,
+                               hyperparameters=NULL,
                                reg_weight=0.,
                                reg_bic=TRUE,
                                CUDA=FALSE,
-                               verbose=FALSE) {
+                               verbose=FALSE,
+                               seed_list=c(10),
+                               initializ_seed = TRUE,
+                               save_runs_seed = TRUE,
+                               initializ_pars_fit = TRUE) {
 
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
 
   if (!is.null(reference_catalogue)) {
     x_ref = pyfit(
-      x = x,
+      counts = x,
       py = py,
       lr = lr,
       n_steps = n_steps,
       k_list = 0,
+      hyperparameters = hyperparameters,
       groups = groups,
       input_catalogue = reference_catalogue,
       regularizer = regularizer,
@@ -37,7 +43,11 @@ two_steps_inference = function(x,
       CUDA = CUDA,
       verbose = verbose,
       enforce_sparsity = enforce_sparsity1,
-      stage = "random_noise") %>%
+      stage = "random_noise",
+      seed_list = seed_list,
+      initializ_seed = initializ_seed,
+      save_runs_seed = save_runs_seed,
+      initializ_pars_fit = initializ_pars_fit) %>%
 
       create_basilica_obj(input_catalogue=reference_catalogue[keep_sigs, ],
                           reference_catalogue=reference_catalogue,
@@ -61,11 +71,12 @@ two_steps_inference = function(x,
   }
 
   x_dn = pyfit(
-    x = round(resid_counts),
+    counts = round(resid_counts),
     py = py,
     lr = lr,
     n_steps = n_steps,
     k_list = k,
+    hyperparameters = hyperparameters,
     groups = groups,
     input_catalogue = catalogue2,
     regularizer = regularizer,
@@ -76,15 +87,19 @@ two_steps_inference = function(x,
     verbose = verbose,
     enforce_sparsity = enforce_sparsity2,
     stage = "",
-    regul_compare = regul_compare
-  ) %>% create_basilica_obj(input_catalogue=reference_catalogue[keep_sigs,],
-                            reference_catalogue=reference_catalogue,
-                            cohort=cohort,
-                            filtered_catalogue=filtered_catalogue)
+    regul_compare = regul_compare,
+    seed_list = seed_list,
+    initializ_seed = initializ_seed,
+    save_runs_seed = save_runs_seed,
+    initializ_pars_fit = initializ_pars_fit) %>%
+
+    create_basilica_obj(input_catalogue=reference_catalogue[keep_sigs,],
+                        reference_catalogue=reference_catalogue,
+                        cohort=cohort,
+                        filtered_catalogue=filtered_catalogue)
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
 
-  # if (!residues) merged = x_dn
   merged = merge_fits(x_ref, x_dn, x_ref_filt, min_exposure, keep_sigs, residues)
   merged$time = TIME
   merged$k_list = k
