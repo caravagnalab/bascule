@@ -7,11 +7,11 @@
 #' @return a data.frame where rows are samples and columns are inferred signature profiles
 #' @export get_exposure
 
-get_exposure <- function(x, long = FALSE, add_groups = FALSE) {
+get_exposure = function(x, long = FALSE, add_groups = FALSE) {
 
   stopifnot(inherits(x, "basilica_obj"))
 
-  alpha <- x$fit$exposure
+  alpha = x$fit$exposure
 
   if (is.matrix(alpha)) {
     alpha = alpha %>% as.data.frame()
@@ -27,10 +27,10 @@ get_exposure <- function(x, long = FALSE, add_groups = FALSE) {
       n %in% (x$fit$denovo_signatures %>% rownames())
     }
 
-    alpha$Sample <- rownames(alpha)
+    alpha$Sample = rownames(alpha)
     if ("groups" %in% colnames(alpha))
-      alpha <- tidyr::gather(alpha, key="Signature", value="Exposure", c(-Sample, -groups)) else
-        alpha <- tidyr::gather(alpha, key="Signature", value="Exposure", c(-Sample))
+      alpha = tidyr::gather(alpha, key="Signature", value="Exposure", c(-Sample, -groups)) else
+        alpha = tidyr::gather(alpha, key="Signature", value="Exposure", c(-Sample))
 
     alpha = alpha %>%
       dplyr::mutate(Type = ifelse(
@@ -52,7 +52,7 @@ get_exposure <- function(x, long = FALSE, add_groups = FALSE) {
 #' @return a data.frame where rows are inferred signatures (included in reference catalogue) and columns are 96 substitution bases.
 #' @export get_catalogue_signatures
 
-get_catalogue_signatures <- function(x, long = FALSE) {
+get_catalogue_signatures = function(x, long = FALSE) {
   stopifnot(inherits(x, "basilica_obj"))
 
   sigs = x$fit$catalogue_signatures
@@ -77,7 +77,7 @@ get_catalogue_signatures <- function(x, long = FALSE) {
 #' @return a data.frame where rows are inferred signatures (not included in reference catalogue) and columns are 96 substitution bases.
 #' @export get_denovo_signatures
 
-get_denovo_signatures <- function(x,  long = FALSE) {
+get_denovo_signatures = function(x,  long = FALSE) {
   stopifnot(inherits(x, "basilica_obj"))
 
   sigs = x$fit$denovo_signatures
@@ -98,7 +98,7 @@ get_denovo_signatures <- function(x,  long = FALSE) {
 }
 
 
-get_fixed_signatures <- function(x,  long = FALSE) {
+get_fixed_signatures = function(x,  long = FALSE) {
   stopifnot(inherits(x, "basilica_obj"))
 
   sigs = x$fit$input_catalogue
@@ -126,7 +126,7 @@ get_fixed_signatures <- function(x,  long = FALSE) {
 #' @return a data.frame where rows are inferred signatures (not included in reference catalogue) and columns are 96 substitution bases.
 #' @export get_denovo_signatures
 
-get_signatures <- function(x,  long = FALSE) {
+get_signatures = function(x,  long = FALSE) {
   stopifnot(inherits(x, "basilica_obj"))
 
   sigs_dn = x %>% get_denovo_signatures(long = !!long)
@@ -138,7 +138,7 @@ get_signatures <- function(x,  long = FALSE) {
   return(sigs)
 }
 
-get_reference_signatures <- function(x, long = FALSE) {
+get_reference_signatures = function(x, long = FALSE) {
   stopifnot(inherits(x, "basilica_obj"))
 
   sigs = x$input$reference_catalogue
@@ -238,4 +238,21 @@ get_fixed_signames = function(x) {
 
 get_signames = function(x) {
   return(rownames(get_signatures(x)))
+}
+
+
+get_K_scores = function(x) {
+  return(x$fit$runs_K)
+}
+
+
+
+get_secondBest_run = function(x) {
+  return(
+    x$fit$secondBest %>%
+      create_basilica_obj(input_catalogue=get_fixed_signatures(x),
+                          reference_catalogue=get_reference_signatures(x),
+                          cohort=x$cohort,
+                          filtered_catalogue=TRUE)
+  )
 }

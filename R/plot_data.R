@@ -8,6 +8,8 @@
 #' @param what Character among \code{["SBS","DBS","ID","CNV"]} reporting the type of signature.
 #' @param sample_ids Array with the samples IDs to show.
 #'
+#' @import ggplot2
+#'
 #' @return plot
 #' @export plot_data
 

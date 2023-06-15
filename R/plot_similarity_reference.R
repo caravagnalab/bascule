@@ -221,7 +221,7 @@ plot_similarity_reference <- function(x, reference = NULL, similarity_cutoff = 0
     )
 
     if (add_pheatmap) {
-    plot =   ggpubr::ggarrange(
+    plot = ggpubr::ggarrange(
         plotlist = list(ggp, extra_plots),
         nrow = 1,
         ncol = 2

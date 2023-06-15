@@ -91,15 +91,21 @@
 # }
 
 
-plot_signatures = function(x, what = "SBS", context = T, cls = NULL, signatures = NULL) {
+plot_signatures = function(x, what = "SBS", context = T, cls = NULL,
+                           signames = NULL, catalogue = NULL) {
 
-  if (is.null(signatures))
-    signatures = rownames(x %>% get_signatures)
+  if (is.null(signames))
+    signames = rownames(x %>% get_signatures)
+  if (!is.null(catalogue))
+    signames = unique(c(signames, rownames(catalogue)))
 
   a = NULL
 
   if("catalogue_signatures" %in% names(x$fit)) a = rbind(x$fit$catalogue_signatures, a)
   if("denovo_signatures" %in% names(x$fit)) a = rbind(x$fit$denovo_signatures, a)
+
+  if (!is.null(catalogue))
+    a = rbind(a, catalogue[setdiff(rownames(catalogue), rownames(a)),])
 
   if(is.null(cls) && !have_color_palette(x)) cls = gen_palette(nrow(a)) %>% setNames(rownames(a))
   else if (is.null(cls) && have_color_palette(x)) cls = get_color_palette(x)
@@ -112,7 +118,7 @@ plot_signatures = function(x, what = "SBS", context = T, cls = NULL, signatures 
   a =  a %>% dplyr::mutate(sbs = rownames(a)) %>%
     as_tibble() %>%
     reshape2::melt() %>%
-    dplyr::filter(sbs %in% signatures) %>%
+    dplyr::filter(sbs %in% signames) %>%
     reformat_contexts(what=what)
 
   # library(CNAqc)

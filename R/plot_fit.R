@@ -18,11 +18,13 @@ plot_fit = function(x, x.true=NULL, reconstructed=T, cls=NULL,
                     single_samples=FALSE) {
   if (is.null(sampleIDs)) sampleIDs = rownames(x$fit$x)
 
+  if (!is.null(x.true)) catalogue = get_signatures(x.true) else catalogue = NULL
+
   mm = plot_mutations(x, reconstructed=reconstructed, what=what,
                       epsilon=epsilon, sampleIDs=sampleIDs)
   alp = plot_exposures(x, sort_by=sort_by, cls=cls,
                        sample_name=sample_name, sampleIDs=sampleIDs)
-  bet = plot_signatures(x, cls=cls, what=what)
+  bet = plot_signatures(x, cls=cls, what=what, catalogue=catalogue)
 
   if (is.null(x.true)) return(patchwork::wrap_plots(bet + (mm/alp), guides="collect"))
 
@@ -68,3 +70,20 @@ get_samples_high_expos = function(x, x.true, min_expos, sigs=NULL) {
               "input_sigs"=samples_sigs))
 }
 
+
+
+plot_scores = function(x, which="") {
+  scores = get_K_scores(x)
+
+  scores %>%
+    dplyr::mutate(K=stringr::str_replace_all(K, "K_", "") %>% as.integer(),
+                  seed=stringr::str_replace_all(seed, "seed_", "") %>% as.integer()) %>%
+    dplyr::mutate(score=ifelse(score_id=="bic", log(score), score)) %>%
+
+    ggplot() +
+    geom_point(aes(x=K, y=score, color=factor(seed))) +
+    geom_line(aes(x=K, y=score, color=factor(seed))) +
+    facet_wrap(~score_id, scales="free") +
+    theme_bw()
+
+}
