@@ -102,13 +102,13 @@ plot_mutations = function(x, sampleIDs=NULL, by_sig=FALSE,
   xx_s = xx %>% tibble::rownames_to_column(var="sampleID") %>% dplyr::mutate(sbs="s1", groups=gid)
 
   if (by_sig) {
+    rownm = rownames(get_exposure(x))
     xx_s = lapply(rownames(get_signatures(x)),
                   function(sname) {
                     ((as.matrix(x$fit$exposure[, sname], ncol=1) %*%
                         as.matrix(get_signatures(x)[sname,], nrow=1)) * rowSums(x$fit$x)) %>%
                       as.data.frame() %>%
-                      dplyr::mutate(sbs=sname, groups=gid) %>%
-                      tibble::rownames_to_column(var="sampleID")
+                      dplyr::mutate(sbs=sname, groups=gid, sampleID=rownm)
                   }
     ) %>% do.call(what=rbind, args=.)
   }

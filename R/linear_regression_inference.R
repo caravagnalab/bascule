@@ -22,7 +22,9 @@ two_steps_inference = function(x,
                                seed_list=c(10,27,33,92,111),
                                initializ_seed = FALSE,
                                save_runs_seed = TRUE,
-                               initializ_pars_fit = TRUE) {
+                               initializ_pars_fit = TRUE,
+                               new_hier = FALSE,
+                               regul_denovo = TRUE) {
 
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
 
@@ -47,7 +49,9 @@ two_steps_inference = function(x,
       seed_list = seed_list,
       initializ_seed = initializ_seed,
       save_runs_seed = save_runs_seed,
-      initializ_pars_fit = initializ_pars_fit) %>%
+      initializ_pars_fit = initializ_pars_fit,
+      new_hier = new_hier,
+      regul_denovo = regul_denovo) %>%
 
       create_basilica_obj(input_catalogue=reference_catalogue[keep_sigs, ],
                           reference_catalogue=reference_catalogue,
@@ -91,7 +95,9 @@ two_steps_inference = function(x,
     seed_list = seed_list,
     initializ_seed = initializ_seed,
     save_runs_seed = save_runs_seed,
-    initializ_pars_fit = initializ_pars_fit) %>%
+    initializ_pars_fit = initializ_pars_fit,
+    new_hier = new_hier,
+    regul_denovo = regul_denovo) %>%
 
     create_basilica_obj(input_catalogue=reference_catalogue[keep_sigs,],
                         reference_catalogue=reference_catalogue,
@@ -173,23 +179,31 @@ normalize_exposures = function(x) {
 
 
 filter_exposures = function(x, min_exp=0.15, keep_sigs=NULL) {
-  sbs_keep = x$fit$exposure %>%
-    tibble::rownames_to_column(var="sample") %>%
-    reshape2::melt(id="sample", value.name="alpha", variable.name="sigs") %>%
+  sbs_keep = get_exposure(x, long=TRUE) %>%
+    # x$fit$exposure %>%
+    # tibble::rownames_to_column(var="sample") %>%
+    # reshape2::melt(id="sample", value.name="alpha", variable.name="sigs") %>%
 
-    dplyr::mutate(alpha=ifelse(alpha < min_exp, 0, alpha)) %>%
-    dplyr::filter(alpha > 0) %>%
-    dplyr::pull(sigs) %>% unique() %>% as.character()
+    dplyr::mutate(Exposure=ifelse(Exposure < min_exp, 0, Exposure)) %>%
+    dplyr::filter(Exposure > 0) %>%
+    dplyr::pull(Signature) %>% unique() %>% as.character()
 
   if (!is.null(keep_sigs)) sbs_keep = c(sbs_keep, keep_sigs) %>% unique()
   if (length(sbs_keep) == 0) return(x)
 
-  x$fit$input_catalogue = x$fit$input_catalogue[sbs_keep,]
-  x$fit$catalogue_signatures = x$fit$catalogue_signatures[sbs_keep,]
+  x$fit$input_catalogue =
+    x$fit$input_catalogue[intersect(sbs_keep, get_fixed_signames(x)),]
+
+  x$fit$catalogue_signatures =
+    x$fit$catalogue_signatures[intersect(sbs_keep, get_catalogue_signames(x)),]
+
+  x$fit$denovo_signatures =
+    x$fit$denovo_signatures[intersect(sbs_keep, get_dn_signames(x)),]
+
   x$fit$exposure = x$fit$exposure[,sbs_keep]
 
-  x$input$input_catalogue = x$input$input_catalogue[sbs_keep,]
-  x$input$reference_catalogue = x$input$reference_catalogue[sbs_keep,]
+  # x$input$input_catalogue =
+  #   x$input$input_catalogue[intersect(sbs_keep, get_fixed_signames(x)),]
 
   return(x)
 }

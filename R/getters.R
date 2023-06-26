@@ -236,6 +236,10 @@ get_fixed_signames = function(x) {
   return(rownames(get_fixed_signatures(x)))
 }
 
+get_catalogue_signames = function(x) {
+  return(rownames(get_catalogue_signatures(x)))
+}
+
 get_signames = function(x) {
   return(rownames(get_signatures(x)))
 }

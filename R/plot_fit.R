@@ -28,10 +28,10 @@ plot_fit = function(x, x.true=NULL, reconstructed=T, cls=NULL,
 
   if (is.null(x.true)) return(patchwork::wrap_plots(bet + (mm/alp), guides="collect"))
 
-  fn_sigs = setdiff(x.true %>% get_signatures() %>% rownames(),
-                    x %>% get_signatures() %>% rownames()) %>% sort()
-  fp_sigs = setdiff(x %>% get_signatures() %>% rownames(),
-                    x.true %>% get_signatures() %>% rownames()) %>% sort()
+  fn_sigs = setdiff(x.true %>% get_signames(),
+                    x %>% get_signames()) %>% sort()
+  fp_sigs = setdiff(x %>% get_signames(),
+                    x.true %>% get_signames()) %>% sort()
 
   mm.true = plot_mutations(x.true, reconstructed=F, what=what,
                            epsilon=epsilon, sampleIDs=sampleIDs)
@@ -39,8 +39,12 @@ plot_fit = function(x, x.true=NULL, reconstructed=T, cls=NULL,
                               sample_name=sample_name, sampleIDs=sampleIDs)
 
   subtitle_str = ""
-  if (length(fn_sigs) > 0) subtitle_str = paste0("Missing signatures: ", fn_sigs, ". ")
-  if (length(fp_sigs) > 0) subtitle_str = paste0(subtitle_str, "Added signatures: ", fp_sigs, ".")
+  if (length(fn_sigs) > 0) subtitle_str = paste0("Missing signatures: ",
+                                                 paste(fn_sigs, collapse=","),
+                                                 ". ")
+  if (length(fp_sigs) > 0) subtitle_str = paste0(subtitle_str, "Added signatures: ",
+                                                 paste(fp_sigs, collapse=","),
+                                                 ".")
 
   return(patchwork::wrap_plots(bet + (mm/mm.true/alp/alpha.true), guides="collect") &
            patchwork::plot_annotation(subtitle=subtitle_str))

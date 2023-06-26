@@ -13,8 +13,10 @@ get_signature_colors = function(x)
   dn = x$fit$denovo_signatures %>% rownames
   sc = x$fit$catalogue_signatures %>% rownames
 
-  dn_c = ggsci::pal_nejm()(x$n_denovo)
-  names(dn_c) = dn
+  if (!is.null(dn)) {
+    dn_c = ggsci::pal_nejm()(x$n_denovo)
+    names(dn_c) = dn
+  } else { dn_c = NULL }
 
   n_cat = x$fit$catalogue_signatures %>% nrow
 

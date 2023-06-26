@@ -15,7 +15,8 @@
 plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
                           flip_coord=F, muts=FALSE, sampleIDs=NULL, sort_by=NULL) {
 
-  if (is.null(sampleIDs)) sampleIDs = rownames(x$fit$exposure)
+  if (is.null(sampleIDs)) sampleIDs = rownames(x$fit$exposure) else
+    x$fit$exposure = x$fit$exposure[sampleIDs,]
 
   b = x$fit$exposure
 
@@ -23,10 +24,12 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
 
   b = b[sampleIDs,]
 
-  if(is.null(cls) && !have_color_palette(x)) cls = gen_palette(ncol(b)) %>% setNames(colnames(b))
-  else if (is.null(cls) && have_color_palette(x)) cls = get_color_palette(x)
+  if (is.null(cls) && !have_color_palette(x)) {
+    cls = gen_palette(ncol(b)) %>% setNames(colnames(b))
+  } else if (is.null(cls) && have_color_palette(x))
+    cls = get_color_palette(x)
 
-  if(is.null(sigs_levels)) sigs_levels = sort(colnames(b))
+  if (is.null(sigs_levels)) sigs_levels = sort(colnames(b))
 
   idcols = c("sample")
   if (have_groups(x)) {
