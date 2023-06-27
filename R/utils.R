@@ -5,6 +5,7 @@ pyfit = function(counts,
                  stage = "",
                  py = NULL,
                  groups = NULL,
+                 clusters = NULL,
                  input_catalogue = NULL,
                  hyperparameters = NULL,
                  CUDA = FALSE,
@@ -33,8 +34,14 @@ pyfit = function(counts,
   if (length(seed_list) > 1) seed_list = reticulate::r_to_py(as.integer(seed_list)) else
     seed_list = reticulate::r_to_py(list(as.integer(seed_list)))
 
+  # if (!is.null(clusters) && length(clusters) > 1)
+  #   clusters = reticulate::r_to_py(as.integer(clusters)) else if (!is.null(clusters))
+  #   clusters = reticulate::r_to_py(list(as.integer(clusters)))
+
+  if (!is.null(clusters)) clusters = as.integer(clusters)
+
   obj = py$fit(x = counts, k_list = k_list, lr = lr, n_steps = n_steps,
-               groups = groups, beta_fixed = input_catalogue,
+               groups = groups, cluster = clusters, beta_fixed = input_catalogue,
                hyperparameters = hyperparameters, CUDA = CUDA,
                compile_model = compile, enforce_sparsity = enforce_sparsity,
                store_parameters = store_parameters, regularizer = regularizer,

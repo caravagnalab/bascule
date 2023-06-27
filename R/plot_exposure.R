@@ -15,8 +15,9 @@
 plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
                           flip_coord=F, muts=FALSE, sampleIDs=NULL, sort_by=NULL) {
 
-  if (is.null(sampleIDs)) sampleIDs = rownames(x$fit$exposure) else
-    x$fit$exposure = x$fit$exposure[sampleIDs,]
+  if (is.null(sampleIDs)) sampleIDs = rownames(x$fit$exposure)
+  # else
+  #   x$fit$exposure = x$fit$exposure[sampleIDs,]
 
   b = x$fit$exposure
 

@@ -9,10 +9,10 @@ two_steps_inference = function(x,
                                lr=0.05,
                                n_steps=500,
                                groups=NULL,
+                               clusters=NULL,
                                compile=FALSE,
                                cohort="MyCohort",
                                regularizer="cosine",
-                               residues=FALSE,
                                py=NULL,
                                hyperparameters=NULL,
                                reg_weight=1.,
@@ -37,6 +37,7 @@ two_steps_inference = function(x,
       k_list = 0,
       hyperparameters = hyperparameters,
       groups = groups,
+      clusters = NULL,
       input_catalogue = reference_catalogue,
       regularizer = regularizer,
       reg_weight = reg_weight,
@@ -65,23 +66,24 @@ two_steps_inference = function(x,
     residues = FALSE
   }
 
-  if (residues) {
-    resid_counts = compute_residuals(x_ref, min_exp=min_exposure, keep_sigs=keep_sigs)
-    regul_compare = catalogue2
-    catalogue2 = NULL
-  } else {
-    resid_counts = x
-    regul_compare = NULL
-  }
+  # if (residues) {
+  #   resid_counts = compute_residuals(x_ref, min_exp=min_exposure, keep_sigs=keep_sigs)
+  #   regul_compare = catalogue2
+  #   catalogue2 = NULL
+  # } else {
+  #   resid_counts = x
+  #   regul_compare = NULL
+  # }
 
   x_dn = pyfit(
-    counts = round(resid_counts),
+    counts = x,
     py = py,
     lr = lr,
     n_steps = n_steps,
     k_list = k,
     hyperparameters = hyperparameters,
     groups = groups,
+    clusters = clusters,
     input_catalogue = catalogue2,
     regularizer = regularizer,
     reg_weight = reg_weight,
@@ -91,7 +93,7 @@ two_steps_inference = function(x,
     verbose = verbose,
     enforce_sparsity = enforce_sparsity2,
     stage = "",
-    regul_compare = regul_compare,
+    regul_compare = NULL,
     seed_list = seed_list,
     initializ_seed = initializ_seed,
     save_runs_seed = save_runs_seed,
@@ -106,11 +108,13 @@ two_steps_inference = function(x,
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
 
-  merged = merge_fits(x_ref, x_dn, x_ref_filt, min_exposure, keep_sigs, residues)
+  # merged = merge_fits(x_ref, x_dn, x_ref_filt, min_exposure, keep_sigs)
+  merged = x_dn
   merged$time = TIME
   merged$k_list = k
 
-  return(list("tot"=merged, "step1"=x_ref, "step1_filt"=x_ref_filt, "step2"=x_dn))
+  # return(list("tot"=merged, "step1"=x_ref, "step1_filt"=x_ref_filt, "step2"=x_dn))
+  return(merged)
 }
 
 
