@@ -20,7 +20,7 @@ pyfit = function(counts,
                  save_runs_seed = FALSE,
                  initializ_pars_fit = FALSE,
                  new_hier = FALSE,
-                 regul_denovo = TRUE
+                 regul_denovo = TRUE,
                  verbose = FALSE) {
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
 
