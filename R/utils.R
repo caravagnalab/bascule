@@ -110,7 +110,7 @@ get_scores_from_py = function(scores) {
     scores %>%
       as.data.frame() %>%
       reshape2::melt(value.name="score") %>%
-      tidyr::separate("variable", into=c("K", "seed", "score_id"), sep="[.]") %>%
+      tidyr::separate("variable", into=c("K", "groups", "seed", "score_id"), sep="[.]") %>%
       tibble::as_tibble()
   )
 }
