@@ -85,8 +85,8 @@ plot_scores = function(x, which="") {
     dplyr::mutate(score=ifelse(score_id=="bic", log(score), score)) %>%
 
     ggplot() +
-    geom_point(aes(x=K, y=score, color=factor(seed))) +
-    geom_line(aes(x=K, y=score, color=factor(seed))) +
+    geom_point(aes(x=K, y=score, color=factor(seed), shape=factor(groups))) +
+    geom_line(aes(x=K, y=score, color=factor(seed), linetype=factor(groups))) +
     facet_wrap(~score_id, scales="free") +
     theme_bw()
 
