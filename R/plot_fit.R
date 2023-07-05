@@ -79,6 +79,8 @@ get_samples_high_expos = function(x, x.true, min_expos, sigs=NULL) {
 plot_scores = function(x, which="") {
   scores = get_K_scores(x)
 
+  if (!"groups" %in% colnames(scores)) scores = scores %>% dplyr::mutate(groups=1)
+
   scores %>%
     dplyr::mutate(K=stringr::str_replace_all(K, "K_", "") %>% as.integer(),
                   seed=stringr::str_replace_all(seed, "seed_", "") %>% as.integer()) %>%
@@ -87,7 +89,7 @@ plot_scores = function(x, which="") {
     ggplot() +
     geom_point(aes(x=K, y=score, color=factor(seed), shape=factor(groups))) +
     geom_line(aes(x=K, y=score, color=factor(seed), linetype=factor(groups))) +
-    facet_wrap(~score_id, scales="free") +
+    facet_wrap(~score_id, scales="free_y") +
     theme_bw()
 
 }
