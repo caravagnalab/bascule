@@ -88,8 +88,11 @@ get_list_from_py = function(py_obj, counts, input_catalogue, lr, n_steps) {
   x$exposure = py_obj$alpha
   x$denovo_signatures = py_obj$beta_denovo
   x$eps_var = py_obj$eps_var
+  x$pi = py_obj$pi
+  x$post_probs = py_obj$post_probs
   x$bic = py_obj$bic
   x$losses = py_obj$losses
+  x$gradient_norms = py_obj$gradient_norms
   x$train_params = get_train_params(py_obj)
   x$groups = py_obj$groups
   try(expr = { x$seed = py_obj$seed })

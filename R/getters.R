@@ -212,6 +212,24 @@ get_groups_with_sigs = function(x, sigs, thr=0) {
 }
 
 
+get_samples_with_sigs = function(x, sigs, thr=0, return_idx=FALSE) {
+  if (!return_idx)
+    return( rownames(get_exposure(x))[which(get_exposure(x)[,sigs] > thr)] )
+
+  return( which(get_exposure(x)[,sigs] > thr) )
+}
+
+
+get_sigs_group = function(x, groupID, thr=0) {
+  samples_g = rownames(get_group(x, groupID))
+  expos = get_exposure(x)[samples_g,]
+  expos[expos < thr] = 0
+  return(
+    colnames(expos)[colSums(expos) > 0]
+  )
+}
+
+
 get_group = function(x, groupIDs) {
   if (!have_groups(x))
     return()

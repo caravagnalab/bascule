@@ -35,7 +35,7 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
   idcols = c("sample")
   if (have_groups(x)) {
     idcols = c("sample","groups")
-    b$groups = x$groups[rownames(x$fit$exposure) == sampleIDs]
+    b$groups = x$groups[rownames(x$fit$exposure) %in% sampleIDs]
   }
 
   if (!is.null(sort_by))
@@ -65,7 +65,7 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
     p = p + coord_flip()
 
   if (have_groups(x))
-    p = p + facet_grid(~groups, scales="free_x")
+    p = p + facet_grid(~groups, scales="free_x", space="free_x")
 
   return(p)
 }

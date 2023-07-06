@@ -3,48 +3,12 @@ source("~/GitHub/basilica/nobuild/catalogue_curation/helper_fns.R")
 
 ## Datasets ####
 
-
-filter_cosmic_catalogue = function(catalogue) {
-  rm_sigs = list(
-    not_validated = paste0("SBS", c(8, 9, "10c", "10d", 12, 16, "17a",
-                                    19, 23, 29, 32, 33, 34, 37, 38, 39, 40,
-                                    41, 84, 85, 86, 89, 91, 92, 93, 94)),
-    unk_aetiology = paste0("SBS", c(8, 12, 16, "17a", "17b", 19, 23, 28, 33, 34,
-                                    37, 39, 40, 41, 89, 91, 93, 94)),
-    seq_artifacts = paste0("SBS", c(27,43:60,95))
-  )
-
-  keep = lapply(rownames(catalogue), function(sname) {
-    snames = strsplit(sname, " ")[[1]]
-    if (any(!snames %in% c(rm_sigs$not_validated, rm_sigs$seq_artifacts, "SBS5"))) return(sname)
-  }) %>% unlist()
-
-  # keep = rownames(COSMIC_merged)[!grepl(paste(rm_sigs$not_validated, collapse="|"), rownames(COSMIC_merged))]
-  catalogue.tmp = catalogue[keep,]
-
-  thr = c(0.01, 0.02)
-  p = c(0.3, 0.5)
-
-  catalogue_long = wide_to_long(catalogue.tmp)
-  catalogue_long.filt = catalogue_long %>%
-    filter_catalogue(p=p, thr=thr)
-
-
-  ## Export filtered catalogue - thr = 0.02 #####
-  catalogue_filt = (catalogue_long.filt %>% dplyr::filter(type=="filt_thr_0.02") %>% long_to_wide())$filt_thr_0.02
-  # COSMIC_filt_merged["SBS5",] = catalogue["SBS5",]
-  catalogue_filt["SBS5",] = catalogue["SBS5",]
-  catalogue_filt = catalogue_filt[!rownames(catalogue_filt) %in% "SBS40 SBS3 SBS5",]
-
-  return(catalogue_filt)
-}
-
 COSMIC_merged = readRDS("~/GitHub/basilica/nobuild/catalogue_curation/COSMIC_merged.rds")
-COSMIC_filt_merged = filter_cosmic_catalogue(COSMIC_merged)
+COSMIC_filt_merged = filter_cosmic_catalogue(COSMIC_merged, sbs5=COSMIC_catalogue["SBS5",])
 usethis::use_data(COSMIC_filt_merged, overwrite=T)
 save(COSMIC_filt_merged, file="~/GitHub/basilica/nobuild/catalogue_curation/COSMIC_filt_merged.rda")
 
-COSMIC_filt = filter_cosmic_catalogue(COSMIC_catalogue)
+COSMIC_filt = filter_cosmic_catalogue(COSMIC_catalogue, sbs5=COSMIC_catalogue["SBS5",])
 usethis::use_data(COSMIC_filt, overwrite=T)
 save(COSMIC_filt, file="~/GitHub/basilica/nobuild/catalogue_curation/COSMIC_filt.rda")
 
