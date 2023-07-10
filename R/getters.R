@@ -230,13 +230,20 @@ get_sigs_group = function(x, groupID, thr=0) {
 }
 
 
-get_group = function(x, groupIDs) {
+get_group = function(x, groupIDs, return_idx=FALSE) {
   if (!have_groups(x))
     return()
+  if (!return_idx)
+    return(
+      x %>% get_data() %>% dplyr::mutate(groups=x$groups) %>%
+        dplyr::filter(groups %in% groupIDs) %>%
+        dplyr::select(-groups)
+    )
+
   return(
     x %>% get_data() %>% dplyr::mutate(groups=x$groups) %>%
       dplyr::filter(groups %in% groupIDs) %>%
-      dplyr::select(-groups)
+      dplyr::select(-groups) %>% rownames()
   )
 }
 

@@ -93,3 +93,26 @@ plot_scores = function(x, which="") {
     theme_bw()
 
 }
+
+
+plot_gradient_norms = function(x) {
+  x$fit$gradient_norms %>%
+    as.data.frame() %>%
+    tibble::rownames_to_column(var="step") %>%
+    reshape2::melt(id="step", variable.name="parameter", value.name="value") %>%
+    ggplot() +
+    geom_line(aes(x=as.integer(step), y=value)) +
+    facet_wrap(~parameter, scales="free_y") +
+    theme_bw()
+}
+
+
+plot_posterior_probs = function(x) {
+  pheatmap::pheatmap(x$fit$post_probs, cluster_rows=T, cluster_cols=F)
+}
+
+
+
+
+
+

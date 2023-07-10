@@ -13,13 +13,17 @@
 #' @export plot_exposures
 
 plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
-                          flip_coord=F, muts=FALSE, sampleIDs=NULL, sort_by=NULL) {
+                          plot_noise=FALSE, add_centroid=FALSE, flip_coord=FALSE,
+                          muts=FALSE, sampleIDs=NULL, sort_by=NULL) {
 
   if (is.null(sampleIDs)) sampleIDs = rownames(x$fit$exposure)
-  # else
-  #   x$fit$exposure = x$fit$exposure[sampleIDs,]
 
-  b = x$fit$exposure
+  titlee = "Exposure"
+  if (plot_noise) {
+    titlee = "Exposure noise"
+    b = x$fit$params$alpha_noise
+    b = b / rowSums(b)
+  } else { b = x$fit$exposure }
 
   if (muts) b = b * rowSums(x$fit$x)
 
@@ -45,18 +49,31 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
       dplyr::filter(Signature==sort_by) %>%
       dplyr::arrange(desc(alpha)) %>% dplyr::pull(sample) else sample_levels = rownames(b)
 
-  p = b %>% as.data.frame() %>%
-    tibble::rownames_to_column(var="sample") %>%
+
+  b = b %>% as.data.frame() %>%
+    tibble::rownames_to_column(var="sample")
+
+  if (add_centroid) {
+    a_pr = x$fit$params$alpha_prior
+    a_pr = a_pr / rowSums(a_pr)
+    rownames(a_pr) = paste0("G", sort(x$groups %>% unique()))
+    a_pr = a_pr[paste0("G", x$groups[rownames(x$fit$exposure) %in% sampleIDs] %>% unique %>% sort %>% as.character()),]
+    a_pr$groups = "Exposure priors"
+
+    b = rbind(b, a_pr %>% as.data.frame() %>% tibble::rownames_to_column(var="sample"))
+    sample_levels = c(sample_levels, rownames(a_pr))
+  }
+
+  p = b %>%
     reshape2::melt(id=idcols, variable.name="Signature", value.name="alpha") %>%
     dplyr::mutate(sample=factor(sample, levels=sample_levels)) %>%
 
-    ggplot(aes(x=sample, y=alpha, fill=factor(Signature, levels=sigs_levels))) +
-    geom_bar(stat = "identity") +
-    ggplot2::scale_fill_manual(values = cls) +
-    labs(title = "Exposure", x = "") +
-    theme_bw() +
-    theme(axis.text.x = element_text(angle = 90)) +
-    guides(fill=guide_legend(title="Signatures")) + ylab("")
+    ggplot(aes(x=factor(sample), y=alpha, fill=factor(Signature, levels=sigs_levels))) +
+    geom_bar(stat="identity") +
+    ggplot2::scale_fill_manual(values=cls) +
+    labs(title=titlee) +
+    theme_bw() + theme(axis.text.x=element_text(angle=90)) +
+    guides(fill=guide_legend(title="Signatures")) + ylab("") + xlab("")
 
   if (!sample_name)
     p = p + theme(axis.ticks.x = element_blank(), axis.text.x = element_blank()) + labs(x = "")

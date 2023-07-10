@@ -6,6 +6,7 @@ pyfit = function(counts,
                  py = NULL,
                  groups = NULL,
                  clusters = NULL,
+                 nonparametric = FALSE,
                  input_catalogue = NULL,
                  hyperparameters = NULL,
                  CUDA = FALSE,
@@ -42,7 +43,7 @@ pyfit = function(counts,
 
   obj = py$fit(x = counts, k_list = k_list, lr = lr, n_steps = n_steps,
                groups = groups, cluster = clusters, beta_fixed = input_catalogue,
-               hyperparameters = hyperparameters, CUDA = CUDA,
+               hyperparameters = hyperparameters, CUDA = CUDA, nonparametric=nonparametric,
                compile_model = compile, enforce_sparsity = enforce_sparsity,
                store_parameters = store_parameters, regularizer = regularizer,
                reg_weight = reg_weight, reg_bic = reg_bic, stage = stage,
@@ -90,6 +91,7 @@ get_list_from_py = function(py_obj, counts, input_catalogue, lr, n_steps) {
   x$eps_var = py_obj$eps_var
   x$pi = py_obj$pi
   x$post_probs = py_obj$post_probs
+  x$params = py_obj$params
   x$bic = py_obj$bic
   x$losses = py_obj$losses
   x$gradient_norms = py_obj$gradient_norms
