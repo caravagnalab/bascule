@@ -22,7 +22,7 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
   if (plot_noise) {
     titlee = "Exposure noise"
     b = x$fit$params$alpha_noise
-    b = b / rowSums(b)
+    # b = b / rowSums(b)
   } else { b = x$fit$exposure }
 
   if (muts) b = b * rowSums(x$fit$x)
@@ -69,7 +69,7 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
     dplyr::mutate(sample=factor(sample, levels=sample_levels)) %>%
 
     ggplot(aes(x=factor(sample), y=alpha, fill=factor(Signature, levels=sigs_levels))) +
-    geom_bar(stat="identity") +
+    geom_bar(stat="identity", position="stack") +
     ggplot2::scale_fill_manual(values=cls) +
     labs(title=titlee) +
     theme_bw() + theme(axis.text.x=element_text(angle=90)) +
