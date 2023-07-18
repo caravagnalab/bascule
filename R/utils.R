@@ -88,7 +88,7 @@ get_list_from_py = function(py_obj, counts, input_catalogue, lr, n_steps) {
 
   x$exposure = py_obj$alpha
   x$denovo_signatures = py_obj$beta_denovo
-  x$eps_var = py_obj$eps_var
+  x$eps_var = py_obj$eps_sigma
   x$pi = py_obj$pi
   x$post_probs = py_obj$post_probs
   x$params = py_obj$params
