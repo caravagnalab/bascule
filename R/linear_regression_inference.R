@@ -67,14 +67,6 @@ two_steps_inference = function(x,
     residues = FALSE
   }
 
-  # if (residues) {
-  #   resid_counts = compute_residuals(x_ref, min_exp=min_exposure, keep_sigs=keep_sigs)
-  #   regul_compare = catalogue2
-  #   catalogue2 = NULL
-  # } else {
-  #   resid_counts = x
-  #   regul_compare = NULL
-  # }
 
   x_dn = pyfit(
     counts = x,

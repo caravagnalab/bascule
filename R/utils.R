@@ -91,12 +91,15 @@ get_list_from_py = function(py_obj, counts, input_catalogue, lr, n_steps) {
   x$eps_var = py_obj$eps_sigma
   x$pi = py_obj$pi
   x$post_probs = py_obj$post_probs
+  x$groups = py_obj$groups
+
   x$params = py_obj$params
+  x$init_params = py_obj$init_params
+
   x$bic = py_obj$bic
   x$losses = py_obj$losses
   x$gradient_norms = py_obj$gradient_norms
   x$train_params = get_train_params(py_obj)
-  x$groups = py_obj$groups
   try(expr = { x$seed = py_obj$seed })
 
   x$runs_seed = x$runs_scores = NULL
