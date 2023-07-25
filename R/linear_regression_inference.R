@@ -25,7 +25,8 @@ two_steps_inference = function(x,
                                save_runs_seed = TRUE,
                                initializ_pars_fit = TRUE,
                                new_hier = FALSE,
-                               regul_denovo = TRUE) {
+                               regul_denovo = TRUE,
+                               save_all_fits = FALSE) {
 
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
 
@@ -93,7 +94,8 @@ two_steps_inference = function(x,
     save_runs_seed = save_runs_seed,
     initializ_pars_fit = initializ_pars_fit,
     new_hier = new_hier,
-    regul_denovo = regul_denovo) %>%
+    regul_denovo = regul_denovo,
+    save_all_fits = save_all_fits) %>%
 
     create_basilica_obj(input_catalogue=reference_catalogue[keep_sigs,],
                         reference_catalogue=reference_catalogue,

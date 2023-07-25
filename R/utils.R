@@ -23,7 +23,9 @@ pyfit = function(counts,
                  initializ_pars_fit = FALSE,
                  new_hier = FALSE,
                  regul_denovo = TRUE,
-                 verbose = FALSE) {
+                 verbose = FALSE,
+                 save_all_fits = FALSE) {
+
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
 
   if (is.null(py))
@@ -34,10 +36,6 @@ pyfit = function(counts,
 
   if (length(seed_list) > 1) seed_list = reticulate::r_to_py(as.integer(seed_list)) else
     seed_list = reticulate::r_to_py(list(as.integer(seed_list)))
-
-  # if (!is.null(clusters) && length(clusters) > 1)
-  #   clusters = reticulate::r_to_py(as.integer(clusters)) else if (!is.null(clusters))
-  #   clusters = reticulate::r_to_py(list(as.integer(clusters)))
 
   if (!is.null(clusters)) clusters = as.integer(clusters)
 
@@ -50,7 +48,7 @@ pyfit = function(counts,
                regul_compare = regul_compare, verbose = verbose,
                seed = seed_list, initializ_pars_fit = initializ_pars_fit,
                save_runs_seed = save_runs_seed, initializ_seed = initializ_seed,
-               new_hier = new_hier, regul_denovo = regul_denovo)
+               new_hier = new_hier, regul_denovo = regul_denovo, save_all_fits=save_all_fits)
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
 
@@ -77,7 +75,7 @@ pyfit = function(counts,
 }
 
 
-get_list_from_py = function(py_obj, counts, input_catalogue, lr, n_steps) {
+get_list_from_py = function(py_obj, counts, input_catalogue, lr, n_steps, save_stats=T) {
   if (is.null(py_obj)) return(NULL)
 
   x = list()
@@ -102,18 +100,36 @@ get_list_from_py = function(py_obj, counts, input_catalogue, lr, n_steps) {
   x$train_params = get_train_params(py_obj)
   try(expr = { x$seed = py_obj$seed })
 
-  x$runs_seed = x$runs_scores = NULL
-  if ("runs_seed" %in% names(py_obj) && !is.null(py_obj$runs_seed))
+  if (!save_stats) return(x)
+
+  x$runs_seed = x$runs_scores = x$all_fits = NULL
+  if ("runs_seed" %in% names(py_obj))
     x$runs_seed = py_obj$runs_seed
 
-  if ("scores_K" %in% names(py_obj) && !is.null(py_obj$scores_K))
+  if ("scores_K" %in% names(py_obj))
     x$runs_K = get_scores_from_py(py_obj$scores_K)
+
+  if ("all_fits" %in% names(py_obj)) {
+    if (length(py_obj$all_fits) > 0) x$all_fits = NULL
+    x$all_fits = get_fits_from_py(py_obj$all_fits, x$x, x$input_catalogue, lr, n_steps)
+  }
 
   return(x)
 }
 
 
+get_fits_from_py = function(fits, counts, beta_fixed, lr, n_steps)
+  return(
+    lapply(names(fits), function(i) {
+      fits[[i]]$convert_to_dataframe(counts, beta_fixed)
+        get_list_from_py(fits[[i]], counts, beta_fixed, lr, n_steps, save_stats=F)
+    }) %>%
+      setNames(names(fits))
+  )
+
+
 get_scores_from_py = function(scores) {
+  if (is.null(scores)) return(NULL)
   return(
     scores %>%
       as.data.frame() %>%
