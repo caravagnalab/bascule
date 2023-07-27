@@ -144,7 +144,7 @@ plot_mutations = function(x, sampleIDs=NULL, by_sig=FALSE,
     p = xx_s %>%
       ggplot() +
       geom_histogram(aes(x=context, y=tot_muts, fill=sig), stat="identity", position="stack") +
-      facet_grid(~substitution) +
+      facet_grid(~substitution, scales="free_y") +
       ylab("Number of mutations") + xlab("") +
       theme_bw() + theme(axis.text.x=element_text(angle=90)) +
       scale_fill_manual(values=c(cls, "epsilon"="gainsboro"))
@@ -152,13 +152,13 @@ plot_mutations = function(x, sampleIDs=NULL, by_sig=FALSE,
     p = xx_s %>%
       ggplot() +
       geom_histogram(aes(x=context, y=tot_muts, fill=sig), stat="identity") +
-      facet_grid(~substitution) +
+      facet_grid(~substitution, scales="free_y") +
       ylab("Number of mutations") + xlab("") +
       theme_bw() + theme(axis.text.x=element_text(angle=90)) +
       scale_fill_manual(values=c("epsilon"="gainsboro", "s1"="grey5")) +
       guides(fill="none")
 
-  if (have_groups(x)) return(p + facet_grid(groups~substitution))
+  if (have_groups(x)) return(p + facet_grid(groups~substitution, scales="free_y"))
 
   return(p)
 }

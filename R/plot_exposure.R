@@ -14,7 +14,7 @@
 
 plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
                           plot_noise=FALSE, add_centroid=FALSE, flip_coord=FALSE,
-                          muts=FALSE, sampleIDs=NULL, sort_by=NULL) {
+                          muts=FALSE, sampleIDs=NULL, sort_by=NULL, centroids=F) {
 
   if (is.null(sampleIDs)) sampleIDs = rownames(x$fit$exposure)
 
@@ -53,15 +53,21 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
   b = b %>% as.data.frame() %>%
     tibble::rownames_to_column(var="sample")
 
-  if (add_centroid) {
+  if (add_centroid || centroids) {
     a_pr = x$fit$params$alpha_prior[sort(unique(x$groups)+1),]
     a_pr = a_pr / rowSums(a_pr)
     rownames(a_pr) = paste0("G", sort(x$groups %>% unique()))
 
     a_pr$groups = "Exposure priors"
 
-    b = rbind(b, a_pr %>% as.data.frame() %>% tibble::rownames_to_column(var="sample"))
-    sample_levels = c(sample_levels, rownames(a_pr))
+    if (add_centroid) {
+      b = rbind(b, a_pr %>% as.data.frame() %>% tibble::rownames_to_column(var="sample"))
+      sample_levels = c(sample_levels, rownames(a_pr))
+    } else if (centroids) {
+      b = a_pr %>% as.data.frame() %>% tibble::rownames_to_column(var="sample")
+      sample_levels = rownames(a_pr)
+      sample_name = T
+    }
   }
 
   p = b %>%

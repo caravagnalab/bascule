@@ -15,15 +15,15 @@
 plot_fit = function(x, x.true=NULL, reconstructed=T, cls=NULL,
                     sort_by=NULL, what="SBS", epsilon=FALSE,
                     sample_name=FALSE, sampleIDs=NULL,
-                    single_samples=FALSE) {
+                    single_samples=FALSE, add_centroid=F) {
   if (is.null(sampleIDs)) sampleIDs = rownames(x$fit$x)
 
   if (!is.null(x.true)) catalogue = get_signatures(x.true) else catalogue = NULL
 
   mm = plot_mutations(x, reconstructed=reconstructed, what=what,
                       epsilon=epsilon, sampleIDs=sampleIDs)
-  alp = plot_exposures(x, sort_by=sort_by, cls=cls,
-                       sample_name=sample_name, sampleIDs=sampleIDs)
+  alp = plot_exposures(x, sort_by=sort_by, cls=cls, sample_name=sample_name,
+                       sampleIDs=sampleIDs, add_centroid=add_centroid)
   bet = plot_signatures(x, cls=cls, what=what, catalogue=catalogue)
 
   if (is.null(x.true)) return(patchwork::wrap_plots(bet + (mm/alp), guides="collect"))
@@ -35,8 +35,8 @@ plot_fit = function(x, x.true=NULL, reconstructed=T, cls=NULL,
 
   mm.true = plot_mutations(x.true, reconstructed=F, what=what,
                            epsilon=epsilon, sampleIDs=sampleIDs)
-  alpha.true = plot_exposures(x.true, sort_by=sort_by, cls=cls,
-                              sample_name=sample_name, sampleIDs=sampleIDs)
+  alpha.true = plot_exposures(x.true, sort_by=sort_by, cls=cls, sample_name=sample_name,
+                              sampleIDs=sampleIDs)
 
   subtitle_str = ""
   if (length(fn_sigs) > 0) subtitle_str = paste0("Missing signatures: ",
