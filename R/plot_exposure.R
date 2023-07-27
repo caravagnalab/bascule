@@ -54,12 +54,10 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
     tibble::rownames_to_column(var="sample")
 
   if (add_centroid) {
-    a_pr = x$fit$params$alpha_prior
+    a_pr = x$fit$params$alpha_prior[sort(unique(x$groups)+1),]
     a_pr = a_pr / rowSums(a_pr)
     rownames(a_pr) = paste0("G", sort(x$groups %>% unique()))
 
-    keep = x$groups[rownames(x$fit$exposure) %in% sampleIDs] %>% unique %>% sort %>% as.character()
-    a_pr = a_pr[paste0("G", keep),]
     a_pr$groups = "Exposure priors"
 
     b = rbind(b, a_pr %>% as.data.frame() %>% tibble::rownames_to_column(var="sample"))
