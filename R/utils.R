@@ -23,6 +23,7 @@ pyfit = function(counts,
                  initializ_pars_fit = FALSE,
                  new_hier = FALSE,
                  regul_denovo = TRUE,
+                 regul_fixed = TRUE,
                  verbose = FALSE,
                  save_all_fits = FALSE,
                  do_initial_fit = FALSE) {
@@ -50,7 +51,7 @@ pyfit = function(counts,
                seed = seed_list, initializ_pars_fit = initializ_pars_fit,
                save_runs_seed = save_runs_seed, initializ_seed = initializ_seed,
                new_hier = new_hier, regul_denovo = regul_denovo, save_all_fits=save_all_fits,
-               do_initial_fit = do_initial_fit)
+               do_initial_fit = do_initial_fit, regul_fixed = regul_fixed)
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
 

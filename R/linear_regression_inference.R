@@ -26,6 +26,7 @@ two_steps_inference = function(x,
                                initializ_pars_fit = TRUE,
                                new_hier = FALSE,
                                regul_denovo = TRUE,
+                               regul_fixed = TRUE,
                                save_all_fits = FALSE,
                                do_initial_fit = FALSE) {
 
@@ -56,6 +57,7 @@ two_steps_inference = function(x,
       initializ_pars_fit = initializ_pars_fit,
       new_hier = new_hier,
       regul_denovo = regul_denovo,
+      regul_fixed = regul_fixed,
       do_initial_fit = FALSE) %>%
 
       create_basilica_obj(input_catalogue=reference_catalogue[keep_sigs, ],
@@ -97,6 +99,7 @@ two_steps_inference = function(x,
     initializ_pars_fit = initializ_pars_fit,
     new_hier = new_hier,
     regul_denovo = regul_denovo,
+    regul_fixed = regul_fixed,
     save_all_fits = save_all_fits,
     do_initial_fit = do_initial_fit) %>%
 
