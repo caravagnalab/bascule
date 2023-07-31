@@ -149,17 +149,19 @@ create_basilica_obj_simul = function(simul, cohort="MySimul") {
   ss = list()
   class(ss) = "basilica_obj"
   ss$cohort = cohort
-  ss$n_samples = nrow(simul$x[[1]])
-  ss$n_denovo = nrow(simul$exp_denovo[[1]])
-  ss$input = list("counts"=simul$x[[1]],
-                  "reference_catalogue"=simul$ref_cat[[1]],
-                  "input_catalogue"=simul$exp_fixed[[1]])
+  ss$n_samples = nrow(simul$counts[[1]])
+  ss$n_denovo = nrow(simul$alpha[[1]])
+  ss$input = list("counts"=simul$counts[[1]],
+                  "reference_catalogue"=simul$beta[[1]],
+                  "input_catalogue"=simul$beta[[1]])
 
-  ss$fit = list("input_catalogue"=simul$exp_fixed[[1]],
-                "catalogue_signatures"=simul$ref_cat[[1]],
-                "denovo_signatures"=simul$exp_denovo[[1]],
-                "exposure"=simul$exp_exposure[[1]],
-                "x"=simul$x[[1]])
+  ss$fit = list("input_catalogue"=simul$beta[[1]],
+                "catalogue_signatures"=simul$beta[[1]],
+                "denovo_signatures"=NULL,
+                "exposure"=simul$alpha[[1]],
+                "x"=simul$counts[[1]])
+
+  ss$fit$params = list("alpha_prior"=simul$alpha_prior[[1]])
 
   if (!is.null(simul$groups))
     ss$groups = simul$groups[[1]]
@@ -168,14 +170,50 @@ create_basilica_obj_simul = function(simul, cohort="MySimul") {
     setNames(sort(rownames(get_signatures(ss))))
 
   ss$private_sigs = list()
-  if ("private_rare" %in% colnames(simul))
-    ss$private_sigs[["private_rare"]] = simul$private_rare[[1]]
+  if ("private" %in% colnames(simul))
+    ss$sigs[["private"]] = simul$private[[1]]
 
-  if ("private_common" %in% colnames(simul))
-    ss$private_sigs[["private_common"]] = simul$private_common[[1]]
+  if ("private_shared" %in% colnames(simul))
+    ss$sigs[["private_shared"]] = simul$private_shared[[1]]
+
+  if ("shared" %in% colnames(simul))
+    ss$sigs[["shared"]] = simul$shared[[1]]
 
   return(ss)
 }
+
+
+# create_basilica_obj_simul_old = function(simul, cohort="MySimul") {
+#   ss = list()
+#   class(ss) = "basilica_obj"
+#   ss$cohort = cohort
+#   ss$n_samples = nrow(simul$x[[1]])
+#   ss$n_denovo = nrow(simul$exp_denovo[[1]])
+#   ss$input = list("counts"=simul$x[[1]],
+#                   "reference_catalogue"=simul$ref_cat[[1]],
+#                   "input_catalogue"=simul$exp_fixed[[1]])
+#
+#   ss$fit = list("input_catalogue"=simul$exp_fixed[[1]],
+#                 "catalogue_signatures"=simul$ref_cat[[1]],
+#                 "denovo_signatures"=simul$exp_denovo[[1]],
+#                 "exposure"=simul$exp_exposure[[1]],
+#                 "x"=simul$x[[1]])
+#
+#   if (!is.null(simul$groups))
+#     ss$groups = simul$groups[[1]]
+#
+#   ss$color_palette = gen_palette(get_signatures(ss) %>% nrow()) %>%
+#     setNames(sort(rownames(get_signatures(ss))))
+#
+#   ss$private_sigs = list()
+#   if ("private_rare" %in% colnames(simul))
+#     ss$private_sigs[["private_rare"]] = simul$private_rare[[1]]
+#
+#   if ("private_common" %in% colnames(simul))
+#     ss$private_sigs[["private_common"]] = simul$private_common[[1]]
+#
+#   return(ss)
+# }
 
 
 normalize_exposures = function(x) {

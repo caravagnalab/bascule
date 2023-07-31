@@ -93,3 +93,9 @@ check_python_deps = function(envname="basilica-env", pip=FALSE) {
   )
 }
 
+
+plot_catalogue = function(catalogue) {
+  catalogue %>%
+    tibble::rownames_to_column() %>% reshape2::melt() %>% dplyr::mutate(variable=stringr::str_replace_all(variable, "\\[|\\]", "_")) %>% tidyr::separate(variable, into=c("left","subs","right"), sep="_") %>% dplyr::mutate(context=paste0(left,"_",right), left=NULL, right=NULL) %>% ggplot() + geom_bar(aes(x=context, y=value, fill=rowname), stat="identity") + facet_grid(rowname~subs)
+}
+

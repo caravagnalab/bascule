@@ -285,3 +285,18 @@ get_secondBest_run = function(x) {
                           filtered_catalogue=TRUE)
   )
 }
+
+
+get_fit_by_id = function(x, idd) {
+  new_fit = x$fit$all_fits[[idd]]
+
+  return(
+    new_fit %>%
+      create_basilica_obj(input_catalogue=get_fixed_signatures(x),
+                          reference_catalogue=get_reference_signatures(x),
+                          cohort=x$cohort,
+                          filtered_catalogue=TRUE)
+  )
+}
+
+

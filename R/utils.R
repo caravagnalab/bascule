@@ -133,13 +133,20 @@ get_fits_from_py = function(fits, counts, beta_fixed, lr, n_steps)
 
 get_scores_from_py = function(scores) {
   if (is.null(scores)) return(NULL)
+
   return(
-    scores %>%
+    replace_null(scores) %>%
       as.data.frame() %>%
       reshape2::melt(value.name="score") %>%
       tidyr::separate("variable", into=c("K", "groups", "seed", "score_id"), sep="[.]") %>%
       tibble::as_tibble()
   )
+}
+
+
+replace_null = function(i){
+  i = purrr::map(i, ~ replace(.x, is.null(.x), NA))
+  purrr::map(i, ~ if(is.list(.x)) replace_null(.x) else .x)
 }
 
 

@@ -40,8 +40,7 @@ Imports:
     ggplotify,
     scales,
     quadprog, 
-    progress,
-    ggplot2
+    progress
 RoxygenNote: 7.2.3
 URL: https://github.com/caravagnalab/basilica,
     https://caravagnalab.github.io/basilica/

@@ -16,13 +16,13 @@
 #' For each signature (besides SBS5) the contexts with probability mass below 0.02 are set to 0
 #' and the probabilities are re-normalized over contexts.
 #'
-#' @usage data(COSMIC_filtered)
+#' @usage data(COSMIC_filt)
 #'
 #' @format add
 #'
 #' @keywords datasets
 
-"COSMIC_filtered"
+"COSMIC_filt"
 
 #' COSMIC catalogue (version XXXX)
 #'
