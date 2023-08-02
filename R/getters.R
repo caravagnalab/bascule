@@ -310,7 +310,10 @@ get_centroids = function(x, normalize=FALSE) {
   if (!have_groups(x)) return(NULL)
 
   centr = x$fit$params$alpha_prior
-  if (!all(grepl("G", rownames(centr)))) rownames(centr) = paste0("G",1:nrow(centr) -1)
+
+  if (any(grepl("G", get_groups(x)))) to_paste = "G" else to_paste = ""
+  if (!any(grepl("G", rownames(centr)))) rownames(centr) = 1:nrow(centr) -1
+  rownames(centr) = paste0(to_paste, rownames(centr) %>% stringr::str_replace_all("G",""))
 
   if (normalize) return(centr / rowSums(centr))
   return(centr)

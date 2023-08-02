@@ -16,14 +16,14 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
                           plot_noise=FALSE, add_centroid=FALSE, flip_coord=FALSE,
                           muts=FALSE, sampleIDs=NULL, sort_by=NULL, centroids=F) {
 
-  if (is.null(sampleIDs)) sampleIDs = rownames(x$fit$exposure)
+  if (is.null(sampleIDs)) sampleIDs = rownames(get_exposure(x))
 
   titlee = "Exposure"
+  b = get_exposure(x, add_groups=TRUE)
   if (plot_noise) {
     titlee = "Exposure noise"
     b = x$fit$params$alpha_noise
-    # b = b / rowSums(b)
-  } else { b = x$fit$exposure }
+  }
 
   if (muts) b = b * rowSums(x$fit$x)
 
@@ -34,13 +34,11 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
   } else if (is.null(cls) && have_color_palette(x))
     cls = get_color_palette(x)
 
-  if (is.null(sigs_levels)) sigs_levels = sort(colnames(b))
+  if (is.null(sigs_levels))
+    sigs_levels = sort(colnames(b %>% dplyr::select(-dplyr::contains("groups"))))
 
   idcols = c("sample")
-  if (have_groups(x)) {
-    idcols = c("sample","groups")
-    b$groups = as.character(x$groups[rownames(x$fit$exposure) %in% sampleIDs])
-  }
+  if (have_groups(x)) idcols = c("sample","groups")
 
   if (!is.null(sort_by))
     sample_levels = b %>% as.data.frame() %>%
@@ -49,17 +47,17 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
       dplyr::filter(Signature==sort_by) %>%
       dplyr::arrange(desc(alpha)) %>% dplyr::pull(sample) else sample_levels = rownames(b)
 
-
   b = b %>% as.data.frame() %>%
     tibble::rownames_to_column(var="sample")
 
   if (add_centroid || centroids) {
     a_pr = get_centroids(x, normalize=T)
-    if ( all(grepl("G", rownames(a_pr))) )
-      grps = paste0("G", unique(x$groups) %>% stringr::str_replace_all("G","") %>% sort()) else
-        grps = unique(x$groups) %>% stringr::str_replace_all("G","") %>% sort()
+    # if ( all(grepl("G", rownames(a_pr))) )
+    #   grps = paste0("G", unique(x$groups) %>% stringr::str_replace_all("G","") %>% sort()) else
+    #     grps = unique(x$groups) %>% stringr::str_replace_all("G","") %>% sort()
+    grps = unique(x$groups)
 
-    a_pr = a_pr[grps,]
+    a_pr = a_pr[as.character(grps),]
     rownames(a_pr) = paste0("G", grps %>% stringr::str_replace_all("G",""))
 
     a_pr$groups = "Exposure priors"

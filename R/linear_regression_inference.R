@@ -161,9 +161,9 @@ create_basilica_obj_simul = function(simul, cohort="MySimul") {
                 "exposure"=simul$alpha[[1]],
                 "x"=simul$counts[[1]])
 
-  centr = simul$alpha_prior[[1]]
+  centr = simul$alpha_prior[[1]] %>% as.data.frame()
   rownames(centr) = paste0("G",rownames(centr))
-  ss$fit$params = list("alpha_prior"=simul$alpha_prior[[1]])
+  ss$fit$params = list("alpha_prior"=centr)
 
   ss$groups = simul$groups[[1]]
   if (is.null(ss$groups)) {
@@ -171,6 +171,7 @@ create_basilica_obj_simul = function(simul, cohort="MySimul") {
       tidyr::separate(sample, into=c("gid","sample"), sep="_") %>%
       dplyr::pull(gid) %>% stringr::str_replace_all("G","")
   }
+  ss$groups = paste0("G", ss$groups)
 
   ss$color_palette = gen_palette(get_signatures(ss) %>% nrow()) %>%
     setNames(sort(rownames(get_signatures(ss))))
@@ -343,7 +344,7 @@ filter_exposures = function(x, min_expos=0.1) {
 
 
 recompute_centroids = function(x.fit) {
-  grps = sort(unique(get_groups(x.fit)))
+  grps = unique(get_groups(x.fit)) %>% as.character()
   expos = get_exposure(x.fit, add_groups=T)
   new_centroids = lapply(grps, function(gid)
     expos %>% dplyr::filter(groups==gid) %>%
@@ -381,21 +382,21 @@ merge_clusters = function(x.fit, cutoff=0.8) {
 
   if (nrow(merging) == 0) return(x.fit)
 
-  grps = paste0("G", x.fit$groups %>% stringr::str_replace_all("G",""))
-  centroids = get_centroids(x.fit); new_centroids = data.frame()
+  grps = get_groups(x.fit)
+  # centroids = get_centroids(x.fit); new_centroids = data.frame()
   for (i in 1:nrow(merging)) {
     old_cl = dplyr::pull(merging[i,], cl_old)[[1]]
     new_cl = dplyr::pull(merging[i,], cl_name)
     grps[grps %in% old_cl] = new_cl
 
-    rownames_tmp = rownames(new_centroids)
-    new_centroids = new_centroids %>%
-      dplyr::bind_rows( colMeans(centroids[old_cl, ]) )
-    rownames(new_centroids) = c(rownames_tmp, new_cl)
+    # rownames_tmp = rownames(new_centroids)
+    # new_centroids = new_centroids %>%
+    #   dplyr::bind_rows( colMeans(centroids[old_cl, ]) )
+    # rownames(new_centroids) = c(rownames_tmp, new_cl)
   }
 
   x.fit$groups = grps
-  x.fit = set_new_centroids(x.fit, new_centroids=new_centroids)
+  x.fit = recompute_centroids(x.fit)
 
   return(x.fit)
 }
