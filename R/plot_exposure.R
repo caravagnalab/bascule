@@ -60,8 +60,7 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
     }
     if (is.character(x$groups)) grps = idxs = unique(x$groups) %>% stringr::str_replace_all("G","")
 
-    a_pr = x$fit$params$alpha_prior[idxs,]
-    a_pr = a_pr / rowSums(a_pr)
+    a_pr = get_centroids(x, normalize=T)[idxs,]
     rownames(a_pr) = paste0("G", grps)
 
     a_pr$groups = "Exposure priors"
@@ -71,6 +70,8 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
       sample_levels = c(sample_levels, rownames(a_pr))
 
     } else if (centroids) {
+      a_pr = get_centroids(x, normalize=T)
+      a_pr$groups = "Exposure priors"
       b = a_pr %>% as.data.frame() %>% tibble::rownames_to_column(var="sample")
       sample_levels = rownames(a_pr)
       sample_name = T
