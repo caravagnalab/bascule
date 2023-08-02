@@ -310,7 +310,7 @@ get_centroids = function(x, normalize=FALSE) {
   if (!have_groups(x)) return(NULL)
 
   centr = x$fit$params$alpha_prior
-  rownames(centr) = 1:nrow(centr) -1
+  if (!all(grepl("G", rownames(centr)))) rownames(centr) = paste0("G",1:nrow(centr) -1)
 
   if (normalize) return(centr / rowSums(centr))
   return(centr)

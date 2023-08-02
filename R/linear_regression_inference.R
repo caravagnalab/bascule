@@ -161,6 +161,8 @@ create_basilica_obj_simul = function(simul, cohort="MySimul") {
                 "exposure"=simul$alpha[[1]],
                 "x"=simul$counts[[1]])
 
+  centr = simul$alpha_prior[[1]]
+  rownames(centr) = paste0("G",rownames(centr))
   ss$fit$params = list("alpha_prior"=simul$alpha_prior[[1]])
 
   ss$groups = simul$groups[[1]]
@@ -340,38 +342,61 @@ filter_exposures = function(x, min_expos=0.1) {
 }
 
 
+recompute_centroids = function(x.fit) {
+  grps = sort(unique(get_groups(x.fit)))
+  expos = get_exposure(x.fit, add_groups=T)
+  new_centroids = lapply(grps, function(gid)
+    expos %>% dplyr::filter(groups==gid) %>%
+      dplyr::select(-groups) %>%
+      colMeans()
+    ) %>% do.call(rbind, .)
+  rownames(new_centroids) = paste0("G",grps)
+
+  return(x.fit %>% set_new_centroids(new_centroids))
+}
+
+
+set_new_centroids = function(x.fit, new_centroids) {
+  x.fit$fit$params$alpha_prior_fit = get_centroids(x.fit, normalize=FALSE)
+  x.fit$fit$params$alpha_prior = as.data.frame(new_centroids)
+  return(x.fit)
+}
 
 
 merge_clusters = function(x.fit, cutoff=0.8) {
-  alpha_prior = x.fit$fit$params$alpha_prior
+  alpha_prior = get_centroids(x.fit, normalize=TRUE)
+  if (nrow(alpha_prior) == 1) return(x.fit)
   cosine_simil = lsa::cosine(t(alpha_prior)) %>% as.data.frame()
+  cosine_simil[lower.tri(cosine_simil, diag=T)] = 0
 
-  scores = sapply(1:(nrow(alpha_prior)), function(k) {
-    a = kmeans(x=get_exposure(x.fit), centers=k, nstart=20)
-    a$betweenss / a$totss
-  }) %>% setNames(1:(nrow(alpha_prior)))
-
-  rownames(alpha_prior) = 1:nrow(alpha_prior)-1
   rownames(cosine_simil) = colnames(cosine_simil) = rownames(alpha_prior)
 
-  # merging = cosine_simil %>% tibble::rownames_to_column(var="gid1") %>%
-  #   reshape2::melt(id="gid1", variable.name="gid2", value.name="cosine") %>%
-  #   dplyr::mutate(gid1=as.character(gid1), gid2=as.character(gid2)) %>%
-  #   dplyr::filter(gid1 != gid2, cosine > cutoff) %>%
-  #   dplyr::group_by(gid1) %>%
-  #   dplyr::summarise(new_cl=paste(c(unique(gid2), unique(gid1)) %>% sort(), collapse=",")) %>%
-  #   dplyr::group_by(new_cl) %>%
-  #   dplyr::summarise(ids=list(as.integer(unique(gid1)))) %>%
-  #   dplyr::mutate(new_cl_name=min(ids[[1]]))
-  #
-  # grps = x.fit$groups
-  # for (i in 1:nrow(merging)) {
-  #   old_cl = dplyr::pull(merging[i,], ids)[[1]]
-  #   new_cl = dplyr::pull(merging[i,], new_cl_name)
-  #   grps[grps %in% old_cl] = new_cl
-  # }
+  merging = cosine_simil %>% tibble::rownames_to_column(var="gid1") %>%
+    reshape2::melt(id="gid1", variable.name="gid2", value.name="cosine") %>%
+    dplyr::mutate(gid1=as.character(gid1), gid2=as.character(gid2)) %>%
+    dplyr::filter(cosine > cutoff) %>% dplyr::select(-cosine) %>%
+    dplyr::group_by(gid1) %>%
+    dplyr::summarise(cl_old=list(c(gid1,gid2) %>% unique())) %>% dplyr::ungroup() %>%
+    dplyr::rename(cl_name=gid1)
 
-  # x.fit$groups = grps
+  if (nrow(merging) == 0) return(x.fit)
+
+  grps = paste0("G", x.fit$groups %>% stringr::str_replace_all("G",""))
+  centroids = get_centroids(x.fit); new_centroids = data.frame()
+  for (i in 1:nrow(merging)) {
+    old_cl = dplyr::pull(merging[i,], cl_old)[[1]]
+    new_cl = dplyr::pull(merging[i,], cl_name)
+    grps[grps %in% old_cl] = new_cl
+
+    rownames_tmp = rownames(new_centroids)
+    new_centroids = new_centroids %>%
+      dplyr::bind_rows( colMeans(centroids[old_cl, ]) )
+    rownames(new_centroids) = c(rownames_tmp, new_cl)
+  }
+
+  x.fit$groups = grps
+  x.fit = set_new_centroids(x.fit, new_centroids=new_centroids)
+
   return(x.fit)
 }
 

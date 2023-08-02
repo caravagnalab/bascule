@@ -54,14 +54,13 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
     tibble::rownames_to_column(var="sample")
 
   if (add_centroid || centroids) {
-    if (!is.character(x$groups)) {
-      grps = sort(unique(x$groups))
-      idxs = grps + 1
-    }
-    if (is.character(x$groups)) grps = idxs = unique(x$groups) %>% stringr::str_replace_all("G","")
+    a_pr = get_centroids(x, normalize=T)
+    if ( all(grepl("G", rownames(a_pr))) )
+      grps = paste0("G", unique(x$groups) %>% stringr::str_replace_all("G","") %>% sort()) else
+        grps = unique(x$groups) %>% stringr::str_replace_all("G","") %>% sort()
 
-    a_pr = get_centroids(x, normalize=T)[idxs,]
-    rownames(a_pr) = paste0("G", grps)
+    a_pr = a_pr[grps,]
+    rownames(a_pr) = paste0("G", grps %>% stringr::str_replace_all("G",""))
 
     a_pr$groups = "Exposure priors"
 
@@ -85,13 +84,14 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
   if (add_centroid) {
     centrs = dplyr::select(a_pr, -groups)[,rev(sigs_levels)]
 
-    b = b %>% dplyr::full_join(centrs %>%
-                                  tibble::rownames_to_column(var="groups") %>%
-                                  dplyr::mutate(groups=stringr::str_replace_all(groups,"G","")) %>%
-                                  reshape2::melt(variable.name="Signature", value.name="alpha_centr") %>%
-                                  dplyr::group_by(groups) %>%
-                                  dplyr::mutate(alpha_centr=cumsum(alpha_centr)),
-                                by=c("groups","Signature"))
+    b = b %>% dplyr::mutate(groups=stringr::str_replace_all(groups,"G","")) %>%
+      dplyr::full_join(centrs %>%
+                         tibble::rownames_to_column(var="groups") %>%
+                         dplyr::mutate(groups=stringr::str_replace_all(groups,"G","")) %>%
+                         reshape2::melt(variable.name="Signature", value.name="alpha_centr") %>%
+                         dplyr::group_by(groups) %>%
+                         dplyr::mutate(alpha_centr=cumsum(alpha_centr)),
+                         by=c("groups","Signature"))
   }
 
 
