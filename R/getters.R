@@ -300,3 +300,27 @@ get_fit_by_id = function(x, idd) {
 }
 
 
+get_groups = function(x) {
+  if (have_groups(x)) return(x$groups)
+  return(NULL)
+}
+
+
+get_centroids = function(x, normalize=FALSE) {
+  if (!have_groups(x)) return(NULL)
+
+  centr = x$fit$params$alpha_prior
+  rownames(centr) = 1:nrow(centr) -1
+
+  if (normalize) return(centr / rowSums(centr))
+  return(centr)
+}
+
+
+get_mixture_weights = function(x) {
+  if (!have_groups(x)) return(NULL)
+
+  return(x$fit$params$pi)
+}
+
+

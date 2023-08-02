@@ -65,7 +65,7 @@ two_steps_inference = function(x,
                           cohort=cohort,
                           filtered_catalogue=filtered_catalogue)
 
-    x_ref_filt = x_ref %>% filter_exposures(min_exp=min_exposure, keep_sigs=keep_sigs)
+    x_ref_filt = x_ref %>% filter_sigs_low_expos(min_exp=min_exposure, keep_sigs=keep_sigs)
     catalogue2 = get_signatures(x_ref_filt)
   } else {
     x_ref = x_ref_filt = catalogue2 = NULL
@@ -124,7 +124,7 @@ merge_fits = function(x1, x2, x1_filt, min_exposure, keep_sigs, residues) {
   if (!residues)
     return(x2)
 
-  merged = x1 %>% filter_exposures(min_exp=min_exposure, keep_sigs=keep_sigs)
+  merged = x1 %>% filter_sigs_low_expos(min_exp=min_exposure, keep_sigs=keep_sigs)
   merged$n_denovo = x2$n_denovo
   merged$fit$denovo_signatures = NULL
 
@@ -163,13 +163,16 @@ create_basilica_obj_simul = function(simul, cohort="MySimul") {
 
   ss$fit$params = list("alpha_prior"=simul$alpha_prior[[1]])
 
-  if (!is.null(simul$groups))
-    ss$groups = simul$groups[[1]]
+  ss$groups = simul$groups[[1]]
+  if (is.null(ss$groups)) {
+    ss$groups = simul$counts[[1]] %>% tibble::rownames_to_column(var="sample") %>%
+      tidyr::separate(sample, into=c("gid","sample"), sep="_") %>%
+      dplyr::pull(gid) %>% stringr::str_replace_all("G","")
+  }
 
   ss$color_palette = gen_palette(get_signatures(ss) %>% nrow()) %>%
     setNames(sort(rownames(get_signatures(ss))))
 
-  ss$private_sigs = list()
   if ("private" %in% colnames(simul))
     ss$sigs[["private"]] = simul$private[[1]]
 
@@ -222,7 +225,7 @@ normalize_exposures = function(x) {
 }
 
 
-filter_exposures = function(x, min_exp=0.15, keep_sigs=NULL) {
+filter_sigs_low_expos = function(x, min_exp=0.15, keep_sigs=NULL) {
   sbs_keep = get_exposure(x, long=TRUE) %>%
     # x$fit$exposure %>%
     # tibble::rownames_to_column(var="sample") %>%
@@ -297,7 +300,7 @@ create_basilica_obj = function(fit, input_catalogue, reference_catalogue, cohort
 
 
 compute_residuals = function(x, min_exp=0.2, keep_sigs=NULL) {
-  xf = x %>% filter_exposures(min_exp=min_exp, keep_sigs=keep_sigs)
+  xf = x %>% filter_sigs_low_expos(min_exp=min_exp, keep_sigs=keep_sigs)
   sigs_order = rownames(xf$fit$input_catalogue)
 
   orig_counts = xf$input$counts
@@ -320,5 +323,56 @@ gen_palette = function(n) {
   return(ggsci::pal_simpsons()(n))
 }
 
+
+
+filter_exposures = function(x, min_expos=0.1) {
+  expos = get_exposure(x)
+  expos[expos < min_expos] = 0
+
+  x$fit$exposure = x$fit$params$alpha = expos / rowSums(expos)
+
+  if (!is.null(x$fit$params$alpha_prior)) {
+    x$fit$params$alpha_prior[x$fit$params$alpha_prior < min_expos] = 0
+    x$fit$params$alpha_prior = x$fit$params$alpha_prior / rowSums(x$fit$params$alpha_prior)
+  }
+
+  return(x)
+}
+
+
+
+
+merge_clusters = function(x.fit, cutoff=0.8) {
+  alpha_prior = x.fit$fit$params$alpha_prior
+  cosine_simil = lsa::cosine(t(alpha_prior)) %>% as.data.frame()
+
+  scores = sapply(1:(nrow(alpha_prior)), function(k) {
+    a = kmeans(x=get_exposure(x.fit), centers=k, nstart=20)
+    a$betweenss / a$totss
+  }) %>% setNames(1:(nrow(alpha_prior)))
+
+  rownames(alpha_prior) = 1:nrow(alpha_prior)-1
+  rownames(cosine_simil) = colnames(cosine_simil) = rownames(alpha_prior)
+
+  # merging = cosine_simil %>% tibble::rownames_to_column(var="gid1") %>%
+  #   reshape2::melt(id="gid1", variable.name="gid2", value.name="cosine") %>%
+  #   dplyr::mutate(gid1=as.character(gid1), gid2=as.character(gid2)) %>%
+  #   dplyr::filter(gid1 != gid2, cosine > cutoff) %>%
+  #   dplyr::group_by(gid1) %>%
+  #   dplyr::summarise(new_cl=paste(c(unique(gid2), unique(gid1)) %>% sort(), collapse=",")) %>%
+  #   dplyr::group_by(new_cl) %>%
+  #   dplyr::summarise(ids=list(as.integer(unique(gid1)))) %>%
+  #   dplyr::mutate(new_cl_name=min(ids[[1]]))
+  #
+  # grps = x.fit$groups
+  # for (i in 1:nrow(merging)) {
+  #   old_cl = dplyr::pull(merging[i,], ids)[[1]]
+  #   new_cl = dplyr::pull(merging[i,], new_cl_name)
+  #   grps[grps %in% old_cl] = new_cl
+  # }
+
+  # x.fit$groups = grps
+  return(x.fit)
+}
 
 

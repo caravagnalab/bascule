@@ -39,7 +39,7 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
   idcols = c("sample")
   if (have_groups(x)) {
     idcols = c("sample","groups")
-    b$groups = x$groups[rownames(x$fit$exposure) %in% sampleIDs]
+    b$groups = as.character(x$groups[rownames(x$fit$exposure) %in% sampleIDs])
   }
 
   if (!is.null(sort_by))
@@ -54,15 +54,22 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
     tibble::rownames_to_column(var="sample")
 
   if (add_centroid || centroids) {
-    a_pr = x$fit$params$alpha_prior[sort(unique(x$groups)+1),]
+    if (!is.character(x$groups)) {
+      grps = sort(unique(x$groups))
+      idxs = grps + 1
+    }
+    if (is.character(x$groups)) grps = idxs = unique(x$groups) %>% stringr::str_replace_all("G","")
+
+    a_pr = x$fit$params$alpha_prior[idxs,]
     a_pr = a_pr / rowSums(a_pr)
-    rownames(a_pr) = paste0("G", sort(x$groups %>% unique()))
+    rownames(a_pr) = paste0("G", grps)
 
     a_pr$groups = "Exposure priors"
 
     if (add_centroid) {
       b = rbind(b, a_pr %>% as.data.frame() %>% tibble::rownames_to_column(var="sample"))
       sample_levels = c(sample_levels, rownames(a_pr))
+
     } else if (centroids) {
       b = a_pr %>% as.data.frame() %>% tibble::rownames_to_column(var="sample")
       sample_levels = rownames(a_pr)
@@ -70,16 +77,35 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
     }
   }
 
-  p = b %>%
+  b = b %>%
     reshape2::melt(id=idcols, variable.name="Signature", value.name="alpha") %>%
-    dplyr::mutate(sample=factor(sample, levels=sample_levels)) %>%
+    dplyr::mutate(sample=factor(sample, levels=sample_levels))
 
+  if (add_centroid) {
+    centrs = dplyr::select(a_pr, -groups)[,rev(sigs_levels)]
+
+    b = b %>% dplyr::full_join(centrs %>%
+                                  tibble::rownames_to_column(var="groups") %>%
+                                  dplyr::mutate(groups=stringr::str_replace_all(groups,"G","")) %>%
+                                  reshape2::melt(variable.name="Signature", value.name="alpha_centr") %>%
+                                  dplyr::group_by(groups) %>%
+                                  dplyr::mutate(alpha_centr=cumsum(alpha_centr)),
+                                by=c("groups","Signature"))
+  }
+
+
+  p = b %>%
     ggplot(aes(x=factor(sample), y=alpha, fill=factor(Signature, levels=sigs_levels))) +
     geom_bar(stat="identity", position="stack") +
     ggplot2::scale_fill_manual(values=cls) +
+    ggplot2::scale_color_manual(values=cls) +
     labs(title=titlee) +
     theme_bw() + theme(axis.text.x=element_text(angle=90)) +
     guides(fill=guide_legend(title="Signatures")) + ylab("") + xlab("")
+
+  if (add_centroid)
+    p = p + geom_hline(aes(yintercept=alpha_centr, color=factor(Signature, levels=sigs_levels)),
+                       linetype="dashed") + guides(color="none")
 
   if (!sample_name)
     p = p + theme(axis.ticks.x = element_blank(), axis.text.x = element_blank()) + labs(x = "")
