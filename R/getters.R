@@ -323,7 +323,8 @@ get_centroids = function(x, normalize=FALSE) {
 get_mixture_weights = function(x) {
   if (!have_groups(x)) return(NULL)
 
-  return(x$fit$params$pi)
+  cl_names = rownames(get_centroids(x))
+  return(x$fit$params$pi %>% setNames(cl_names))
 }
 
 

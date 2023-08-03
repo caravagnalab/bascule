@@ -383,16 +383,10 @@ merge_clusters = function(x.fit, cutoff=0.8) {
   if (nrow(merging) == 0) return(x.fit)
 
   grps = get_groups(x.fit)
-  # centroids = get_centroids(x.fit); new_centroids = data.frame()
   for (i in 1:nrow(merging)) {
     old_cl = dplyr::pull(merging[i,], cl_old)[[1]]
     new_cl = dplyr::pull(merging[i,], cl_name)
     grps[grps %in% old_cl] = new_cl
-
-    # rownames_tmp = rownames(new_centroids)
-    # new_centroids = new_centroids %>%
-    #   dplyr::bind_rows( colMeans(centroids[old_cl, ]) )
-    # rownames(new_centroids) = c(rownames_tmp, new_cl)
   }
 
   x.fit$groups = grps
@@ -400,5 +394,98 @@ merge_clusters = function(x.fit, cutoff=0.8) {
 
   return(x.fit)
 }
+
+
+fix_assignments = function(x.fit, cutoff=0.8, max_iters=20) {
+  init_fit = x.fit
+  curr_z = get_groups(x.fit)
+  i = 0
+  repeat {
+    i = i+1
+    x.fit = recompute_centroids(x.fit)
+    # x.fit = merge_clusters(x.fit, cutoff=cutoff)
+
+    x.fit = recompute_assignments(x.fit)
+    new_z = get_groups(x.fit)
+
+    if (setequal(new_z, curr_z) || i > max_iters) break
+    curr_z = new_z
+  }
+
+  if (i > max_iters) return(init_fit)
+  return(x.fit %>% merge_clusters(cutoff=cutoff))
+}
+
+
+recompute_assignments = function(x.fit) {
+  grps = get_groups(x.fit)
+  centroids = get_centroids(x.fit, normalize=TRUE)[as.character(unique(grps)),]
+  # pi = get_mixture_weights(x.fit)[as.character(unique(grps))]
+  pi = table(get_groups(x.fit)) / x.fit$n_samples
+
+  counts = get_data(x.fit, reconstructed=FALSE)
+  n_muts = rowSums(counts)
+  beta = get_signatures(x.fit)[colnames(centroids), ]
+
+  z = c(); ll_k = data.frame() # K x N
+
+  for (k in unique(grps)) {
+    alpha_k = centroids[as.character(k),][rep(1, times=x.fit$n_samples),]
+    rownames(alpha_k) = names(n_muts)
+    rate = as.matrix(alpha_k * n_muts) %*% as.matrix(beta)
+
+    ll_k = ll_k %>% dplyr::bind_rows(
+      log(pi[as.character(k)]) +
+        rowSums(dpois(x=as.matrix(counts), lambda=rate, log=TRUE))
+    )
+  }
+  rownames(ll_k) = unique(grps)
+
+  probs = logsumexp(ll_k) %>%
+    dplyr::mutate(probs=exp(ll_k-logsumexpdiff))
+
+  new_probs = probs %>% dplyr::select(sampleid, groupid, probs) %>%
+    tidyr::pivot_wider(values_from=probs, names_from=groupid) %>%
+    tibble::column_to_rownames(var="sampleid")
+
+  x.fit = set_assignment_probs(x.fit, new_probs)
+
+  new_z = probs %>% dplyr::select(sampleid, groupid, probs) %>% unique() %>%
+    dplyr::group_by(sampleid) %>%
+    dplyr::filter(probs==max(probs)) %>% dplyr::select(sampleid, groupid) %>%
+    tibble::column_to_rownames(var="sampleid") %>%
+    dplyr::mutate(groupid=as.character(groupid))
+
+  x.fit$groups = new_z[rownames(counts), "groupid"]
+
+  return(x.fit)
+}
+
+
+set_assignment_probs = function(x.fit, new_probs) {
+  x.fit$fit$post_probs = new_probs
+  return(x.fit)
+}
+
+
+
+logsumexp = function(ll_k) {
+  summed_lk = t(ll_k) %>% as.data.frame() %>%
+    tibble::rownames_to_column(var="sampleid") %>%
+    reshape2::melt(id="sampleid", variable.name="groupid", value.name="ll_k") %>%
+
+    dplyr::group_by(sampleid) %>%
+
+    # compute max among groups for each sample
+    dplyr::mutate(m=max(ll_k)) %>%
+    dplyr::mutate(expdiff=exp(ll_k-m)) %>%
+    dplyr::reframe(logsumexpdiff=log(sum(expdiff)) + m,
+                   ll_k=ll_k, groupid=groupid)
+
+  return(summed_lk)
+}
+
+
+
 
 
