@@ -412,7 +412,9 @@ fix_assignments = function(x.fit, cutoff=0.8, max_iters=20) {
     curr_z = new_z
   }
 
-  if (i > max_iters) return(init_fit)
+  if (i > max_iters)
+    return(init_fit %>% recompute_centroids() %>% merge_clusters())
+
   return(x.fit %>% merge_clusters(cutoff=cutoff))
 }
 
