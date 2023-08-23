@@ -144,9 +144,9 @@ get_scores_from_py = function(scores) {
 }
 
 
-replace_null = function(i){
-  i = purrr::map(i, ~ replace(.x, is.null(.x), NA))
-  purrr::map(i, ~ if(is.list(.x)) replace_null(.x) else .x)
+replace_null = function(i) {
+  j = purrr::map(i, ~ replace(.x, is.null(.x), NA))
+  purrr::map(j, ~ if(is.list(.x)) replace_null(.x) else .x)
 }
 
 
@@ -190,377 +190,6 @@ get_train_params = function(obj) {
 }
 
 
-filter.fixed = function(M,
-                         alpha,
-                         beta_fixed = NULL,
-                         phi = 0.05) {
-  if (!is.data.frame(M)) {
-    warning("invalid count matrix (M) !")
-  }
-  if (!is.data.frame(alpha)) {
-    warning("invalid exposure matrix (alpha) !")
-  }
-  if (!is.numeric(phi)) {
-    warning("invalid parameter phi !")
-  }
-
-  if (is.null(beta_fixed)) {
-    remained_fixed = NULL
-    dropped_fixed = NULL
-  } else if (is.data.frame(beta_fixed)) {
-    theta = matrix(rowSums(M), nrow = 1)
-    alpha0 = theta %*% as.matrix(alpha)
-    contribution = colSums(alpha0) / sum(alpha0)
-
-    atb = alpha0 %>%
-      as_tibble() %>%
-      reshape2::melt(id = NULL) %>%
-      dplyr::rename(Signature = variable, TMB = value)
-
-    ctb = contribution %>%
-      as.list() %>%
-      as_tibble %>%
-      reshape2::melt(id = NULL) %>%
-      dplyr::rename(Signature = variable, proportion = value)
-
-    predicate_collapsed = dplyr::full_join(atb, ctb, by = 'Signature') %>%
-      dplyr::arrange(dplyr::desc(proportion)) %>%
-      mutate(Signature = ifelse(proportion < phi, crayon::red(Signature), Signature))
-
-    predicate_collapsed$TMB = paste0("TMB = ",
-                                     predicate_collapsed$TMB %>% round(0))
-
-    predicate_collapsed$proportion = paste0("\u03c0 = ",
-                                            predicate_collapsed$proportion %>% round(3))
-
-    predicate_collapsed$Signature = sprintf("%20s", predicate_collapsed$Signature)
-    predicate_collapsed$TMB = sprintf("%20s", predicate_collapsed$TMB)
-    predicate_collapsed$proportion = sprintf("%20s", predicate_collapsed$proportion)
-
-    predicate_collapsed = apply(predicate_collapsed, 1, function(x)
-      paste(x, collapse = ' '))
-
-    cli::boxx(
-      predicate_collapsed,
-      header = "TMB filter",
-      float = 'center',
-      footer = paste0("\u03c0 > ", phi)
-    ) %>% cat()
-    cat('\n')
-
-    dropped = which(contribution < phi)
-
-    if (sum(dropped) == 0) {
-      remained_fixed = beta_fixed
-      dropped_fixed = NULL
-    } else {
-      remained_fixed = beta_fixed[-c(dropped),]
-      if (nrow(remained_fixed) == 0) {
-        remained_fixed = NULL
-      }
-
-      if (any(dropped > nrow(beta_fixed))) {
-        cli::boxx("AZAD this is a bug") %>% cat()
-        dropped = dropped[dropped < nrow(beta_fixed)]
-      }
-
-      dropped_fixed = beta_fixed[c(dropped),]
-    }
-  } else {
-    warning("invalid fixed signatures (beta_fixed) !")
-  }
-  return(list(remained_fixed = remained_fixed, dropped_fixed = dropped_fixed))
-}
-
-
-# Checks if a signature has at least one patient where it's exposure exceeds phi
-filter.fixed_minfreq = function(alpha, beta_fixed, phi = 0.15)
-{
-  if (is.null(beta_fixed))
-    return(list(remained_fixed = NULL, dropped_fixed = NULL))
-
-  if (!is.null(alpha)) {
-    alpha_cat = alpha[, rownames(beta_fixed)]
-    predicate = apply(alpha_cat, 2, function(x)
-      sum(x > phi))
-
-    stays = colnames(alpha_cat)[predicate > 0]
-    goes = colnames(alpha_cat)[predicate == 0]
-
-    if (length(stays) == 0)
-      remained_fixed = NULL
-    else
-      remained_fixed = beta_fixed[stays,]
-
-    if (length(goes) == 0)
-      dropped_fixed = NULL
-    else
-      dropped_fixed = beta_fixed[goes,]
-
-    predicate_collapsed = predicate %>% as_tibble()
-    predicate_collapsed$Signature = names(predicate)
-
-    predicate_collapsed = predicate_collapsed %>%
-      group_by(value) %>%
-      mutate(Signature = paste(Signature, collapse = ', ')) %>%
-      distinct() %>%
-      arrange(value) %>%
-      mutate(Signature = ifelse(value == 0, crayon::red(Signature), Signature))
-
-    predicate_collapsed = paste('n =',
-                                predicate_collapsed$value,
-                                '[',
-                                predicate_collapsed$Signature,
-                                ']')
-
-    cli::boxx(
-      predicate_collapsed,
-      header = "Frequency filter",
-      float = 'center',
-      footer = paste0("\u03C6 > ", phi, " in n samples")
-    )  %>% cat()
-
-    cat('\n')
-
-    return(list(remained_fixed = remained_fixed, dropped_fixed = dropped_fixed))
-  }
-}
-
-
-filter.fixed_nofilter = function(alpha, beta_fixed)
-{
-  if (is.null(beta_fixed))
-    return(list(remained_fixed = NULL, dropped_fixed = NULL))
-
-  if (!is.null(beta_fixed))
-    return(list(remained_fixed = beta_fixed, dropped_fixed = NULL))
-
-  if (!is.null(alpha))
-    return(list(remained_fixed = beta_fixed[colnames(alpha)[colnames(alpha) %in% rownames(beta_fixed)],],dropped_fixed = NULL))
-
-}
-
-
-#' @import dplyr
-filter.denovo = function(reference_catalogue,
-                         beta_fixed,
-                         beta_denovo = NULL,
-                         black_list = NULL,
-                         delta = 0.9) {
-    if (!is.data.frame(reference_catalogue)) {
-      warning("Invalid reference catalogue!")
-    }
-    if (!is.numeric(delta)) {
-      warning("Invalid delta argument!")
-    }
-
-    if (is.data.frame(beta_fixed)) {
-      reference = dplyr::setdiff(reference_catalogue, beta_fixed)
-    } else if (is.null(beta_fixed)) {
-      reference = reference_catalogue
-    } else {
-      warning('invalid fixed signatures (beta_fixed) !')
-    }
-
-    if (is.null(beta_denovo)) {
-      return(list(new_fixed = NULL, reduced_denovo = NULL))
-    } else if (is.data.frame(beta_denovo)) {
-      match_list = c()
-      cos_matrix = cosine.matrix(beta_denovo, reference)
-      while (TRUE) {
-        max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
-        if (cos_matrix[max] < delta) {
-          break
-        }
-        row_index = as.numeric(max)[1]
-        col_index = as.numeric(max)[2]
-        match_list[length(match_list) + 1] =
-          colnames(cos_matrix[col_index])
-
-        if (dim(cos_matrix)[1] == 1 | dim(cos_matrix)[2] == 1) {
-          cos_matrix = cos_matrix[-c(row_index),-c(col_index)]
-          break
-        } else {
-          cos_matrix = cos_matrix[-c(row_index),-c(col_index)]
-        }
-      }
-    } else {
-      warning("Invalid beta denovo!")
-    }
-
-    match_list = setdiff(match_list, black_list)
-    if (length(match_list) == 0) {
-      #col_names = colnames(reference_catalogue)
-      #df = data.frame(matrix(nrow=0, ncol = length(col_names)))
-      #colnames(df) = col_names
-      return(list(new_fixed = NULL, reduced_denovo = beta_denovo))
-    } else {
-      if (is.null(dim(cos_matrix))) {
-        return(list(new_fixed = reference[match_list,], reduced_denovo = NULL))
-      } else {
-        reduced_denovo = beta_denovo[rownames(cos_matrix),]
-        return(list(new_fixed = reference[match_list,], reduced_denovo = reduced_denovo))
-      }
-    }
-  }
-
-
-adjust.denovo.fixed =
-  function(alpha,
-           fixed_signatures,
-           denovo_signatures,
-           limit = 0.9) {
-    if (is.null(fixed_signatures) | is.null(denovo_signatures)) {
-      return(list(exposure = alpha, denovo_signatures = denovo_signatures))
-    }
-
-    cos_matrix =
-      cosine.matrix(denovo_signatures, fixed_signatures)
-    while (TRUE) {
-      max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
-      if (cos_matrix[max] < limit) {
-        break
-      } else {
-        row_index = as.numeric(max)[1]
-        col_index = as.numeric(max)[2]
-        denovo_name = rownames(cos_matrix[col_index])[row_index]
-        fixed_name = colnames(cos_matrix[col_index])
-
-        # remove denovo signature
-        denovo_signatures =
-          denovo_signatures[!(rownames(denovo_signatures) %in% denovo_name),]
-
-        # adjust fixed signature exposure
-        alpha[fixed_name] =
-          alpha[, fixed_name] + alpha[, denovo_name]
-        # remove denovo signature exposure
-        alpha = alpha[,!names(alpha) %in% denovo_name]
-
-        if (dim(cos_matrix)[1] == 1 | dim(cos_matrix)[2] == 1) {
-          break
-        } else {
-          cos_matrix = cos_matrix[-c(row_index),-c(col_index)]
-        }
-      }
-    }
-    return(list(exposure = alpha, denovo_signatures = denovo_signatures))
-  }
-
-
-adjust.denovo.denovo =
-  function(alpha, denovo_signatures, limit = 0.9) {
-    if (is.null(denovo_signatures)) {
-      return(list(exposure = alpha, denovo_signatures = denovo_signatures))
-    } else if (nrow(denovo_signatures) == 1) {
-      return(list(exposure = alpha, denovo_signatures = denovo_signatures))
-    }
-    cos_matrix =
-      cosine.matrix(denovo_signatures, denovo_signatures)
-    for (i in 1:nrow(cos_matrix)) {
-      cos_matrix[i, i] = 0
-    }
-    while (TRUE) {
-      max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
-      if (cos_matrix[max][1] < limit) {
-        break
-      } else {
-        row_index = as.numeric(max)[1]
-        col_index = as.numeric(max)[2]
-        denovo_one = rownames(cos_matrix[col_index])[row_index]
-        denovo_two = colnames(cos_matrix[col_index])
-
-        denovo_signatures[paste(denovo_one, denovo_two, sep = ''),] =
-          denovo_signatures[denovo_one,] + denovo_signatures[denovo_two,]
-
-        denovo_signatures =
-          denovo_signatures[!(rownames(denovo_signatures) %in% c(denovo_one, denovo_two)),]
-
-        # adjust signature in exposure
-        alpha[paste(denovo_one, denovo_two, sep = '')] =
-          alpha[, denovo_one] + alpha[, denovo_two]
-        # remove signature from exposure
-        alpha =
-          alpha[,!names(alpha) %in% c(denovo_one, denovo_two)]
-
-        if (dim(cos_matrix)[1] == 2 | dim(cos_matrix)[2] == 2) {
-          break
-        } else {
-          cos_matrix =
-            cos_matrix[-c(row_index, col_index),-c(col_index, row_index)]
-        }
-      }
-    }
-    return(list(exposure = alpha, denovo_signatures = denovo_signatures))
-  }
-
-
-# filter based on linear projection with constraints
-
-#' @import dplyr
-filter.denovo.QP =
-  function(reference,
-           # beta_fixed,
-           beta_denovo = NULL,
-           black_list = NULL,
-           delta = 0.9,
-           filt_pi = 0.05,
-           thr_exposure = 0.05,
-           exposures = NULL,
-           substitutions = NULL) {
-    ## if denovo = TRUE -> check also if the denovo have exposure > thr in same samples
-
-    if (!is.data.frame(reference)) warning("Invalid reference catalogue!")
-    if (!is.numeric(delta)) warning("Invalid delta argument!")
-
-    # (Reference - Beta Fixed)
-    # if (is.data.frame(beta_fixed)) {
-    #   reference = dplyr::setdiff(reference_catalogue, beta_fixed)
-    # } else if (is.null(beta_fixed)) {
-    #   reference = reference_catalogue
-    # } else {
-    #   warning('invalid fixed signatures (beta_fixed) !')
-    # }
-
-    if (nrow(reference)==0) return(list(new_fixed = NULL, reduced_denovo = beta_denovo))
-
-    # BETA DENOVO
-    if (is.null(beta_denovo)) return(list(new_fixed = NULL, reduced_denovo = NULL))
-
-    if (is.data.frame(beta_denovo)) {
-      if (is.null(exposures)) {
-        a = beta_denovo
-        b = reference
-      } else {
-        a = reference
-        b = beta_denovo
-      }
-      ### names of catalogue signatures to include + names de novo to remove
-      res_optimization =
-        solve.quadratic.optimization(a,
-                                     b,
-                                     delta = delta,
-                                     filt_pi = filt_pi,
-                                     thr_exposure = thr_exposure,
-                                     exposures = exposures,
-                                     substitutions = substitutions)
-      match_list = res_optimization$catalogue_to_include
-      } else warning("Invalid beta denovo!")
-
-    match_list = setdiff(match_list, black_list)
-    if (length(match_list) == 0) {
-      # col_names = colnames(reference_catalogue)
-      # df = data.frame(matrix(nrow=0, ncol = length(col_names)))
-      # colnames(df) = col_names
-      return(list(new_fixed = NULL, reduced_denovo = beta_denovo))
-    } else {
-      if (is.null(res_optimization$denovo_to_include)) {
-        return(list(new_fixed = reference[match_list,], reduced_denovo = NULL))
-      } else {
-        reduced_denovo = beta_denovo[res_optimization$denovo_to_include,]
-        return(list(new_fixed = reference[match_list,], reduced_denovo = reduced_denovo))
-      }
-    }
-  }
 
 
 
@@ -720,18 +349,35 @@ renormalize_denovo_thr = function(denovo, thr=0.02) {
 }
 
 
-filter.denovo.phi = function(exposures, phi, denovo) {
-  exposures.denovo = exposures[,denovo] %>% as.data.frame()
-  colnames(exposures.denovo) = denovo
-  sbs_low_exp = (exposures.denovo < phi) %>% colSums()
 
-  rmv = sbs_low_exp[sbs_low_exp > nrow(exposures.denovo)] %>% names()
-  if (length(rmv) == 0) return(exposures)
+# if by_context is TRUE, it computes the cosine similarity by substitution type
+cosine.matrix <- function(a, b, substitutions=NULL) {
+  # a and b are data.frame
 
-  return(
-    exposures %>% dplyr::select(-dplyr::all_of(rmv)) %>% renormalize_denovo_thr(thr=0)
+  df <- data.frame(matrix(0, nrow(a), nrow(b)))
+  rownames(df) <- rownames(a)
+  colnames(df) <- rownames(b)
+
+  cmp = nrow(a) * nrow(b)
+  pb <- progress::progress_bar$new(
+    format = paste0("  Cosine similarity (n = ", cmp, ") [:bar] :percent eta: :eta"),
+    total = cmp,
+    clear = FALSE,
+    width= 90
   )
+
+
+  for (i in 1:nrow(a)) {
+    denovo <- a[i, ]
+    for (j in 1:nrow(b)) {
+      ref <- b[j, ]
+      pb$tick()
+
+      score <- cosine.vector(denovo, ref, substitutions)
+      df[i,j] <- score
+    }
+  }
+
+  return(df)
 }
-
-
 

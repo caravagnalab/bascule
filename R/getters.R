@@ -1,4 +1,3 @@
-
 #' get exposure matrix
 #'
 #' @param x basilica object
@@ -137,6 +136,7 @@ get_signatures = function(x,  long = FALSE) {
 
   return(sigs)
 }
+
 
 get_reference_signatures = function(x, long = FALSE) {
   stopifnot(inherits(x, "basilica_obj"))
@@ -326,5 +326,21 @@ get_mixture_weights = function(x) {
   cl_names = rownames(get_centroids(x))
   return(x$fit$params$pi %>% setNames(cl_names))
 }
+
+
+
+get_contexts = function(x) {
+  tryCatch(expr = {
+    context_names = x %>% get_signatures(long=T) %>% dplyr::select(Feature) %>% unique()
+  }, error = function(e)
+    context_names = data.frame(Feature = x$denovo_signatures %>% colnames()) )
+
+  return(context_names %>%
+           dplyr::mutate(Feature=gsub(pattern = '\\[', replacement = '_', x=Feature)) %>%
+           dplyr::mutate(Feature=gsub(pattern = '\\]', replacement = '_', x=Feature)) %>%
+           tidyr::separate(Feature, into=c("left","subs","right"), sep="_"))
+}
+
+
 
 
