@@ -302,7 +302,7 @@ get_fit_by_id = function(x, idd) {
 
 get_groups = function(x) {
   if (have_groups(x)) return(x$groups)
-  return(NULL)
+  return(rep(0, time=x$n_samples))
 }
 
 
@@ -349,6 +349,7 @@ get_obj_initial_params = function(x) {
   x$fit$pi = x$fit$params$pi = params$pi_param
 
   x$fit$params$alpha_prior = params$alpha_prior_param
-  return(recompute_assignments(x))
+
+  return(x)
 }
 

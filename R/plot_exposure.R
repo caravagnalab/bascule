@@ -16,6 +16,7 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
                           plot_noise=FALSE, add_centroid=FALSE, flip_coord=FALSE,
                           muts=FALSE, sampleIDs=NULL, sort_by=NULL, centroids=F) {
 
+  if (!have_groups(x)) add_centroid = centroids = FALSE
   if (is.null(sampleIDs)) sampleIDs = rownames(get_exposure(x))
 
   titlee = "Exposure"

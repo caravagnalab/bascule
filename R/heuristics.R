@@ -14,6 +14,8 @@ filter_exposures = function(x, min_expos=0.1) {
 
 
 fix_assignments = function(x.fit, cutoff=0.8, max_iters=20) {
+  if (!have_groups(x.fit)) return(x.fit)
+
   init_fit = x.fit
   curr_z = get_groups(x.fit)
   i = 0

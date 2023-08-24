@@ -1,3 +1,49 @@
+#' Fit function
+#'
+#' @param x add
+#' @param k add
+#' @param enforce_sparsity add
+#' @param min_exposure add
+#' @param reference_catalogue add
+#' @param filtered_catalogue add
+#' @param keep_sigs add
+#' @param lr add
+#' @param n_steps add
+#' @param groups add
+#' @param clusters add
+#' @param nonparametric add
+#' @param compile add
+#' @param cohort add
+#' @param regularizer add
+#' @param py add
+#' @param hyperparameters add
+#' @param reg_weight add
+#' @param reg_bic add
+#' @param CUDA add
+#' @param verbose add
+#' @param seed_list add
+#' @param initializ_seed add
+#' @param save_runs_seed add
+#' @param initializ_pars_fit add
+#' @param new_hier add
+#' @param regul_denovo add
+#' @param regul_fixed add
+#' @param save_all_fits add
+#' @param do_initial_fit add
+#'
+#' @return basilica object
+#'
+#' @importFrom magrittr  %>%
+#' @importFrom dplyr mutate group_by select rename as_tibble bind_rows reframe
+#' @importFrom dplyr ungroup filter summarise pull setdiff add_row contains
+#' @importFrom dplyr arrange full_join inner_join rowwise any_vars filter_all
+#'
+#' @importFrom tidyr separate gather as_tibble nest pivot_wider pivot_longer
+#'
+#' @importFrom tibble rownames_to_column column_to_rownames as_tibble
+#'
+#' @export
+
 fit = function(x,
                k,
                enforce_sparsity=FALSE,
