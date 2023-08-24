@@ -146,7 +146,7 @@ get_scores_from_py = function(scores) {
 
 replace_null = function(i) {
   j = purrr::map(i, ~ replace(.x, is.null(.x), NA))
-  purrr::map(j, ~ if(is.list(.x)) replace_null(.x) else .x)
+  purrr::map(j, ~ (if(is.list(.x)) replace_null(.x) else .x))
 }
 
 
@@ -193,28 +193,20 @@ get_train_params = function(obj) {
 
 
 
-solve.quadratic.optimization =
-  function(a,
-           b,
-           filt_pi = 0.05,
-           delta = 0.9,
-           exposures = NULL,
-           thr_exposure = 0.05,
-           substitutions = NULL) {
-    # a and b are data.frame
+solve.quadratic.optimization = function(a,
+                                        b,
+                                        filt_pi = 0.05,
+                                        delta = 0.9,
+                                        thr_exposure = 0.05,
+                                        exposures = NULL,
+                                        return_weights = FALSE) {
 
     df = data.frame(matrix(0, nrow(a), nrow(b)))
     rownames(df) = rownames(a)
     colnames(df) = rownames(b)
 
     cmp = nrow(a)
-    pb = progress::progress_bar$new(
-      format = paste0("  Quadratic programming solver (n = ", cmp, ") [:bar] :percent eta: :eta"),
-      total = cmp,
-      clear = FALSE,
-      width = 90)
-
-    b_m = as.matrix(b) %>% t
+    b_m = t(as.matrix(b))
     Rinv = solve(chol(t(b_m) %*% b_m))
 
     res = lapply(
@@ -227,44 +219,25 @@ solve.quadratic.optimization =
             Rinv = Rinv,
             filt_pi = filt_pi,
             delta = delta,
-            a_name = rownames(a)[i],
             exposures = exposures,
             thr_exposure = thr_exposure,
-            substitutions = substitutions)
-        pb$tick()
+            return_weights = return_weights)
         return(optim_res)
       }
-    )
+    ) %>% setNames(rownames(a))
 
-    catalogue_to_include =
-      lapply(res, function(x)
-        x[[1]]) %>% do.call(c, .) %>% unique()
-    denovo_to_include =
-      lapply(res, function(x)
-        x[[2]]) %>% do.call(c, .)
-
-    if (!is.null(exposures))
-      denovo_to_include = setdiff(rownames(b), denovo_to_include)
-
-    return(
-      list(
-        catalogue_to_include = catalogue_to_include,
-        denovo_to_include = denovo_to_include
-      )
-    )
+    return(res)
   }
 
 
-solve.quadratic.optimization.aux =
-  function(v,
-           Z,
-           Rinv,
-           a_name,
-           filt_pi = 0.05,
-           delta = 0.9,
-           exposures = NULL,
-           thr_exposure = 0.05,
-           substitutions = NULL) {
+solve.quadratic.optimization.aux = function(v,
+                                            Z,
+                                            Rinv,
+                                            filt_pi = 0.05,
+                                            delta = 0.9,
+                                            exposures = NULL,
+                                            thr_exposure = 0.05,
+                                            return_weights = FALSE) {
     d = v %*% Z
     b = c(1, rep(0, length(d)))
     C = cbind(rep(1, length(d)), diag(length(d)))
@@ -283,61 +256,35 @@ solve.quadratic.optimization.aux =
     vec1 = matrix(v)
     rownames(vec1) = rownames(reconstructed_vector)
 
-    cos_sim = cosine.vector(vec1, reconstructed_vector, substitutions = substitutions)
-
-    # return -> first element is catalogue to include
-    #           second element is denovo to include
+    cos_sim = lsa::cosine(as.numeric(v), as.numeric(reconstructed_vector)) %>%
+      as.numeric()
+    # cos_sim = cosine.vector(vec1, reconstructed_vector)
 
     if (is.null(exposures)) {
-      if (!is.na(cos_sim) && cos_sim > delta)
-        return(list(colnames(Z)[pis > 0], NULL))
-      else
-        return(list(NULL, a_name))
-    } else {
       if (!is.na(cos_sim) && cos_sim > delta) {
-        if (sum(pis>0) <= 1) return(list(NULL, colnames(Z)[pis > 0]))
+        if (return_weights) return(pis[pis > 0] %>% setNames(colnames(Z)[pis > 0]))
+        return(colnames(Z)[pis > 0])
+      }
 
-        keep.tmp = colnames(Z)[pis > 0]
-        exposures.tmp = exposures[,keep.tmp]
-        exposures.tmp$n_denovo = apply(exposures.tmp > thr_exposure, 1,
-                                       function(x) length(unique(x))==1)
-
-        print(a_name)
-        print(colnames(Z)[pis > 0])
-        print(sum(exposures.tmp$n_denovo))
-
-        if (sum(exposures.tmp$n_denovo) >= nrow(exposures)*0.9)
-          # return the reference that can be explained as a linear comb of denovo
-          return(list(a_name, colnames(Z)[pis > 0]))
-        else
-          return(list(NULL, NULL))
-        } else {
-          return(list(NULL, NULL))
-        }
     }
 
-
-    if (!is.na(cos_sim) && cos_sim > delta) {
-      if (!is.null(exposures) && sum(pis > 0)>1) {
-
-        print(a_name)
-
-        keep.tmp = colnames(Z)[pis > 0]
-        exposures.tmp = exposures[,keep.tmp]
-        exposures.tmp$n_denovo = apply(exposures.tmp > thr_exposure, 1, function(x) length(unique(x))==1)
-
-        ## if both either are present or not in the same patients (more than 90% of the times)
-        if (sum(exposures.tmp$n_denovo) >= nrow(exposures)*0.9)
-          return(list(colnames(Z)[pis>0],NULL))
-      } else if (!is.null(exposures))
-        return(list(NULL, NULL))
-
-      return(list(colnames(Z)[pis > 0], NULL))
-
-    } else {
-      if (!is.null(exposures)) return(list(NULL, NULL))
-      return(list(NULL, a_name))
-    }
+    # # exposure not null -> makes sense if we test more than one dn vs cosmic
+    # } else {
+    #   if (!is.na(cos_sim) && cos_sim > delta) {
+    #     # if none or one linear combination
+    #     if (sum(pis>0) <= 1) return(colnames(Z)[pis > 0])
+    #
+    #     keep.tmp = colnames(Z)[pis > 0]
+    #     exposures.tmp = exposures[, keep.tmp]
+    #     exposures.tmp$n_denovo = apply(exposures.tmp > thr_exposure, 1,
+    #                                    function(x) length(unique(x))==1)
+    #
+    #     if (sum(exposures.tmp$n_denovo) >= nrow(exposures)*0.9)
+    #       # return the reference that can be explained as a linear comb of denovo
+    #       return(colnames(Z)[pis > 0])
+    #   }
+    # }
+  return(NULL)
 }
 
 # Renormalize denovo

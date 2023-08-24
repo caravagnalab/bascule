@@ -342,5 +342,13 @@ get_contexts = function(x) {
 }
 
 
+get_obj_initial_params = function(x) {
+  params = x$fit$init_params
+  x$fit$exposure = x$fit$params$alpha = params$alpha / rowSums(params$alpha)
+  x$fit$groups = x$groups = params$init_clusters
+  x$fit$pi = x$fit$params$pi = params$pi_param
 
+  x$fit$params$alpha_prior = params$alpha_prior_param
+  return(recompute_assignments(x))
+}
 
