@@ -328,6 +328,14 @@ get_mixture_weights = function(x) {
 }
 
 
+COSMIC_color_palette = function(catalogue=COSMIC_filt, seed=14) {
+  N = nrow(catalogue)
+  set.seed(seed)
+  colss = Polychrome::createPalette(N, c("#856de3","#9e461c"), target="normal", range=c(15,80), M=1000)[1:N]
+  names(colss) = rownames(catalogue)
+  return(colss)
+}
+
 
 get_contexts = function(x) {
   tryCatch(expr = {

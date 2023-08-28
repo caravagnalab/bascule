@@ -14,16 +14,16 @@
 
 plot_fit = function(x, x.true=NULL, reconstructed=T, cls=NULL,
                     sort_by=NULL, what="SBS", epsilon=FALSE,
-                    sample_name=FALSE, sampleIDs=NULL,
+                    sample_name=FALSE, sampleIDs=NULL, name1="fit", name2="simul",
                     single_samples=FALSE, add_centroid=F) {
   if (is.null(sampleIDs)) sampleIDs = rownames(x$fit$x)
 
   if (!is.null(x.true)) catalogue = get_signatures(x.true) else catalogue = NULL
 
   mm = plot_mutations(x, reconstructed=reconstructed, what=what,
-                      epsilon=epsilon, sampleIDs=sampleIDs)
+                      epsilon=epsilon, sampleIDs=sampleIDs) + ylab("") + labs(title=paste0("Mutations ", name1))
   alp = plot_exposures(x, sort_by=sort_by, cls=cls, sample_name=sample_name,
-                       sampleIDs=sampleIDs, add_centroid=add_centroid)
+                       sampleIDs=sampleIDs, add_centroid=add_centroid) + labs(title=paste0("Exposure ", name1))
   bet = plot_signatures(x, cls=cls, what=what, catalogue=catalogue)
 
   if (is.null(x.true)) return(patchwork::wrap_plots(bet + (mm/alp), guides="collect"))
@@ -34,9 +34,9 @@ plot_fit = function(x, x.true=NULL, reconstructed=T, cls=NULL,
                     x.true %>% get_signames()) %>% sort()
 
   mm.true = plot_mutations(x.true, reconstructed=F, what=what,
-                           epsilon=epsilon, sampleIDs=sampleIDs)
+                           epsilon=epsilon, sampleIDs=sampleIDs) + ylab("") + labs(title=paste0("Mutations ", name2))
   alpha.true = plot_exposures(x.true, sort_by=sort_by, cls=cls, sample_name=sample_name,
-                              sampleIDs=sampleIDs)
+                              sampleIDs=sampleIDs) + labs(title=paste0("Exposure ", name2))
 
   subtitle_str = ""
   if (length(fn_sigs) > 0) subtitle_str = paste0("Missing signatures: ",
@@ -46,8 +46,13 @@ plot_fit = function(x, x.true=NULL, reconstructed=T, cls=NULL,
                                                  paste(fp_sigs, collapse=","),
                                                  ".")
 
-  return(patchwork::wrap_plots(bet + (mm/mm.true/alp/alpha.true), guides="collect") &
-           patchwork::plot_annotation(subtitle=subtitle_str))
+  design = "AAABBB
+            AAACCC
+            AAADDD
+            ###EEE"
+
+  return(patchwork::wrap_plots(bet, mm, mm.true, alp, alpha.true, design=design, guides="collect") &
+           patchwork::plot_annotation(title=paste0(name1, " vs ", name2), subtitle=subtitle_str))
 }
 
 
