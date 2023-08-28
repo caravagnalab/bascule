@@ -353,3 +353,9 @@ get_obj_initial_params = function(x) {
   return(x)
 }
 
+
+get_adjusted_fit_lc = function(x) {
+  if ("lc_check" %in% names(x)) return(x$lc_check)
+  return(x)
+}
+
