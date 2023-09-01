@@ -13,7 +13,7 @@ filter_exposures = function(x, min_expos=0.1) {
 }
 
 
-fix_assignments = function(x.fit, cutoff=0.8, max_iters=20) {
+fix_assignments = function(x.fit, cutoff=0.8, max_iters=20, merge_groups=FALSE) {
   if (!have_groups(x.fit)) return(x.fit)
 
   init_fit = x.fit
@@ -22,7 +22,6 @@ fix_assignments = function(x.fit, cutoff=0.8, max_iters=20) {
   repeat {
     i = i+1
     x.fit = recompute_centroids(x.fit)
-    # x.fit = merge_clusters(x.fit, cutoff=cutoff)
 
     x.fit = recompute_assignments(x.fit)
     new_z = get_groups(x.fit)
@@ -34,6 +33,7 @@ fix_assignments = function(x.fit, cutoff=0.8, max_iters=20) {
   if (i > max_iters)
     return(init_fit %>% recompute_centroids() %>% merge_clusters())
 
+  if (!merge_groups) return(x.fit)
   return(x.fit %>% merge_clusters(cutoff=cutoff))
 }
 
