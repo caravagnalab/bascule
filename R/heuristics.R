@@ -100,6 +100,7 @@ recompute_assignments = function(x.fit) {
   counts = get_data(x.fit, reconstructed=FALSE)
   n_muts = rowSums(counts)
   beta = get_signatures(x.fit)[colnames(centroids), ]
+  alpha = get_exposure(x.fit)
 
   z = c(); ll_k = data.frame() # K x N
 
@@ -110,7 +111,7 @@ recompute_assignments = function(x.fit) {
 
     ll_k = ll_k %>% dplyr::bind_rows(
       log(pi[as.character(k)]) +
-        rowSums(dpois(x=as.matrix(counts), lambda=rate, log=TRUE))
+        rowSums(dpois(x=as.matrix(counts), lambda=rate, log=TRUE)) # + gtools::ddirichlet(x=alpha, alpha=as.numeric(centroids[as.character(k),])*1000)
     )
   }
   rownames(ll_k) = unique(grps)

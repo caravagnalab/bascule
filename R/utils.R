@@ -21,7 +21,6 @@ pyfit = function(counts,
                  initializ_seed = TRUE,
                  save_runs_seed = FALSE,
                  initializ_pars_fit = FALSE,
-                 new_hier = FALSE,
                  regul_denovo = TRUE,
                  regul_fixed = TRUE,
                  verbose = FALSE,
@@ -50,7 +49,7 @@ pyfit = function(counts,
                regul_compare = regul_compare, verbose = verbose,
                seed = seed_list, initializ_pars_fit = initializ_pars_fit,
                save_runs_seed = save_runs_seed, initializ_seed = initializ_seed,
-               new_hier = new_hier, regul_denovo = regul_denovo, save_all_fits=save_all_fits,
+               regul_denovo = regul_denovo, save_all_fits=save_all_fits,
                do_initial_fit = do_initial_fit, regul_fixed = regul_fixed)
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
@@ -164,29 +163,46 @@ get_train_params = function(obj) {
   beta_d = data.frame() %>% dplyr::mutate(signature=as.character(NA), context=as.character(NA),
                                           iteration=as.integer(NA), beta=as.numeric(NA))
 
+  params = data.frame()
+
   for (i in 1:length(train_params)) {
-    tmp_a = train_params[[i]][["alpha"]]$numpy() %>% as.data.frame()
-    rownames(tmp_a) = samples_names
-    colnames(tmp_a) = c(bfixed_names, bdenovo_names)
+    expos = train_params[[i]][["alpha"]] %>% as.data.frame()
+    rownames(expos) = samples_names
+    colnames(expos) = c(bfixed_names, bdenovo_names)
 
-    tmp_a = tmp_a %>% tibble::rownames_to_column(var="sample_id") %>%
-      reshape2::melt(id="sample_id",variable.name="signature",value.name="alpha") %>%
-      dplyr::mutate(iteration=i)
+    centroids = train_params[[i]][["alpha_prior"]] %>% as.data.frame()
+    rownames(centroids) = (1:nrow(centroids)) -1
+    colnames(centroids) = c(bfixed_names, bdenovo_names)
 
-    alpha_all = alpha_all %>% dplyr::add_row(tmp_a)
+    pi = train_params[[i]][["pi"]] %>% as.numeric() %>% setNames((1:nrow(centroids)) -1)
 
-    tmp_b = train_params[[i]][["beta_d"]]$numpy() %>% as.data.frame()
-    rownames(tmp_b) = bdenovo_names
-    colnames(tmp_b) = contexts
+    sigs = train_params[[i]][["beta_d"]] %>% as.data.frame()
+    rownames(sigs) = bdenovo_names
+    colnames(sigs) = contexts
 
-    tmp_b = tmp_b %>% tibble::rownames_to_column(var="signature") %>%
-      reshape2::melt(id="signature",variable.name="context",value.name="beta") %>%
-      dplyr::mutate(iteration=i)
+    params = params %>% dplyr::bind_rows(
+      expos %>% tibble::rownames_to_column(var="rowname") %>%
+        reshape2::melt(id="rowname",variable.name="columnname",value.name="value") %>%
+        dplyr::mutate(iteration=i, paramname="alpha")
+    ) %>% dplyr::bind_rows(
+      sigs %>% tibble::rownames_to_column(var="rowname") %>%
+        reshape2::melt(id="rowname",variable.name="columnname",value.name="value") %>%
+        dplyr::mutate(iteration=i, paramname="beta_d")
+    ) %>% dplyr::bind_rows(
+      centroids %>% tibble::rownames_to_column(var="rowname") %>%
+        reshape2::melt(id="rowname",variable.name="columnname",value.name="value") %>%
+        dplyr::mutate(iteration=i, paramname="centroid")
+    ) %>% dplyr::bind_rows(
+      data.frame("rowname"=names(pi),"value"=pi,"iteration"=i,"paramname"="pi")
+    )
 
-    beta_d = beta_d %>% dplyr::add_row(tmp_b)
+    # alpha_all = alpha_all %>% dplyr::add_row(tmp_a)
+    # beta_d = beta_d %>% dplyr::add_row(tmp_b)
   }
 
-  return(tibble::tibble(alpha=list(alpha_all), beta_d=list(beta_d)))
+  return(params)
+
+  # return(tibble::tibble(alpha=list(alpha_all), beta_d=list(beta_d)))
 }
 
 
