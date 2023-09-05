@@ -1,29 +1,31 @@
 #' Fit function
 #'
-#' @param x add
-#' @param k add
-#' @param enforce_sparsity add
-#' @param min_exposure add
-#' @param reference_catalogue add
-#' @param filtered_catalogue add
-#' @param keep_sigs add
-#' @param lr add
-#' @param n_steps add
-#' @param groups add
-#' @param clusters add
-#' @param nonparametric add
+#' @param x mutations catalogue
+#' @param k number or list of values of denovo signatures to test
+#' @param enforce_sparsity if TRUE, Beta prior on exposures centroids
+#' @param min_exposure filters exposure after the first fit with the reference catalogue
+#' @param reference_catalogue signatures to look for in the data.
+#' After one fit of the model only those signatures with a strong signal will be kept (see "min_exposure").
+#' @param filtered_catalogue whether "reference_catalogue" has been filtered from low signals
+#' @param keep_sigs signatures in "reference_catalogue" to keep despite their signals
+#' @param lr learning rare
+#' @param n_steps number of VI steps
+#' @param groups either NULL or known groups (deprecated)
+#' @param clusters number or list of values to test for clustering
+#' @param nonparametric whether to run the nonparametric clustering
+#' @param dirichlet_prior whether to use Dirichlet prior on exposures' centroids (instead of a Normal)
 #' @param compile add
-#' @param cohort add
-#' @param regularizer add
-#' @param py add
-#' @param hyperparameters add
-#' @param reg_weight add
+#' @param cohort cohort name
+#' @param regularizer type of regularizer for the signatures (only considered if "reg_weight" is > 0)
+#' @param py python package to use (if NULL, the package will be installed from PyPI)
+#' @param hyperparameters list of hyperparameters
+#' @param reg_weight weight of the regularization
 #' @param CUDA add
 #' @param verbose add
-#' @param seed_list add
+#' @param seed_list list of seeds to use for distinct runs
 #' @param initializ_seed add
 #' @param save_runs_seed add
-#' @param initializ_pars_fit add
+#' @param initializ_pars_fit deprecated
 #' @param regul_denovo add
 #' @param regul_fixed add
 #' @param save_all_fits add
@@ -53,25 +55,25 @@ fit = function(x,
                n_steps=2000,
                groups=NULL,
                clusters=NULL,
+               hyperparameters=NULL,
                nonparametric=TRUE,
                dirichlet_prior=TRUE,
-               compile=FALSE,
-               cohort="MyCohort",
-               regularizer="cosine",
                py=NULL,
-               hyperparameters=NULL,
                reg_weight=0.,
-               CUDA=FALSE,
-               verbose=FALSE,
+               regularizer="cosine",
+               regul_denovo=TRUE,
+               regul_fixed=TRUE,
                seed_list=c(10,27,92),
                initializ_seed=FALSE,
                save_runs_seed=TRUE,
                initializ_pars_fit=TRUE,
                store_parameters=FALSE,
-               regul_denovo=TRUE,
-               regul_fixed=TRUE,
                save_all_fits=FALSE,
-               do_initial_fit=FALSE) {
+               do_initial_fit=FALSE,
+               compile=FALSE,
+               CUDA=FALSE,
+               verbose=FALSE,
+               cohort="MyCohort") {
 
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
 
