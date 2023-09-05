@@ -111,7 +111,7 @@ recompute_assignments = function(x.fit) {
 
     ll_k = ll_k %>% dplyr::bind_rows(
       log(pi[as.character(k)]) +
-        rowSums(dpois(x=as.matrix(counts), lambda=rate, log=TRUE)) # + gtools::ddirichlet(x=alpha, alpha=as.numeric(centroids[as.character(k),])*1000)
+        rowSums(dpois(x=as.matrix(counts), lambda=rate, log=TRUE)) # + gtools::ddirichlet(x=alpha, alpha=as.numeric(centroids[as.character(k),]))
     )
   }
   rownames(ll_k) = unique(grps)
