@@ -10,7 +10,6 @@
 #' @param keep_sigs signatures in "reference_catalogue" to keep despite their signals
 #' @param lr learning rare
 #' @param n_steps number of VI steps
-#' @param groups either NULL or known groups (deprecated)
 #' @param clusters number or list of values to test for clustering
 #' @param nonparametric whether to run the nonparametric clustering
 #' @param dirichlet_prior whether to use Dirichlet prior on exposures' centroids (instead of a Normal)
@@ -50,7 +49,7 @@ fit = function(x,
                keep_sigs=c("SBS1", "SBS5"),
                lr=0.005,
                n_steps=2000,
-               groups=NULL,
+               # groups=NULL,
                clusters=NULL,
                hyperparameters=NULL,
                nonparametric=TRUE,
@@ -82,7 +81,7 @@ fit = function(x,
       n_steps = n_steps,
       k_list = 0,
       hyperparameters = hyperparameters,
-      groups = groups,
+      # groups = groups,
       clusters = NULL,
       dirichlet_prior = FALSE,
       input_catalogue = reference_catalogue,
@@ -121,7 +120,7 @@ fit = function(x,
     n_steps = n_steps,
     k_list = k,
     hyperparameters = hyperparameters,
-    groups = groups,
+    # groups = groups,
     clusters = clusters,
     nonparametric = nonparametric,
     dirichlet_prior = dirichlet_prior,

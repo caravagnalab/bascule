@@ -4,7 +4,7 @@ pyfit = function(counts,
                  n_steps = 2000,
                  stage = "",
                  py = NULL,
-                 groups = NULL,
+                 # groups = NULL,
                  clusters = NULL,
                  nonparametric = FALSE,
                  dirichlet_prior = TRUE,
@@ -41,17 +41,17 @@ pyfit = function(counts,
   if (!is.null(clusters)) clusters = as.integer(clusters)
 
   obj = py$fit(x = counts, k_list = k_list, lr = lr, n_steps = n_steps,
-               groups = groups, cluster = clusters, beta_fixed = input_catalogue,
-               hyperparameters = hyperparameters, CUDA = CUDA, nonparametric=nonparametric,
-               compile_model = compile, enforce_sparsity = enforce_sparsity,
+               cluster = clusters, beta_fixed = input_catalogue,
+               hyperparameters = hyperparameters, nonparametric=nonparametric,
+               dirichlet_prior = dirichlet_prior, enforce_sparsity = enforce_sparsity,
                store_parameters = store_parameters, regularizer = regularizer,
-               reg_weight = reg_weight, stage = stage, dirichlet_prior = dirichlet_prior,
-               regul_compare = regul_compare, verbose = verbose,
-               seed = seed_list,
+               reg_weight = reg_weight, regul_compare = regul_compare,
+               regul_denovo = regul_denovo, regul_fixed = regul_fixed,
+               stage = stage, seed = seed_list, compile_model = compile,
+               CUDA = CUDA, verbose = verbose,
                # initializ_pars_fit = initializ_pars_fit, save_runs_seed = save_runs_seed,
                # initializ_seed = initializ_seed,
-               regul_denovo = regul_denovo, save_all_fits = save_all_fits,
-               do_initial_fit = do_initial_fit, regul_fixed = regul_fixed)
+               save_all_fits = save_all_fits, do_initial_fit = do_initial_fit)
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
 
