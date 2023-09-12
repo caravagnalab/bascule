@@ -1,6 +1,7 @@
 pyfit = function(counts,
                  k_list,
                  lr = 0.005,
+                 optim_gamma = 0.1,
                  n_steps = 2000,
                  stage = "",
                  py = NULL,
@@ -23,9 +24,10 @@ pyfit = function(counts,
                  # initializ_pars_fit = TRUE,
                  regul_denovo = TRUE,
                  regul_fixed = TRUE,
-                 verbose = FALSE,
-                 save_all_fits = FALSE,
-                 do_initial_fit = FALSE) {
+                 # verbose = FALSE,
+                 save_all_fits = FALSE
+                 # do_initial_fit = FALSE
+                 ) {
 
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
 
@@ -40,7 +42,7 @@ pyfit = function(counts,
 
   if (!is.null(clusters)) clusters = as.integer(clusters)
 
-  obj = py$fit(x = counts, k_list = k_list, lr = lr, n_steps = n_steps,
+  obj = py$fit(x = counts, k_list = k_list, lr = lr, optim_gamma = optim_gamma, n_steps = n_steps,
                cluster = clusters, beta_fixed = input_catalogue,
                hyperparameters = hyperparameters, nonparametric=nonparametric,
                dirichlet_prior = dirichlet_prior, enforce_sparsity = enforce_sparsity,
@@ -48,10 +50,11 @@ pyfit = function(counts,
                reg_weight = reg_weight, regul_compare = regul_compare,
                regul_denovo = regul_denovo, regul_fixed = regul_fixed,
                stage = stage, seed = seed_list, compile_model = compile,
-               CUDA = CUDA, verbose = verbose,
+               CUDA = CUDA,
+               # verbose = verbose,
                # initializ_pars_fit = initializ_pars_fit, save_runs_seed = save_runs_seed,
                # initializ_seed = initializ_seed,
-               save_all_fits = save_all_fits, do_initial_fit = do_initial_fit)
+               save_all_fits = save_all_fits) # do_initial_fit = do_initial_fit
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
 
@@ -87,11 +90,11 @@ get_list_from_py = function(py_obj, counts, input_catalogue, lr, n_steps, save_s
   x$lr = lr
   x$steps = n_steps
 
-  x$exposure = py_obj$alpha
-  x$denovo_signatures = py_obj$beta_denovo
-  x$eps_var = py_obj$eps_sigma
-  x$pi = py_obj$pi
-  x$post_probs = py_obj$post_probs
+  x$exposure = py_obj$params$alpha
+  x$denovo_signatures = py_obj$params$beta_d
+  x$eps_var = py_obj$params$lambda_epsilon
+  x$pi = py_obj$params$pi
+  x$post_probs = py_obj$params$post_probs
   x$groups = py_obj$groups
 
   x$params = py_obj$params

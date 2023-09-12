@@ -94,27 +94,38 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
   }
 
 
-  p = b %>%
-    ggplot(aes(x=factor(sample), y=alpha, fill=factor(Signature, levels=sigs_levels))) +
+  p = plot_exposures_aux(expos=b, cls=cls, titlee=titlee, sigs_level=sigs_levels,
+                         sample_name=sample_name, flip_coor=flip_coord)
+
+  return(p)
+}
+
+
+plot_exposures_aux = function(expos, cls=NULL, titlee="", sigs_levels=NULL,
+                              sample_name=FALSE, flip_coord=FALSE) {
+
+  p = expos %>%
+    ggplot(aes(x=factor(sample), y=alpha, fill=Signature)) +
     geom_bar(stat="identity", position="stack") +
-    ggplot2::scale_fill_manual(values=cls) +
-    ggplot2::scale_color_manual(values=cls) +
     labs(title=titlee) +
     theme_bw() + theme(axis.text.x=element_text(angle=90)) +
     guides(fill=guide_legend(title="Signatures")) + ylab("") + xlab("")
 
-  if (add_centroid)
-    p = p + geom_hline(aes(yintercept=alpha_centr, color=factor(Signature, levels=sigs_levels)),
+  if (!is.null(cls))
+    p = p + ggplot2::scale_fill_manual(values=cls) + ggplot2::scale_color_manual(values=cls)
+
+  if ("alpha_centr" %in% colnames(expos))
+    p = p + geom_hline(aes(yintercept=alpha_centr, color=Signature),
                        linetype="dashed") + guides(color="none")
 
   if (!sample_name)
-    p = p + theme(axis.ticks.x = element_blank(), axis.text.x = element_blank()) + labs(x = "")
+    p = p + theme(axis.ticks.x=element_blank(), axis.text.x=element_blank()) + labs(x="")
 
   if (flip_coord)
     p = p + coord_flip()
 
-  if (have_groups(x))
-    p = p + facet_grid(~groups, scales="free_x", space="free_x")
+  if ("groups" %in% colnames(expos))
+    p = p + facet_grid(~ groups, scales="free_x", space="free_x")
 
   return(p)
 }
