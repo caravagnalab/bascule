@@ -69,7 +69,7 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
 
     } else if (centroids) {
       a_pr = get_centroids(x, normalize=T)
-      a_pr$groups = "Exposure priors"
+      a_pr$groups = "Centroids"
       b = a_pr %>% as.data.frame() %>% tibble::rownames_to_column(var="sample")
       sample_levels = rownames(a_pr)
       sample_name = T

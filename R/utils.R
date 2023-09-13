@@ -157,15 +157,10 @@ get_train_params = function(obj) {
   if (!obj$store_parameters)
     return(NULL)
   train_params = obj$train_params
-  samples_names = obj$alpha %>% rownames()
+  samples_names = obj$params[["alpha"]] %>% rownames()
   bfixed_names = obj$beta_fixed %>% rownames()
-  bdenovo_names = obj$beta_denovo %>% rownames()
-  contexts = obj$beta_denovo %>% colnames()
-
-  alpha_all = data.frame() %>% dplyr::mutate(sample_id=as.character(NA), signature=as.character(NA),
-                                             iteration=as.integer(NA), alpha=as.numeric(NA))
-  beta_d = data.frame() %>% dplyr::mutate(signature=as.character(NA), context=as.character(NA),
-                                          iteration=as.integer(NA), beta=as.numeric(NA))
+  bdenovo_names = obj$params[["beta_d"]] %>% rownames()
+  contexts = obj$params[["beta_d"]] %>% colnames()
 
   params = data.frame()
 
