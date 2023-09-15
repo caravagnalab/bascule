@@ -92,27 +92,34 @@ merge_clusters = function(x.fit, cutoff=0.8) {
 
 
 recompute_assignments = function(x.fit) {
+  cli::cli_warn("The function `recompute_assignmets` contains undetected bugs.\nThe original object will be returned.")
+  return(x.fit)
+
   grps = get_groups(x.fit)
   centroids = get_centroids(x.fit, normalize=TRUE)[as.character(unique(grps)),]
-  # pi = get_mixture_weights(x.fit)[as.character(unique(grps))]
-  pi = table(get_groups(x.fit)) / x.fit$n_samples
+  pi = get_mixture_weights(x.fit)[as.character(unique(grps))]
+  # pi = table(get_groups(x.fit)) / x.fit$n_samples
 
   counts = get_data(x.fit, reconstructed=FALSE)
   n_muts = rowSums(counts)
   beta = get_signatures(x.fit)[colnames(centroids), ]
   alpha = get_exposure(x.fit)
 
+  rate = as.matrix(diag(n_muts) %*% as.matrix(alpha)) %*% as.matrix(beta)
+  lprob_pois = rowSums(dpois(x=as.matrix(counts), lambda=rate, log=TRUE))
+
   z = c(); ll_k = data.frame() # K x N
 
   for (k in unique(grps)) {
     alpha_k = centroids[as.character(k),][rep(1, times=x.fit$n_samples),]
     rownames(alpha_k) = names(n_muts)
-    rate = as.matrix(alpha_k * n_muts) %*% as.matrix(beta)
+
+    lprob_alpha = log(gtools::ddirichlet(x=alpha, alpha=as.numeric(centroids[as.character(k),])))
 
     ll_k = ll_k %>% dplyr::bind_rows(
-      log(pi[as.character(k)]) +
-        rowSums(dpois(x=as.matrix(counts), lambda=rate, log=TRUE)) # + gtools::ddirichlet(x=alpha, alpha=as.numeric(centroids[as.character(k),]))
+      log(pi[as.character(k)]) + lprob_pois + lprob_alpha
     )
+
   }
   rownames(ll_k) = unique(grps)
 

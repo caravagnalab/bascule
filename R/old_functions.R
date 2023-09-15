@@ -1182,40 +1182,40 @@
 #
 #
 #
-# cosine.vector <- function(a, b, substitutions = NULL) {
-#
-#   if (is.matrix(a) && nrow(a)>1) a = t(a)
-#   if (is.matrix(b) && nrow(b)>1) b = t(b)
-#
-#   if (is.null(substitutions)) {
-#     if (!identical(colnames(a), colnames(b))) {
-#       a = a[names(b)]
-#     }
-#
-#     numerator <- sum(a * b)
-#     denominator <- sqrt(sum(a^2)) * sqrt(sum(b^2))
-#     return(numerator / denominator)
-#   }
-#
-#   cosine.tot = 0
-#   keep_subs = length(substitutions)
-#   for (ss in substitutions) {
-#     keep_cols.tmp = grep(ss, colnames(b), value = T)
-#
-#     if (all(c(a[,keep_cols.tmp], b[,keep_cols.tmp])==0)) {
-#       keep_subs = keep_subs - 1
-#       next
-#     }
-#
-#     num.tmp = sum(a[,keep_cols.tmp] * b[,keep_cols.tmp])
-#     denomin.tmp = sqrt(sum(a[,keep_cols.tmp]^2)) * sqrt(sum(b[,keep_cols.tmp]^2))
-#
-#     if (num.tmp != 0 && denomin.tmp != 0)
-#       cosine.tot = cosine.tot + (num.tmp / denomin.tmp)
-#   }
-#
-#   return(cosine.tot / keep_subs)
-# }
+cosine.vector <- function(a, b, substitutions = NULL) {
+
+  if (is.matrix(a) && nrow(a)>1) a = t(a)
+  if (is.matrix(b) && nrow(b)>1) b = t(b)
+
+  if (is.null(substitutions)) {
+    if (!identical(colnames(a), colnames(b))) {
+      a = a[names(b)]
+    }
+
+    numerator <- sum(a * b)
+    denominator <- sqrt(sum(a^2)) * sqrt(sum(b^2))
+    return(numerator / denominator)
+  }
+
+  cosine.tot = 0
+  keep_subs = length(substitutions)
+  for (ss in substitutions) {
+    keep_cols.tmp = grep(ss, colnames(b), value = T)
+
+    if (all(c(a[,keep_cols.tmp], b[,keep_cols.tmp])==0)) {
+      keep_subs = keep_subs - 1
+      next
+    }
+
+    num.tmp = sum(a[,keep_cols.tmp] * b[,keep_cols.tmp])
+    denomin.tmp = sqrt(sum(a[,keep_cols.tmp]^2)) * sqrt(sum(b[,keep_cols.tmp]^2))
+
+    if (num.tmp != 0 && denomin.tmp != 0)
+      cosine.tot = cosine.tot + (num.tmp / denomin.tmp)
+  }
+
+  return(cosine.tot / keep_subs)
+}
 #
 #
 #
