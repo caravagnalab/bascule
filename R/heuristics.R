@@ -14,6 +14,8 @@ filter_exposures = function(x, min_expos=0.1) {
 
 
 fix_assignments = function(x.fit, cutoff=0.8, max_iters=20, merge_groups=FALSE) {
+  cli::cli_warn("The function `fix_assignments` contains undetected bugs. The original object will be returned.")
+  return(x.fit)
   if (!have_groups(x.fit)) return(x.fit)
 
   init_fit = x.fit
@@ -92,7 +94,7 @@ merge_clusters = function(x.fit, cutoff=0.8) {
 
 
 recompute_assignments = function(x.fit) {
-  cli::cli_warn("The function `recompute_assignmets` contains undetected bugs.\nThe original object will be returned.")
+  cli::cli_warn("The function `recompute_assignments` contains undetected bugs.\nThe original object will be returned.")
   return(x.fit)
 
   grps = get_groups(x.fit)
@@ -101,26 +103,30 @@ recompute_assignments = function(x.fit) {
   # pi = table(get_groups(x.fit)) / x.fit$n_samples
 
   counts = get_data(x.fit, reconstructed=FALSE)
-  n_muts = rowSums(counts)
-  beta = get_signatures(x.fit)[colnames(centroids), ]
+  # n_muts = rowSums(counts)
+  # beta = get_signatures(x.fit)[colnames(centroids), ]
   alpha = get_exposure(x.fit)
 
-  rate = as.matrix(diag(n_muts) %*% as.matrix(alpha)) %*% as.matrix(beta)
-  lprob_pois = rowSums(dpois(x=as.matrix(counts), lambda=rate, log=TRUE))
+  # rate = as.matrix(diag(n_muts) %*% as.matrix(alpha)) %*% as.matrix(beta)
+  # lprob_pois = rowSums(dpois(x=as.matrix(counts), lambda=rate, log=TRUE))
 
   z = c(); ll_k = data.frame() # K x N
 
   for (k in unique(grps)) {
-    alpha_k = centroids[as.character(k),][rep(1, times=x.fit$n_samples),]
-    rownames(alpha_k) = names(n_muts)
+    alpha_k = centroids[as.character(k),]# [rep(1, times=x.fit$n_samples),]
+    # rownames(alpha_k) = names(n_muts)
 
     lprob_alpha = log(gtools::ddirichlet(x=alpha, alpha=as.numeric(centroids[as.character(k),])))
+    names(lprob_alpha) = rownames(alpha)
+
+    # lprob = data.frame(log(pi[as.character(k)]) + lprob_alpha) # + lprob_pois
+    # colnames(lprob) = as.character(k)
 
     ll_k = ll_k %>% dplyr::bind_rows(
-      log(pi[as.character(k)]) + lprob_pois + lprob_alpha
+      as.data.frame(t(data.frame(log(pi[as.character(k)]) + lprob_alpha)))
     )
-
   }
+
   rownames(ll_k) = unique(grps)
 
   probs = logsumexp(ll_k) %>%

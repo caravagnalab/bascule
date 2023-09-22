@@ -139,12 +139,14 @@ plot_sigs_prevalence = function(x) {
 
 
 
-plot_exposures_real = function(x, groups_true, cls=NULL, sort_by=NULL) {
+plot_exposures_real = function(x, groups_true, sampleIDs=NULL, cls=NULL, sort_by=NULL) {
   if (is.null(cls)) cls = get_color_palette(x)
+  if (is.null(sampleIDs)) sampleIDs = rownames(get_exposure(x))
 
   p = get_exposure(x, long=F, add_groups=T) %>%
     dplyr::mutate(groups_true=groups_true) %>%
     tibble::rownames_to_column(var="sample") %>%
+    dplyr::filter(sample %in% sampleIDs) %>%
     reshape2::melt(id=c("sample","groups","groups_true"),
                    variable.name="Signature", value.name="alpha") %>%
     plot_exposures_aux(facet=FALSE, cls=cls, sort_by=sort_by)
