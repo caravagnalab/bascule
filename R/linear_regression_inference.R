@@ -74,6 +74,7 @@ fit = function(x,
                cohort="MyCohort") {
 
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
+  call_info = match.call()
 
   if (!is.null(reference_catalogue)) {
     x_ref = pyfit(
@@ -159,6 +160,7 @@ fit = function(x,
   merged = x_dn
   merged$time = TIME
   merged$k_list = k
+  merged$call = call_info
 
   return(merged)
 }

@@ -104,6 +104,7 @@ get_list_from_py = function(py_obj, counts, input_catalogue, lr, n_steps, save_s
   x$losses = py_obj$losses
   x$gradient_norms = py_obj$gradient_norms
   x$train_params = get_train_params(py_obj)
+  x$hyperparameters = py_obj$hyperparameters
   try(expr = { x$seed = py_obj$seed })
 
   if (!save_stats) return(x)
@@ -114,6 +115,9 @@ get_list_from_py = function(py_obj, counts, input_catalogue, lr, n_steps, save_s
 
   if ("scores_K" %in% names(py_obj))
     x$runs_K = get_scores_from_py(py_obj$scores_K)
+
+  if ("scores_CL" %in% names(py_obj))
+    x$runs_CL = get_scores_from_py(py_obj$scores_CL) %>% dplyr::rename(G=K)
 
   if ("all_fits" %in% names(py_obj)) {
     if (length(py_obj$all_fits) > 0) x$all_fits = NULL
@@ -137,13 +141,17 @@ get_fits_from_py = function(fits, counts, beta_fixed, lr, n_steps)
 get_scores_from_py = function(scores) {
   if (is.null(scores)) return(NULL)
 
-  return(
-    replace_null(scores) %>%
-      as.data.frame() %>%
-      reshape2::melt(value.name="score") %>%
-      tidyr::separate("variable", into=c("K", "groups", "seed", "score_id"), sep="[.]") %>%
-      tibble::as_tibble()
-  )
+  print(scores)
+  print(replace_null(scores))
+
+  res = replace_null(scores) %>%
+  # res = purrr::discard(scores, is.null) %>%
+    as.data.frame() %>%
+    reshape2::melt(value.name="score") %>%
+    tidyr::separate("variable", into=c("K", "seed", "score_id"), sep="[.]") %>%
+    tibble::as_tibble()
+
+  return(res)
 }
 
 
