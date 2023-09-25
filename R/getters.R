@@ -1,4 +1,3 @@
-
 #' get exposure matrix
 #'
 #' @param x basilica object
@@ -137,6 +136,7 @@ get_signatures = function(x,  long = FALSE) {
 
   return(sigs)
 }
+
 
 get_reference_signatures = function(x, long = FALSE) {
   stopifnot(inherits(x, "basilica_obj"))
@@ -302,7 +302,7 @@ get_fit_by_id = function(x, idd) {
 
 get_groups = function(x) {
   if (have_groups(x)) return(x$groups)
-  return(NULL)
+  return(rep(0, time=x$n_samples))
 }
 
 
@@ -327,4 +327,43 @@ get_mixture_weights = function(x) {
   return(x$fit$params$pi %>% setNames(cl_names))
 }
 
+
+COSMIC_color_palette = function(catalogue=COSMIC_filt, seed=14) {
+  N = nrow(catalogue)
+  set.seed(seed)
+  colss = Polychrome::createPalette(N, c("#856de3","#9e461c"), target="normal", range=c(15,80), M=1000)[1:N]
+  names(colss) = rownames(catalogue)
+  return(colss)
+}
+
+
+get_contexts = function(x) {
+  tryCatch(expr = {
+    context_names = x %>% get_signatures(long=T) %>% dplyr::select(Feature) %>% unique()
+  }, error = function(e)
+    context_names = data.frame(Feature = x$denovo_signatures %>% colnames()) )
+
+  return(context_names %>%
+           dplyr::mutate(Feature=gsub(pattern = '\\[', replacement = '_', x=Feature)) %>%
+           dplyr::mutate(Feature=gsub(pattern = '\\]', replacement = '_', x=Feature)) %>%
+           tidyr::separate(Feature, into=c("left","subs","right"), sep="_"))
+}
+
+
+get_obj_initial_params = function(x) {
+  params = x$fit$init_params
+  # x$fit$exposure = x$fit$params$alpha = params$alpha / rowSums(params$alpha)
+  x$fit$groups = x$groups = params$init_clusters
+  x$fit$pi = x$fit$params$pi = params$pi_param
+
+  x$fit$params$alpha_prior = params$alpha_prior_param
+
+  return(x)
+}
+
+
+get_adjusted_fit_lc = function(x) {
+  if ("lc_check" %in% names(x)) return(x$lc_check)
+  return(x)
+}
 

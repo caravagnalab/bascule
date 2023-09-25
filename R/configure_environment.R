@@ -8,6 +8,8 @@
 #' @param env_name name of the \code{conda} environment to use, if available.
 #'
 #' @importFrom reticulate import conda_create conda_install install_miniconda miniconda_path conda_binary
+#' @importFrom magrittr "%>%"
+#'
 #' @export configure_environment
 
 configure_environment = function(envname="basilica-env") {
@@ -43,7 +45,6 @@ check_conda = function(use_default=F) {
   }
 
 }
-
 
 
 check_conda_env = function(envname="basilica-env", use_default=F) {
@@ -96,6 +97,13 @@ check_python_deps = function(envname="basilica-env", pip=FALSE) {
 
 plot_catalogue = function(catalogue) {
   catalogue %>%
-    tibble::rownames_to_column() %>% reshape2::melt() %>% dplyr::mutate(variable=stringr::str_replace_all(variable, "\\[|\\]", "_")) %>% tidyr::separate(variable, into=c("left","subs","right"), sep="_") %>% dplyr::mutate(context=paste0(left,"_",right), left=NULL, right=NULL) %>% ggplot() + geom_bar(aes(x=context, y=value, fill=rowname), stat="identity") + facet_grid(rowname~subs)
+    tibble::rownames_to_column() %>%
+    reshape2::melt() %>%
+    dplyr::mutate(variable=stringr::str_replace_all(variable, "\\[|\\]", "_")) %>%
+    tidyr::separate(variable, into=c("left","subs","right"), sep="_") %>%
+    dplyr::mutate(context=paste0(left,"_",right), left=NULL, right=NULL) %>%
+    ggplot() +
+    geom_bar(aes(x=context, y=value, fill=rowname), stat="identity") +
+    facet_grid(rowname~subs)
 }
 

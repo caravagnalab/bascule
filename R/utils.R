@@ -1,12 +1,14 @@
 pyfit = function(counts,
                  k_list,
-                 lr = 0.05,
-                 n_steps = 500,
+                 lr = 0.005,
+                 optim_gamma = 0.1,
+                 n_steps = 2000,
                  stage = "",
                  py = NULL,
-                 groups = NULL,
+                 # groups = NULL,
                  clusters = NULL,
                  nonparametric = FALSE,
+                 dirichlet_prior = TRUE,
                  input_catalogue = NULL,
                  hyperparameters = NULL,
                  CUDA = FALSE,
@@ -16,17 +18,16 @@ pyfit = function(counts,
                  regularizer = "cosine",
                  regul_compare = NULL,
                  reg_weight = 1,
-                 reg_bic = FALSE,
                  seed_list = c(10),
-                 initializ_seed = TRUE,
-                 save_runs_seed = FALSE,
-                 initializ_pars_fit = FALSE,
-                 new_hier = FALSE,
+                 # initializ_seed = FALSE,
+                 # save_runs_seed = TRUE,
+                 # initializ_pars_fit = TRUE,
                  regul_denovo = TRUE,
                  regul_fixed = TRUE,
-                 verbose = FALSE,
-                 save_all_fits = FALSE,
-                 do_initial_fit = FALSE) {
+                 # verbose = FALSE,
+                 save_all_fits = FALSE
+                 # do_initial_fit = FALSE
+                 ) {
 
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
 
@@ -41,17 +42,19 @@ pyfit = function(counts,
 
   if (!is.null(clusters)) clusters = as.integer(clusters)
 
-  obj = py$fit(x = counts, k_list = k_list, lr = lr, n_steps = n_steps,
-               groups = groups, cluster = clusters, beta_fixed = input_catalogue,
-               hyperparameters = hyperparameters, CUDA = CUDA, nonparametric=nonparametric,
-               compile_model = compile, enforce_sparsity = enforce_sparsity,
+  obj = py$fit(x = counts, k_list = k_list, lr = lr, optim_gamma = optim_gamma, n_steps = n_steps,
+               cluster = clusters, beta_fixed = input_catalogue,
+               hyperparameters = hyperparameters, nonparametric=nonparametric,
+               dirichlet_prior = dirichlet_prior, enforce_sparsity = enforce_sparsity,
                store_parameters = store_parameters, regularizer = regularizer,
-               reg_weight = reg_weight, reg_bic = reg_bic, stage = stage,
-               regul_compare = regul_compare, verbose = verbose,
-               seed = seed_list, initializ_pars_fit = initializ_pars_fit,
-               save_runs_seed = save_runs_seed, initializ_seed = initializ_seed,
-               new_hier = new_hier, regul_denovo = regul_denovo, save_all_fits=save_all_fits,
-               do_initial_fit = do_initial_fit, regul_fixed = regul_fixed)
+               reg_weight = reg_weight, regul_compare = regul_compare,
+               regul_denovo = regul_denovo, regul_fixed = regul_fixed,
+               stage = stage, seed = seed_list, compile_model = compile,
+               CUDA = CUDA,
+               # verbose = verbose,
+               # initializ_pars_fit = initializ_pars_fit, save_runs_seed = save_runs_seed,
+               # initializ_seed = initializ_seed,
+               save_all_fits = save_all_fits) # do_initial_fit = do_initial_fit
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
 
@@ -67,7 +70,7 @@ pyfit = function(counts,
   data = get_list_from_py(bestRun, counts, input_catalogue, lr, n_steps)
   data$runs_seed = lapply(data$runs_seed, function(i) {
     i[["runs_scores"]] = i[["runs_seed"]] = NULL
-    i$convert_to_dataframe(counts, bestRun$beta_fixed)
+    i$convert_to_dataframe(counts)
     get_list_from_py(i, counts, input_catalogue, lr, n_steps)
   })
 
@@ -87,11 +90,11 @@ get_list_from_py = function(py_obj, counts, input_catalogue, lr, n_steps, save_s
   x$lr = lr
   x$steps = n_steps
 
-  x$exposure = py_obj$alpha
-  x$denovo_signatures = py_obj$beta_denovo
-  x$eps_var = py_obj$eps_sigma
-  x$pi = py_obj$pi
-  x$post_probs = py_obj$post_probs
+  x$exposure = py_obj$params$alpha
+  x$denovo_signatures = py_obj$params$beta_d
+  x$eps_var = py_obj$params$lambda_epsilon
+  x$pi = py_obj$params$pi
+  x$post_probs = py_obj$params$post_probs
   x$groups = py_obj$groups
 
   x$params = py_obj$params
@@ -124,7 +127,7 @@ get_list_from_py = function(py_obj, counts, input_catalogue, lr, n_steps, save_s
 get_fits_from_py = function(fits, counts, beta_fixed, lr, n_steps)
   return(
     lapply(names(fits), function(i) {
-      fits[[i]]$convert_to_dataframe(counts, beta_fixed)
+      fits[[i]]$convert_to_dataframe(counts)
         get_list_from_py(fits[[i]], counts, beta_fixed, lr, n_steps, save_stats=F)
     }) %>%
       setNames(names(fits))
@@ -144,9 +147,9 @@ get_scores_from_py = function(scores) {
 }
 
 
-replace_null = function(i){
-  i = purrr::map(i, ~ replace(.x, is.null(.x), NA))
-  purrr::map(i, ~ if(is.list(.x)) replace_null(.x) else .x)
+replace_null = function(i) {
+  j = purrr::map(i, ~ replace(.x, is.null(.x), NA))
+  purrr::map(j, ~ (if(is.list(.x)) replace_null(.x) else .x))
 }
 
 
@@ -154,438 +157,74 @@ get_train_params = function(obj) {
   if (!obj$store_parameters)
     return(NULL)
   train_params = obj$train_params
-  samples_names = obj$alpha %>% rownames()
+  samples_names = obj$params[["alpha"]] %>% rownames()
   bfixed_names = obj$beta_fixed %>% rownames()
-  bdenovo_names = obj$beta_denovo %>% rownames()
-  contexts = obj$beta_denovo %>% colnames()
+  bdenovo_names = obj$params[["beta_d"]] %>% rownames()
+  contexts = obj$params[["beta_d"]] %>% colnames()
 
-  alpha_all = data.frame() %>% dplyr::mutate(sample_id=as.character(NA), signature=as.character(NA),
-                                             iteration=as.integer(NA), alpha=as.numeric(NA))
-  beta_d = data.frame() %>% dplyr::mutate(signature=as.character(NA), context=as.character(NA),
-                                          iteration=as.integer(NA), beta=as.numeric(NA))
+  params = data.frame()
 
   for (i in 1:length(train_params)) {
-    tmp_a = train_params[[i]][["alpha"]]$numpy() %>% as.data.frame()
-    rownames(tmp_a) = samples_names
-    colnames(tmp_a) = c(bfixed_names, bdenovo_names)
+    expos = train_params[[i]][["alpha"]] %>% as.data.frame()
+    rownames(expos) = samples_names
+    colnames(expos) = c(bfixed_names, bdenovo_names)
 
-    tmp_a = tmp_a %>% tibble::rownames_to_column(var="sample_id") %>%
-      reshape2::melt(id="sample_id",variable.name="signature",value.name="alpha") %>%
-      dplyr::mutate(iteration=i)
+    if ("alpha_prior" %in% names(train_params[[i]])) {
+      centroids = train_params[[i]][["alpha_prior"]] %>% as.data.frame()
+      rownames(centroids) = (1:nrow(centroids)) -1
+      colnames(centroids) = c(bfixed_names, bdenovo_names)
+      centroids = centroids %>% tibble::rownames_to_column(var="rowname") %>%
+        reshape2::melt(id="rowname",variable.name="columnname",value.name="value") %>%
+        dplyr::mutate(iteration=i, paramname="centroid")
+    } else { centroids = data.frame() }
 
-    alpha_all = alpha_all %>% dplyr::add_row(tmp_a)
+    if ("pi" %in% names(train_params[[i]])) {
+      pi = train_params[[i]][["pi"]] %>% as.numeric() %>% setNames((sort(unique(centroids$rowname))))
+      pi = data.frame("rowname"=names(pi),"value"=pi,"iteration"=i,"paramname"="pi")
+    } else { pi = data.frame() }
 
-    tmp_b = train_params[[i]][["beta_d"]]$numpy() %>% as.data.frame()
-    rownames(tmp_b) = bdenovo_names
-    colnames(tmp_b) = contexts
+    sigs = train_params[[i]][["beta_d"]] %>% as.data.frame()
+    rownames(sigs) = bdenovo_names
+    colnames(sigs) = contexts
 
-    tmp_b = tmp_b %>% tibble::rownames_to_column(var="signature") %>%
-      reshape2::melt(id="signature",variable.name="context",value.name="beta") %>%
-      dplyr::mutate(iteration=i)
+    params = params %>% dplyr::bind_rows(
+      expos %>% tibble::rownames_to_column(var="rowname") %>%
+        reshape2::melt(id="rowname",variable.name="columnname",value.name="value") %>%
+        dplyr::mutate(iteration=i, paramname="alpha")
+    ) %>% dplyr::bind_rows(
+      sigs %>% tibble::rownames_to_column(var="rowname") %>%
+        reshape2::melt(id="rowname",variable.name="columnname",value.name="value") %>%
+        dplyr::mutate(iteration=i, paramname="beta_d")
+    ) %>% dplyr::bind_rows(centroids) %>%
+      dplyr::bind_rows(pi)
 
-    beta_d = beta_d %>% dplyr::add_row(tmp_b)
+    # alpha_all = alpha_all %>% dplyr::add_row(tmp_a)
+    # beta_d = beta_d %>% dplyr::add_row(tmp_b)
   }
 
-  return(tibble::tibble(alpha=list(alpha_all), beta_d=list(beta_d)))
+  return(params)
+
+  # return(tibble::tibble(alpha=list(alpha_all), beta_d=list(beta_d)))
 }
 
 
-filter.fixed = function(M,
-                         alpha,
-                         beta_fixed = NULL,
-                         phi = 0.05) {
-  if (!is.data.frame(M)) {
-    warning("invalid count matrix (M) !")
-  }
-  if (!is.data.frame(alpha)) {
-    warning("invalid exposure matrix (alpha) !")
-  }
-  if (!is.numeric(phi)) {
-    warning("invalid parameter phi !")
-  }
-
-  if (is.null(beta_fixed)) {
-    remained_fixed = NULL
-    dropped_fixed = NULL
-  } else if (is.data.frame(beta_fixed)) {
-    theta = matrix(rowSums(M), nrow = 1)
-    alpha0 = theta %*% as.matrix(alpha)
-    contribution = colSums(alpha0) / sum(alpha0)
-
-    atb = alpha0 %>%
-      as_tibble() %>%
-      reshape2::melt(id = NULL) %>%
-      dplyr::rename(Signature = variable, TMB = value)
-
-    ctb = contribution %>%
-      as.list() %>%
-      as_tibble %>%
-      reshape2::melt(id = NULL) %>%
-      dplyr::rename(Signature = variable, proportion = value)
-
-    predicate_collapsed = dplyr::full_join(atb, ctb, by = 'Signature') %>%
-      dplyr::arrange(dplyr::desc(proportion)) %>%
-      mutate(Signature = ifelse(proportion < phi, crayon::red(Signature), Signature))
-
-    predicate_collapsed$TMB = paste0("TMB = ",
-                                     predicate_collapsed$TMB %>% round(0))
-
-    predicate_collapsed$proportion = paste0("\u03c0 = ",
-                                            predicate_collapsed$proportion %>% round(3))
-
-    predicate_collapsed$Signature = sprintf("%20s", predicate_collapsed$Signature)
-    predicate_collapsed$TMB = sprintf("%20s", predicate_collapsed$TMB)
-    predicate_collapsed$proportion = sprintf("%20s", predicate_collapsed$proportion)
-
-    predicate_collapsed = apply(predicate_collapsed, 1, function(x)
-      paste(x, collapse = ' '))
-
-    cli::boxx(
-      predicate_collapsed,
-      header = "TMB filter",
-      float = 'center',
-      footer = paste0("\u03c0 > ", phi)
-    ) %>% cat()
-    cat('\n')
-
-    dropped = which(contribution < phi)
-
-    if (sum(dropped) == 0) {
-      remained_fixed = beta_fixed
-      dropped_fixed = NULL
-    } else {
-      remained_fixed = beta_fixed[-c(dropped),]
-      if (nrow(remained_fixed) == 0) {
-        remained_fixed = NULL
-      }
-
-      if (any(dropped > nrow(beta_fixed))) {
-        cli::boxx("AZAD this is a bug") %>% cat()
-        dropped = dropped[dropped < nrow(beta_fixed)]
-      }
-
-      dropped_fixed = beta_fixed[c(dropped),]
-    }
-  } else {
-    warning("invalid fixed signatures (beta_fixed) !")
-  }
-  return(list(remained_fixed = remained_fixed, dropped_fixed = dropped_fixed))
-}
-
-
-# Checks if a signature has at least one patient where it's exposure exceeds phi
-filter.fixed_minfreq = function(alpha, beta_fixed, phi = 0.15)
-{
-  if (is.null(beta_fixed))
-    return(list(remained_fixed = NULL, dropped_fixed = NULL))
-
-  if (!is.null(alpha)) {
-    alpha_cat = alpha[, rownames(beta_fixed)]
-    predicate = apply(alpha_cat, 2, function(x)
-      sum(x > phi))
-
-    stays = colnames(alpha_cat)[predicate > 0]
-    goes = colnames(alpha_cat)[predicate == 0]
-
-    if (length(stays) == 0)
-      remained_fixed = NULL
-    else
-      remained_fixed = beta_fixed[stays,]
-
-    if (length(goes) == 0)
-      dropped_fixed = NULL
-    else
-      dropped_fixed = beta_fixed[goes,]
-
-    predicate_collapsed = predicate %>% as_tibble()
-    predicate_collapsed$Signature = names(predicate)
-
-    predicate_collapsed = predicate_collapsed %>%
-      group_by(value) %>%
-      mutate(Signature = paste(Signature, collapse = ', ')) %>%
-      distinct() %>%
-      arrange(value) %>%
-      mutate(Signature = ifelse(value == 0, crayon::red(Signature), Signature))
-
-    predicate_collapsed = paste('n =',
-                                predicate_collapsed$value,
-                                '[',
-                                predicate_collapsed$Signature,
-                                ']')
-
-    cli::boxx(
-      predicate_collapsed,
-      header = "Frequency filter",
-      float = 'center',
-      footer = paste0("\u03C6 > ", phi, " in n samples")
-    )  %>% cat()
-
-    cat('\n')
-
-    return(list(remained_fixed = remained_fixed, dropped_fixed = dropped_fixed))
-  }
-}
-
-
-filter.fixed_nofilter = function(alpha, beta_fixed)
-{
-  if (is.null(beta_fixed))
-    return(list(remained_fixed = NULL, dropped_fixed = NULL))
-
-  if (!is.null(beta_fixed))
-    return(list(remained_fixed = beta_fixed, dropped_fixed = NULL))
-
-  if (!is.null(alpha))
-    return(list(remained_fixed = beta_fixed[colnames(alpha)[colnames(alpha) %in% rownames(beta_fixed)],],dropped_fixed = NULL))
-
-}
-
-
-#' @import dplyr
-filter.denovo = function(reference_catalogue,
-                         beta_fixed,
-                         beta_denovo = NULL,
-                         black_list = NULL,
-                         delta = 0.9) {
-    if (!is.data.frame(reference_catalogue)) {
-      warning("Invalid reference catalogue!")
-    }
-    if (!is.numeric(delta)) {
-      warning("Invalid delta argument!")
-    }
-
-    if (is.data.frame(beta_fixed)) {
-      reference = dplyr::setdiff(reference_catalogue, beta_fixed)
-    } else if (is.null(beta_fixed)) {
-      reference = reference_catalogue
-    } else {
-      warning('invalid fixed signatures (beta_fixed) !')
-    }
-
-    if (is.null(beta_denovo)) {
-      return(list(new_fixed = NULL, reduced_denovo = NULL))
-    } else if (is.data.frame(beta_denovo)) {
-      match_list = c()
-      cos_matrix = cosine.matrix(beta_denovo, reference)
-      while (TRUE) {
-        max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
-        if (cos_matrix[max] < delta) {
-          break
-        }
-        row_index = as.numeric(max)[1]
-        col_index = as.numeric(max)[2]
-        match_list[length(match_list) + 1] =
-          colnames(cos_matrix[col_index])
-
-        if (dim(cos_matrix)[1] == 1 | dim(cos_matrix)[2] == 1) {
-          cos_matrix = cos_matrix[-c(row_index),-c(col_index)]
-          break
-        } else {
-          cos_matrix = cos_matrix[-c(row_index),-c(col_index)]
-        }
-      }
-    } else {
-      warning("Invalid beta denovo!")
-    }
-
-    match_list = setdiff(match_list, black_list)
-    if (length(match_list) == 0) {
-      #col_names = colnames(reference_catalogue)
-      #df = data.frame(matrix(nrow=0, ncol = length(col_names)))
-      #colnames(df) = col_names
-      return(list(new_fixed = NULL, reduced_denovo = beta_denovo))
-    } else {
-      if (is.null(dim(cos_matrix))) {
-        return(list(new_fixed = reference[match_list,], reduced_denovo = NULL))
-      } else {
-        reduced_denovo = beta_denovo[rownames(cos_matrix),]
-        return(list(new_fixed = reference[match_list,], reduced_denovo = reduced_denovo))
-      }
-    }
-  }
-
-
-adjust.denovo.fixed =
-  function(alpha,
-           fixed_signatures,
-           denovo_signatures,
-           limit = 0.9) {
-    if (is.null(fixed_signatures) | is.null(denovo_signatures)) {
-      return(list(exposure = alpha, denovo_signatures = denovo_signatures))
-    }
-
-    cos_matrix =
-      cosine.matrix(denovo_signatures, fixed_signatures)
-    while (TRUE) {
-      max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
-      if (cos_matrix[max] < limit) {
-        break
-      } else {
-        row_index = as.numeric(max)[1]
-        col_index = as.numeric(max)[2]
-        denovo_name = rownames(cos_matrix[col_index])[row_index]
-        fixed_name = colnames(cos_matrix[col_index])
-
-        # remove denovo signature
-        denovo_signatures =
-          denovo_signatures[!(rownames(denovo_signatures) %in% denovo_name),]
-
-        # adjust fixed signature exposure
-        alpha[fixed_name] =
-          alpha[, fixed_name] + alpha[, denovo_name]
-        # remove denovo signature exposure
-        alpha = alpha[,!names(alpha) %in% denovo_name]
-
-        if (dim(cos_matrix)[1] == 1 | dim(cos_matrix)[2] == 1) {
-          break
-        } else {
-          cos_matrix = cos_matrix[-c(row_index),-c(col_index)]
-        }
-      }
-    }
-    return(list(exposure = alpha, denovo_signatures = denovo_signatures))
-  }
-
-
-adjust.denovo.denovo =
-  function(alpha, denovo_signatures, limit = 0.9) {
-    if (is.null(denovo_signatures)) {
-      return(list(exposure = alpha, denovo_signatures = denovo_signatures))
-    } else if (nrow(denovo_signatures) == 1) {
-      return(list(exposure = alpha, denovo_signatures = denovo_signatures))
-    }
-    cos_matrix =
-      cosine.matrix(denovo_signatures, denovo_signatures)
-    for (i in 1:nrow(cos_matrix)) {
-      cos_matrix[i, i] = 0
-    }
-    while (TRUE) {
-      max = which(cos_matrix == max(cos_matrix), arr.ind = TRUE)
-      if (cos_matrix[max][1] < limit) {
-        break
-      } else {
-        row_index = as.numeric(max)[1]
-        col_index = as.numeric(max)[2]
-        denovo_one = rownames(cos_matrix[col_index])[row_index]
-        denovo_two = colnames(cos_matrix[col_index])
-
-        denovo_signatures[paste(denovo_one, denovo_two, sep = ''),] =
-          denovo_signatures[denovo_one,] + denovo_signatures[denovo_two,]
-
-        denovo_signatures =
-          denovo_signatures[!(rownames(denovo_signatures) %in% c(denovo_one, denovo_two)),]
-
-        # adjust signature in exposure
-        alpha[paste(denovo_one, denovo_two, sep = '')] =
-          alpha[, denovo_one] + alpha[, denovo_two]
-        # remove signature from exposure
-        alpha =
-          alpha[,!names(alpha) %in% c(denovo_one, denovo_two)]
-
-        if (dim(cos_matrix)[1] == 2 | dim(cos_matrix)[2] == 2) {
-          break
-        } else {
-          cos_matrix =
-            cos_matrix[-c(row_index, col_index),-c(col_index, row_index)]
-        }
-      }
-    }
-    return(list(exposure = alpha, denovo_signatures = denovo_signatures))
-  }
-
-
-# filter based on linear projection with constraints
-
-#' @import dplyr
-filter.denovo.QP =
-  function(reference,
-           # beta_fixed,
-           beta_denovo = NULL,
-           black_list = NULL,
-           delta = 0.9,
-           filt_pi = 0.05,
-           thr_exposure = 0.05,
-           exposures = NULL,
-           substitutions = NULL) {
-    ## if denovo = TRUE -> check also if the denovo have exposure > thr in same samples
-
-    if (!is.data.frame(reference)) warning("Invalid reference catalogue!")
-    if (!is.numeric(delta)) warning("Invalid delta argument!")
-
-    # (Reference - Beta Fixed)
-    # if (is.data.frame(beta_fixed)) {
-    #   reference = dplyr::setdiff(reference_catalogue, beta_fixed)
-    # } else if (is.null(beta_fixed)) {
-    #   reference = reference_catalogue
-    # } else {
-    #   warning('invalid fixed signatures (beta_fixed) !')
-    # }
-
-    if (nrow(reference)==0) return(list(new_fixed = NULL, reduced_denovo = beta_denovo))
-
-    # BETA DENOVO
-    if (is.null(beta_denovo)) return(list(new_fixed = NULL, reduced_denovo = NULL))
-
-    if (is.data.frame(beta_denovo)) {
-      if (is.null(exposures)) {
-        a = beta_denovo
-        b = reference
-      } else {
-        a = reference
-        b = beta_denovo
-      }
-      ### names of catalogue signatures to include + names de novo to remove
-      res_optimization =
-        solve.quadratic.optimization(a,
-                                     b,
-                                     delta = delta,
-                                     filt_pi = filt_pi,
-                                     thr_exposure = thr_exposure,
-                                     exposures = exposures,
-                                     substitutions = substitutions)
-      match_list = res_optimization$catalogue_to_include
-      } else warning("Invalid beta denovo!")
-
-    match_list = setdiff(match_list, black_list)
-    if (length(match_list) == 0) {
-      # col_names = colnames(reference_catalogue)
-      # df = data.frame(matrix(nrow=0, ncol = length(col_names)))
-      # colnames(df) = col_names
-      return(list(new_fixed = NULL, reduced_denovo = beta_denovo))
-    } else {
-      if (is.null(res_optimization$denovo_to_include)) {
-        return(list(new_fixed = reference[match_list,], reduced_denovo = NULL))
-      } else {
-        reduced_denovo = beta_denovo[res_optimization$denovo_to_include,]
-        return(list(new_fixed = reference[match_list,], reduced_denovo = reduced_denovo))
-      }
-    }
-  }
 
 
 
-solve.quadratic.optimization =
-  function(a,
-           b,
-           filt_pi = 0.05,
-           delta = 0.9,
-           exposures = NULL,
-           thr_exposure = 0.05,
-           substitutions = NULL) {
-    # a and b are data.frame
+solve.quadratic.optimization = function(a,
+                                        b,
+                                        filt_pi = 0.05,
+                                        delta = 0.9,
+                                        thr_exposure = 0.05,
+                                        exposures = NULL,
+                                        return_weights = FALSE) {
 
     df = data.frame(matrix(0, nrow(a), nrow(b)))
     rownames(df) = rownames(a)
     colnames(df) = rownames(b)
 
     cmp = nrow(a)
-    pb = progress::progress_bar$new(
-      format = paste0("  Quadratic programming solver (n = ", cmp, ") [:bar] :percent eta: :eta"),
-      total = cmp,
-      clear = FALSE,
-      width = 90)
-
-    b_m = as.matrix(b) %>% t
+    b_m = t(as.matrix(b))
     Rinv = solve(chol(t(b_m) %*% b_m))
 
     res = lapply(
@@ -598,44 +237,25 @@ solve.quadratic.optimization =
             Rinv = Rinv,
             filt_pi = filt_pi,
             delta = delta,
-            a_name = rownames(a)[i],
             exposures = exposures,
             thr_exposure = thr_exposure,
-            substitutions = substitutions)
-        pb$tick()
+            return_weights = return_weights)
         return(optim_res)
       }
-    )
+    ) %>% setNames(rownames(a))
 
-    catalogue_to_include =
-      lapply(res, function(x)
-        x[[1]]) %>% do.call(c, .) %>% unique()
-    denovo_to_include =
-      lapply(res, function(x)
-        x[[2]]) %>% do.call(c, .)
-
-    if (!is.null(exposures))
-      denovo_to_include = setdiff(rownames(b), denovo_to_include)
-
-    return(
-      list(
-        catalogue_to_include = catalogue_to_include,
-        denovo_to_include = denovo_to_include
-      )
-    )
+    return(res)
   }
 
 
-solve.quadratic.optimization.aux =
-  function(v,
-           Z,
-           Rinv,
-           a_name,
-           filt_pi = 0.05,
-           delta = 0.9,
-           exposures = NULL,
-           thr_exposure = 0.05,
-           substitutions = NULL) {
+solve.quadratic.optimization.aux = function(v,
+                                            Z,
+                                            Rinv,
+                                            filt_pi = 0.05,
+                                            delta = 0.9,
+                                            exposures = NULL,
+                                            thr_exposure = 0.05,
+                                            return_weights = FALSE) {
     d = v %*% Z
     b = c(1, rep(0, length(d)))
     C = cbind(rep(1, length(d)), diag(length(d)))
@@ -654,61 +274,35 @@ solve.quadratic.optimization.aux =
     vec1 = matrix(v)
     rownames(vec1) = rownames(reconstructed_vector)
 
-    cos_sim = cosine.vector(vec1, reconstructed_vector, substitutions = substitutions)
-
-    # return -> first element is catalogue to include
-    #           second element is denovo to include
+    cos_sim = lsa::cosine(as.numeric(v), as.numeric(reconstructed_vector)) %>%
+      as.numeric()
+    # cos_sim = cosine.vector(vec1, reconstructed_vector)
 
     if (is.null(exposures)) {
-      if (!is.na(cos_sim) && cos_sim > delta)
-        return(list(colnames(Z)[pis > 0], NULL))
-      else
-        return(list(NULL, a_name))
-    } else {
       if (!is.na(cos_sim) && cos_sim > delta) {
-        if (sum(pis>0) <= 1) return(list(NULL, colnames(Z)[pis > 0]))
+        if (return_weights) return(pis[pis > 0] %>% setNames(colnames(Z)[pis > 0]))
+        return(colnames(Z)[pis > 0])
+      }
 
-        keep.tmp = colnames(Z)[pis > 0]
-        exposures.tmp = exposures[,keep.tmp]
-        exposures.tmp$n_denovo = apply(exposures.tmp > thr_exposure, 1,
-                                       function(x) length(unique(x))==1)
-
-        print(a_name)
-        print(colnames(Z)[pis > 0])
-        print(sum(exposures.tmp$n_denovo))
-
-        if (sum(exposures.tmp$n_denovo) >= nrow(exposures)*0.9)
-          # return the reference that can be explained as a linear comb of denovo
-          return(list(a_name, colnames(Z)[pis > 0]))
-        else
-          return(list(NULL, NULL))
-        } else {
-          return(list(NULL, NULL))
-        }
     }
 
-
-    if (!is.na(cos_sim) && cos_sim > delta) {
-      if (!is.null(exposures) && sum(pis > 0)>1) {
-
-        print(a_name)
-
-        keep.tmp = colnames(Z)[pis > 0]
-        exposures.tmp = exposures[,keep.tmp]
-        exposures.tmp$n_denovo = apply(exposures.tmp > thr_exposure, 1, function(x) length(unique(x))==1)
-
-        ## if both either are present or not in the same patients (more than 90% of the times)
-        if (sum(exposures.tmp$n_denovo) >= nrow(exposures)*0.9)
-          return(list(colnames(Z)[pis>0],NULL))
-      } else if (!is.null(exposures))
-        return(list(NULL, NULL))
-
-      return(list(colnames(Z)[pis > 0], NULL))
-
-    } else {
-      if (!is.null(exposures)) return(list(NULL, NULL))
-      return(list(NULL, a_name))
-    }
+    # # exposure not null -> makes sense if we test more than one dn vs cosmic
+    # } else {
+    #   if (!is.na(cos_sim) && cos_sim > delta) {
+    #     # if none or one linear combination
+    #     if (sum(pis>0) <= 1) return(colnames(Z)[pis > 0])
+    #
+    #     keep.tmp = colnames(Z)[pis > 0]
+    #     exposures.tmp = exposures[, keep.tmp]
+    #     exposures.tmp$n_denovo = apply(exposures.tmp > thr_exposure, 1,
+    #                                    function(x) length(unique(x))==1)
+    #
+    #     if (sum(exposures.tmp$n_denovo) >= nrow(exposures)*0.9)
+    #       # return the reference that can be explained as a linear comb of denovo
+    #       return(colnames(Z)[pis > 0])
+    #   }
+    # }
+  return(NULL)
 }
 
 # Renormalize denovo
@@ -720,18 +314,35 @@ renormalize_denovo_thr = function(denovo, thr=0.02) {
 }
 
 
-filter.denovo.phi = function(exposures, phi, denovo) {
-  exposures.denovo = exposures[,denovo] %>% as.data.frame()
-  colnames(exposures.denovo) = denovo
-  sbs_low_exp = (exposures.denovo < phi) %>% colSums()
 
-  rmv = sbs_low_exp[sbs_low_exp > nrow(exposures.denovo)] %>% names()
-  if (length(rmv) == 0) return(exposures)
+# if by_context is TRUE, it computes the cosine similarity by substitution type
+cosine.matrix <- function(a, b, substitutions=NULL) {
+  # a and b are data.frame
 
-  return(
-    exposures %>% dplyr::select(-dplyr::all_of(rmv)) %>% renormalize_denovo_thr(thr=0)
+  df <- data.frame(matrix(0, nrow(a), nrow(b)))
+  rownames(df) <- rownames(a)
+  colnames(df) <- rownames(b)
+
+  cmp = nrow(a) * nrow(b)
+  pb <- progress::progress_bar$new(
+    format = paste0("  Cosine similarity (n = ", cmp, ") [:bar] :percent eta: :eta"),
+    total = cmp,
+    clear = FALSE,
+    width= 90
   )
+
+
+  for (i in 1:nrow(a)) {
+    denovo <- a[i, ]
+    for (j in 1:nrow(b)) {
+      ref <- b[j, ]
+      pb$tick()
+
+      score <- cosine.vector(denovo, ref, substitutions)
+      df[i,j] <- score
+    }
+  }
+
+  return(df)
 }
-
-
 

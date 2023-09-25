@@ -13,25 +13,21 @@
 #' @export plot_exposures
 
 plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
-                          plot_noise=FALSE, add_centroid=FALSE, flip_coord=FALSE,
-                          muts=FALSE, sampleIDs=NULL, sort_by=NULL, centroids=F) {
+                          add_centroid=FALSE, flip_coord=FALSE, facet=TRUE,
+                          muts=FALSE, sampleIDs=NULL, sort_by=NULL) {
 
+  if (!have_groups(x)) add_centroid = FALSE
   if (is.null(sampleIDs)) sampleIDs = rownames(get_exposure(x))
 
-  titlee = "Exposure"
   b = get_exposure(x, add_groups=TRUE)
-  if (plot_noise) {
-    titlee = "Exposure noise"
-    b = x$fit$params$alpha_noise
-  }
 
   if (muts) b = b * rowSums(x$fit$x)
 
   b = b[sampleIDs,]
 
-  if (is.null(cls) && !have_color_palette(x)) {
+  if (is.null(cls) && !have_color_palette(x))
     cls = gen_palette(ncol(b)) %>% setNames(colnames(b))
-  } else if (is.null(cls) && have_color_palette(x))
+  else if (is.null(cls) && have_color_palette(x))
     cls = get_color_palette(x)
 
   if (is.null(sigs_levels))
@@ -40,80 +36,85 @@ plot_exposures = function(x, sample_name=F, sigs_levels=NULL, cls=NULL,
   idcols = c("sample")
   if (have_groups(x)) idcols = c("sample","groups")
 
-  if (!is.null(sort_by))
-    sample_levels = b %>% as.data.frame() %>%
-      tibble::rownames_to_column(var="sample") %>%
-      reshape2::melt(cols=idcols, variable.name="Signature", value.name="alpha") %>%
-      dplyr::filter(Signature==sort_by) %>%
-      dplyr::arrange(desc(alpha)) %>% dplyr::pull(sample) else sample_levels = rownames(b)
-
   b = b %>% as.data.frame() %>%
     tibble::rownames_to_column(var="sample")
 
-  if (add_centroid || centroids) {
-    a_pr = get_centroids(x, normalize=T)
-    # if ( all(grepl("G", rownames(a_pr))) )
-    #   grps = paste0("G", unique(x$groups) %>% stringr::str_replace_all("G","") %>% sort()) else
-    #     grps = unique(x$groups) %>% stringr::str_replace_all("G","") %>% sort()
-    grps = unique(x$groups)
-
-    a_pr = a_pr[as.character(grps),]
-    rownames(a_pr) = paste0("G", grps %>% stringr::str_replace_all("G",""))
-
-    a_pr$groups = "Exposure priors"
-
-    if (add_centroid) {
-      b = rbind(b, a_pr %>% as.data.frame() %>% tibble::rownames_to_column(var="sample"))
-      sample_levels = c(sample_levels, rownames(a_pr))
-
-    } else if (centroids) {
-      a_pr = get_centroids(x, normalize=T)
-      a_pr$groups = "Exposure priors"
-      b = a_pr %>% as.data.frame() %>% tibble::rownames_to_column(var="sample")
-      sample_levels = rownames(a_pr)
-      sample_name = T
-    }
-  }
+  if (add_centroid)
+    p_centr = plot_centroids(x, cls=cls, sigs_levels=sigs_levels,
+                             flip_coord=flip_coord, sort_by=sort_by)
 
   b = b %>%
-    reshape2::melt(id=idcols, variable.name="Signature", value.name="alpha") %>%
-    dplyr::mutate(sample=factor(sample, levels=sample_levels))
+    reshape2::melt(id=idcols, variable.name="Signature", value.name="alpha")
 
-  if (add_centroid) {
-    centrs = dplyr::select(a_pr, -groups)[,rev(sigs_levels)]
+  p = plot_exposures_aux(expos=b, cls=cls, titlee="Exposure", sigs_level=sigs_levels,
+                         sample_name=sample_name, flip_coor=flip_coord, facet=facet,
+                         sort_by=sort_by)
 
-    b = b %>% dplyr::mutate(groups=stringr::str_replace_all(groups,"G","")) %>%
-      dplyr::full_join(centrs %>%
-                         tibble::rownames_to_column(var="groups") %>%
-                         dplyr::mutate(groups=stringr::str_replace_all(groups,"G","")) %>%
-                         reshape2::melt(variable.name="Signature", value.name="alpha_centr") %>%
-                         dplyr::group_by(groups) %>%
-                         dplyr::mutate(alpha_centr=cumsum(alpha_centr)),
-                         by=c("groups","Signature"))
-  }
+  if (add_centroid)
+    p = patchwork::wrap_plots(p, p_centr, ncol=2, widths=c(9,1), guides="collect")
+
+  return(p)
+}
 
 
-  p = b %>%
-    ggplot(aes(x=factor(sample), y=alpha, fill=factor(Signature, levels=sigs_levels))) +
+plot_centroids = function(x, cls=NULL, sigs_levels=NULL, flip_coord=FALSE, sort_by=NULL) {
+  a_pr = get_centroids(x, normalize=T)
+  grps = rownames(a_pr)
+  a_pr = a_pr[as.character(grps),]
+  rownames(a_pr) = paste0("G", grps %>% stringr::str_replace_all("G",""))
+
+  if (is.null(cls) && !have_color_palette(x))
+    cls = gen_palette(ncol(a_pr)) %>% setNames(colnames(a_pr))
+  else if (is.null(cls) && have_color_palette(x))
+    cls = get_color_palette(x)
+
+  if (is.null(sigs_levels))
+    sigs_levels = sort(colnames(a_pr %>% dplyr::select(-dplyr::contains("groups"))))
+
+  a_pr = a_pr %>% as.data.frame() %>% tibble::rownames_to_column(var="sample") %>%
+    reshape2::melt(id="sample", variable.name="Signature", value.name="alpha")
+
+  return(
+    plot_exposures_aux(expos=a_pr, cls=cls, titlee="Centroids", sigs_level=sigs_levels,
+                       sample_name=TRUE, flip_coor=flip_coord, facet=FALSE,
+                       sample_levels=paste0("G", sort(grps) %>% stringr::str_replace_all("G","")))
+  )
+}
+
+
+plot_exposures_aux = function(expos, cls=NULL, titlee="", sigs_levels=NULL,
+                              sample_name=FALSE, flip_coord=FALSE,
+                              facet=TRUE, sort_by=NULL, sample_levels=NULL) {
+
+  if (!is.null(sort_by))
+    sample_levels = expos %>%
+      dplyr::filter(Signature==sort_by) %>%
+      dplyr::arrange(desc(alpha)) %>%
+      dplyr::pull(sample) else if (is.null(sample_levels))
+        sample_levels = expos$sample %>% unique()
+
+  p = expos %>%
+    ggplot(aes(x=factor(sample, levels=sample_levels), y=alpha, fill=Signature)) +
     geom_bar(stat="identity", position="stack") +
-    ggplot2::scale_fill_manual(values=cls) +
-    ggplot2::scale_color_manual(values=cls) +
     labs(title=titlee) +
     theme_bw() + theme(axis.text.x=element_text(angle=90)) +
     guides(fill=guide_legend(title="Signatures")) + ylab("") + xlab("")
 
-  if (add_centroid)
-    p = p + geom_hline(aes(yintercept=alpha_centr, color=factor(Signature, levels=sigs_levels)),
+  if (!is.null(cls))
+    p = p + ggplot2::scale_fill_manual(values=cls) + ggplot2::scale_color_manual(values=cls)
+
+  if ("alpha_centr" %in% colnames(expos))
+    p = p + geom_hline(aes(yintercept=alpha_centr, color=Signature),
                        linetype="dashed") + guides(color="none")
 
   if (!sample_name)
-    p = p + theme(axis.ticks.x = element_blank(), axis.text.x = element_blank()) + labs(x = "")
+    p = p + theme(axis.ticks.x=element_blank(), axis.text.x=element_blank()) + labs(x="")
 
   if (flip_coord)
     p = p + coord_flip()
 
-  if (have_groups(x))
-    p = p + facet_grid(~groups, scales="free_x", space="free_x")
+  if ("groups" %in% colnames(expos) && facet)
+    p = p + facet_grid(~ groups, scales="free_x", space="free_x")
 
   return(p)
 }
@@ -138,108 +139,20 @@ plot_sigs_prevalence = function(x) {
 
 
 
-# plot_exposure <- function(x, labels = NULL,sort_by = NULL, thr=0.1){
-#
-#
-#   alpha <- get_exposure(x, long = TRUE)
-#
-#   # plt <- .plot_exposure(x = alpha)
-#   if ("groups" %in% colnames(alpha))
-#     samples_order = alpha %>% dplyr::arrange(groups) %>% dplyr::pull(Sample) %>% unique() else
-#     samples_order = alpha$Sample %>% unique %>% gtools::mixedsort()
-#
-#   if(!is.null(sort_by))
-#   {
-#     samples_order = alpha %>%
-#       dplyr::filter(Signature == sort_by) %>%
-#       dplyr::arrange(dplyr::desc(Exposure)) %>%
-#       dplyr::pull(Sample)
-#   }
-#
-#
-#  alpha = alpha %>%
-#     dplyr::mutate(Signature=ifelse(Exposure < thr, "Other", Signature))
-#
-#   caption = paste0("Sorted by ", sort_by)
-#   if(is.null(sort_by)) caption = "Sorted by sample"
-#
-#   if(!is.null(labels)){
-#
-#     alpha = alpha %>% dplyr::select(-groups) %>% full_join(labels, by = "Sample")
-#
-# }
-#
-#
-#   keep = alpha$Signature %>% unique()
-#
-#   other_col = list("Other"="gainsboro") %>% unlist()
-#
-#   plt = ggplot2::ggplot(
-#     data = alpha,
-#     ggplot2::aes(x=factor(Sample,levels = samples_order), y=Exposure, fill=Signature)
-#   ) +
-#     ggplot2::geom_bar(stat = "identity") +
-#     my_ggplot_theme() +
-#     ggplot2::scale_y_continuous(labels=scales::percent) +
-#     ggplot2::scale_fill_manual(values = c(get_signature_colors(x),other_col),
-#                                breaks = keep) +
-#     ggplot2::theme(
-#       axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)
-#     ) +
-#     ggplot2::labs(
-#       title = paste0(x$cohort, ' (n = ', x$n_samples, ')'),
-#       caption = caption,
-#       x = "Sample"
-#     )
-#
-#   # ggplot2::guides(
-#   #   fill = ggplot2::guide_legend(
-#   #     nrow = ifelse(x$n_catalogue + x$n_denovo > 8, 2, 1))
-#   #   )
-#
-#  if ("groups" %in% names(x$fit))
-#     plt = plt + ggplot2::facet_grid(~groups)
-#
-#
-#   return(plt)
-# }
-#
-#
-#
-#
-#
-# plot_exposure = function(x,sample_name = T,levels= NULL, flip_coord = F){
-#
-#   b = x$fit$exposure
-#
-#   if(is.null(cls)){ cls = ggsci::pal_simpsons()(ncol(b))
-#   names(cls) = colnames(b)
-#   }
-#
-#   if(is.null(levels)){ levels =   colnames(b) }
-#
-#   p = ggplot(data = b %>% as.data.frame() %>% mutate(sample = rownames(b)) %>%
-#                reshape2::melt() %>% dplyr::rename(Signature = variable),
-#              aes(x = sample, y  = value,
-#                  fill = factor(Signature,levels = levels))) +
-#     geom_bar(stat = "identity")  + ggplot2::scale_fill_manual(values = cls) + labs(title = "Expsosure", x = "") +
-#     theme(axis.text.x = element_text(angle = 90)) +
-#     guides(fill=guide_legend(title="Signatures"))
-#
-#   if (!sample_name) {
-#     p =  p +  theme(axis.ticks.x = element_blank(), axis.text.x = element_blank()) + labs(x = "")
-#
-#   }
-#
-#   if(flip_coord){
-#
-#     p =  p + coord_flip()
-#   }
-#
-#   p
-# }
-#
+plot_exposures_real = function(x, groups_true, sampleIDs=NULL, cls=NULL, sort_by=NULL) {
+  if (is.null(cls)) cls = get_color_palette(x)
+  if (is.null(sampleIDs)) sampleIDs = rownames(get_exposure(x))
 
+  p = get_exposure(x, long=F, add_groups=T) %>%
+    dplyr::mutate(groups_true=groups_true) %>%
+    tibble::rownames_to_column(var="sample") %>%
+    dplyr::filter(sample %in% sampleIDs) %>%
+    reshape2::melt(id=c("sample","groups","groups_true"),
+                   variable.name="Signature", value.name="alpha") %>%
+    plot_exposures_aux(facet=FALSE, cls=cls, sort_by=sort_by)
+
+  p + ggh4x::facet_nested(~groups_true+groups, scale="free_x", space="free_x")
+}
 
 
 
