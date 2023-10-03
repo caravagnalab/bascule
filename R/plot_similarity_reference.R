@@ -13,7 +13,7 @@
 #' @return add
 #' @export plot_similarity_reference
 
-plot_similarity_reference <- function(x, reference = NULL, similarity_cutoff = 0.4,
+plot_similarity_reference <- function(x, reference = NULL, similarity_cutoff = 0.8,
                                       by_subs = FALSE, context = T, add_pheatmap = T,
                                       similarity = "cosine") {
 
@@ -51,7 +51,7 @@ plot_similarity_reference <- function(x, reference = NULL, similarity_cutoff = 0
 
   # Numbers where worth
   numbers = cosine_matrix %>% round(2)
-  numbers[numbers < similarity_cutoff] = ''
+  numbers[numbers < 0.5] = ''
 
   # Blacklist
   if(!is.null(x$iterations$blacklist) && (x$iterations$blacklist %>% sapply(length) %>% sum() > 0))
@@ -165,6 +165,10 @@ plot_similarity_reference <- function(x, reference = NULL, similarity_cutoff = 0
     {
       target = x %>% get_reference_signatures(long = TRUE) %>%
         dplyr::filter(Signature == rownames(cosine_matrix)[cosine_matrix_dn[i]])
+
+      print(target)
+      print(cosine_matrix)
+      print(cosine_matrix_dn)
 
       reference = x %>%
         get_denovo_signatures(long = TRUE) %>%

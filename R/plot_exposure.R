@@ -139,7 +139,8 @@ plot_sigs_prevalence = function(x) {
 
 
 
-plot_exposures_real = function(x, groups_true, sampleIDs=NULL, cls=NULL, sort_by=NULL) {
+plot_exposures_real = function(x, groups_true, sampleIDs=NULL, cls=NULL,
+                               sort_by=NULL, titlee="") {
   if (is.null(cls)) cls = get_color_palette(x)
   if (is.null(sampleIDs)) sampleIDs = rownames(get_exposure(x))
 
@@ -151,7 +152,8 @@ plot_exposures_real = function(x, groups_true, sampleIDs=NULL, cls=NULL, sort_by
                    variable.name="Signature", value.name="alpha") %>%
     plot_exposures_aux(facet=FALSE, cls=cls, sort_by=sort_by)
 
-  p + ggh4x::facet_nested(~groups_true+groups, scale="free_x", space="free_x")
+  p + ggh4x::facet_nested(~groups_true+groups, scale="free_x", space="free_x") +
+    labs(title=titlee)
 }
 
 

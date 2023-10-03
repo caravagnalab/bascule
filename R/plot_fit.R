@@ -15,10 +15,20 @@
 plot_fit = function(x, x.true=NULL, reconstructed=T, cls=NULL,
                     sort_by=NULL, what="SBS", epsilon=FALSE,
                     sample_name=FALSE, sampleIDs=NULL, name1="fit", name2="simul",
-                    single_samples=FALSE, add_centroid=F) {
+                    single_samples=FALSE, add_centroid=F, cutoff=.8) {
   if (is.null(sampleIDs)) sampleIDs = rownames(x$fit$x)
-
   if (!is.null(x.true)) catalogue = get_signatures(x.true) else catalogue = NULL
+
+  if (!is.null(x.true)) {
+    if (length(intersect(get_dn_signames(x), get_signames(x.true)))==0)
+      x = convert_sigs_names(x, x.simul=x.true, cutoff=cutoff)
+
+    if (is.null(cls))
+      cls = merge_colors_palette(x, x.true)
+
+  }
+
+  # make_plots_compare()
 
   mm = plot_mutations(x, reconstructed=reconstructed, what=what,
                       epsilon=epsilon, sampleIDs=sampleIDs) + ylab("") + labs(title=paste0("Mutations ", name1))
@@ -87,7 +97,8 @@ plot_scores = function(x, which="") {
   if (!"groups" %in% colnames(scores)) scores = scores %>% dplyr::mutate(groups=1)
 
   scores %>%
-    dplyr::mutate(K=stringr::str_replace_all(K, "K_", "") %>% as.integer(),
+    dplyr::select(dplyr::where(~!all(is.na(.x)))) %>%
+    dplyr::mutate(K=stringr::str_replace_all(K, "k_denovo", "") %>% as.integer(),
                   seed=stringr::str_replace_all(seed, "seed_", "") %>% as.integer()) %>%
     dplyr::mutate(score=ifelse(score_id=="bic", log(score), score)) %>%
 
