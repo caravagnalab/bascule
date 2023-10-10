@@ -5,28 +5,22 @@ pyfit = function(counts,
                  n_steps = 2000,
                  stage = "",
                  py = NULL,
-                 # groups = NULL,
                  clusters = NULL,
-                 nonparametric = FALSE,
+                 nonparametric = TRUE,
                  dirichlet_prior = TRUE,
-                 input_catalogue = NULL,
+                 beta_fixed = NULL,
                  hyperparameters = NULL,
                  CUDA = FALSE,
                  compile = FALSE,
-                 enforce_sparsity = FALSE,
+                 enforce_sparsity = TRUE,
                  store_parameters = FALSE,
                  regularizer = "cosine",
                  regul_compare = NULL,
                  reg_weight = 1,
                  seed_list = c(10),
-                 # initializ_seed = FALSE,
-                 # save_runs_seed = TRUE,
-                 # initializ_pars_fit = TRUE,
                  regul_denovo = TRUE,
                  regul_fixed = TRUE,
-                 # verbose = FALSE,
                  save_all_fits = FALSE
-                 # do_initial_fit = FALSE
                  ) {
 
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
@@ -43,18 +37,14 @@ pyfit = function(counts,
   if (!is.null(clusters)) clusters = as.integer(clusters)
 
   obj = py$fit(x = counts, k_list = k_list, lr = lr, optim_gamma = optim_gamma, n_steps = n_steps,
-               cluster = clusters, beta_fixed = input_catalogue,
+               cluster = clusters, beta_fixed = beta_fixed,
                hyperparameters = hyperparameters, nonparametric=nonparametric,
                dirichlet_prior = dirichlet_prior, enforce_sparsity = enforce_sparsity,
                store_parameters = store_parameters, regularizer = regularizer,
                reg_weight = reg_weight, regul_compare = regul_compare,
                regul_denovo = regul_denovo, regul_fixed = regul_fixed,
                stage = stage, seed = seed_list, compile_model = compile,
-               CUDA = CUDA,
-               # verbose = verbose,
-               # initializ_pars_fit = initializ_pars_fit, save_runs_seed = save_runs_seed,
-               # initializ_seed = initializ_seed,
-               save_all_fits = save_all_fits) # do_initial_fit = do_initial_fit
+               CUDA = CUDA, save_all_fits = save_all_fits)
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
 
@@ -67,14 +57,14 @@ pyfit = function(counts,
   }
 
   # save python object data in a list
-  data = get_list_from_py(bestRun, counts, input_catalogue, lr, n_steps)
+  data = get_list_from_py(bestRun, counts, beta_fixed, lr, n_steps)
   data$runs_seed = lapply(data$runs_seed, function(i) {
     i[["runs_scores"]] = i[["runs_seed"]] = NULL
     i$convert_to_dataframe(counts)
-    get_list_from_py(i, counts, input_catalogue, lr, n_steps)
+    get_list_from_py(i, counts, beta_fixed, lr, n_steps)
   })
 
-  data$secondBest = get_list_from_py(secondBest, counts, input_catalogue, lr, n_steps)
+  data$secondBest = get_list_from_py(secondBest, counts, beta_fixed, lr, n_steps)
   data$time = TIME
 
   return(data)
@@ -85,10 +75,7 @@ get_list_from_py = function(py_obj, counts, input_catalogue, lr, n_steps, save_s
   if (is.null(py_obj)) return(NULL)
 
   x = list()
-  x$x = counts
-  x$input_catalogue = input_catalogue
-  x$lr = lr
-  x$steps = n_steps
+  x$x = py_obj$x
 
   x$exposure = py_obj$params$alpha
   x$denovo_signatures = py_obj$params$beta_d
@@ -316,6 +303,7 @@ solve.quadratic.optimization.aux = function(v,
 # Renormalize denovo
 
 renormalize_denovo_thr = function(denovo, thr=0.02) {
+  if (is.null(denovo)) return(NULL)
   denovo.tmp = denovo
   denovo.tmp[denovo.tmp < thr] = 0
   return(denovo.tmp / rowSums(denovo.tmp))

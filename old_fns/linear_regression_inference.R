@@ -248,7 +248,8 @@ filter_sigs_low_expos = function(x, min_exp=0.15, keep_sigs=NULL) {
 # }
 
 
-create_basilica_obj = function(fit, input_catalogue, reference_catalogue, cohort="MyCohort", filtered_catalogue=TRUE) {
+create_basilica_obj = function(fit, input_catalogue, reference_catalogue,
+                               cohort="MyCohort", filtered_catalogue=TRUE) {
   # fit is the output of "pyfit"
   obj = list()
   class(obj) = "basilica_obj"
@@ -256,9 +257,9 @@ create_basilica_obj = function(fit, input_catalogue, reference_catalogue, cohort
   obj$cohort = cohort
   obj$n_samples = nrow(fit$x)
 
-  if ("denovo_signatures" %in% names(fit))
-    obj$n_denovo = nrow(fit$denovo_signatures) else
-      obj$n_denovo = 0
+  # if ("denovo_signatures" %in% names(fit))
+  #   obj$n_denovo = nrow(fit$denovo_signatures) else
+  #     obj$n_denovo = 0
 
   if (filtered_catalogue && obj$n_denovo > 0)
     fit$denovo_signatures = renormalize_denovo_thr(fit$denovo_signatures)
