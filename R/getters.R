@@ -25,7 +25,6 @@ get_denovo_signatures = function(x, type=NULL, wide=F) {
 
 
 wide_to_long_beta = function(dataframe, type=NULL) {
-  stopifnot(!is.null(type))
   return(
     dataframe %>% tibble::rownames_to_column(var="sigs") %>%
       reshape2::melt(id="sigs", variable.name="features") %>%
@@ -44,7 +43,6 @@ long_to_wide_beta = function(dataframe, type) {
 
 
 wide_to_long_alpha = function(dataframe, type=NULL) {
-  stopifnot(!is.null(type))
   return(
     dataframe %>% tibble::rownames_to_column(var="samples") %>%
       reshape2::melt(id="samples", variable.name="sigs") %>%
@@ -54,7 +52,6 @@ wide_to_long_alpha = function(dataframe, type=NULL) {
 
 
 wide_to_long_counts = function(dataframe, type=NULL) {
-  stopifnot(!is.null(type))
   return(
     dataframe %>% tibble::rownames_to_column(var="samples") %>%
       reshape2::melt(id="samples", variable.name="features") %>%
