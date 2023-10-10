@@ -20,7 +20,8 @@ pyfit = function(counts,
                  seed_list = c(10),
                  regul_denovo = TRUE,
                  regul_fixed = TRUE,
-                 save_all_fits = FALSE
+                 save_all_fits = FALSE,
+                 filter_dn = TRUE
 ) {
 
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
@@ -57,37 +58,38 @@ pyfit = function(counts,
   }
 
   # save python object data in a list
-  py_obj = get_list_from_py(bestRun)
-  py_obj$runs_seed = lapply(py_obj$runs_seed, function(i) {
+  py_obj = get_list_from_py(bestRun, filter_dn=filter_dn)
+  py_obj$alternatives$runs_seed = lapply(py_obj$runs_seed, function(i) {
     i[["runs_scores"]] = i[["runs_seed"]] = NULL
     i$convert_to_dataframe(counts)
-    get_list_from_py(i, type=type)
+    get_list_from_py(i)
   })
 
-  py_obj$secondBest = get_list_from_py(secondBest, type=type)
+  py_obj$alternatives$secondBest = get_list_from_py(secondBest, filter_dn=filter_dn)
   py_obj$time = TIME
 
   return(py_obj)
 }
 
 
+filter_sigs_low_expos = function(x, min_exp=0.15, keep_sigs=NULL) {
+  if (is.null(x$exposure)) return(x)
 
-create_basilica_obj = function(py_obj, cohort="MyCohort",
-                               filtered_catalogue=TRUE) {
-  obj = list()
-  class(obj) = "basilica_obj"
-  obj$cohort = cohort
+  sbs_keep = x$exposure %>%
+    dplyr::mutate(value=ifelse(value < min_exp, 0, value)) %>%
+    dplyr::filter(value > 0) %>%
+    dplyr::pull(sigs) %>% unique() %>% as.character()
 
-  obj$input[[type]] = list("counts"=py_obj$x,
-                           "fixed_signatures"=py_obj$fixed_signatures)
+  if (!is.null(keep_sigs)) sbs_keep = c(sbs_keep, keep_sigs) %>% unique()
+  if (length(sbs_keep) == 0) return(x)
 
-  if (filtered_catalogue)
-    py_obj$denovo_signatures = renormalize_denovo_thr(py_obj$denovo_signatures)
+  if (!is.null(x$beta_fixed)) x$beta_fixed = x$beta_fixed %>% dplyr::filter(sigs %in% sbs_keep)
+  if (!is.null(x$beta_denovo)) x$beta_denovo = x$beta_denovo %>% dplyr::filter(sigs %in% sbs_keep)
+  x$exposure = x$exposure %>% dplyr::filter(sigs %in% sbs_keep)
 
-  obj$fit[[type]] = py_obj
-  obj$groups = py_obj$groups
-  obj$color_palette = gen_palette(obj)
-  obj$time = py_obj$time
-
-  return(obj)
+  return(x)
 }
+
+
+
+

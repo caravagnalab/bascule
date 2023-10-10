@@ -1,12 +1,11 @@
-get_list_from_py = function(py_obj) {
-  stopifnot(!is.null(py_obj))
+get_list_from_py = function(py_obj, filter_dn) {
   if (is.null(py_obj)) return(NULL)
 
   x = list()
-  # x$x = py_obj$x %>% wide_to_long_counts(type=type)
-  x$exposure = py_obj$params$alpha %>% wide_to_long_alpha()
-  x$beta_denovo = py_obj$params$beta_d %>% wide_to_long_beta()
-  x$beta_fixed = py_obj$params$beta_f %>% wide_to_long_beta()
+  x$exposure = py_obj$params$alpha %>% wide_to_long(what="exposures")
+  x$beta_denovo = py_obj$params$beta_d %>% wide_to_long(what="beta") %>%
+    renormalize_denovo_thr(filter_dn=filter_dn)
+  x$beta_fixed = py_obj$params$beta_f %>% wide_to_long(what="beta")
   x$eps_var = py_obj$params$lambda_epsilon
   x$pi = py_obj$params$pi
   x$post_probs = py_obj$params$post_probs
@@ -34,7 +33,7 @@ get_list_from_py = function(py_obj) {
 
   if ("all_fits" %in% names(py_obj)) {
     if (length(py_obj$all_fits) > 0) x$all_fits = NULL
-    x$QC$all_fits = get_fits_from_py(py_obj$all_fits, x$x, x$input_catalogue, lr, n_steps)
+    x$alternatives$all_fits = get_fits_from_py(py_obj$all_fits)
   }
 
   return(x)
@@ -93,21 +92,21 @@ get_train_params = function(obj) {
 }
 
 
-get_fits_from_py = function(fits, counts, beta_fixed, lr, n_steps)
+get_fits_from_py = function(fits) {
   return(
     lapply(names(fits), function(i) {
       fits[[i]]$convert_to_dataframe(counts)
-      get_list_from_py(fits[[i]], counts, beta_fixed, lr, n_steps, save_stats=F)
+      get_list_from_py(fits[[i]])
     }) %>%
       setNames(names(fits))
   )
+}
 
 
 get_scores_from_py = function(scores) {
   if (is.null(scores)) return(NULL)
 
   res = replace_null(scores) %>%
-    # res = purrr::discard(scores, is.null) %>%
     as.data.frame() %>%
     reshape2::melt(value.name="score") %>%
     tidyr::separate("variable", into=c("K", "seed", "score_id"), sep="[.]") %>%
