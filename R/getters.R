@@ -270,10 +270,16 @@ get_signames = function(x) {
 }
 
 
-get_K_scores = function(x) {
-  return(x$fit$runs_K)
+get_scores_K = function(x) {
+  if (is.null(x$fit$runs_K)) return(NULL)
+  return(x$fit$runs_K %>% dplyr::select_if(dplyr::where(function(i) any(!is.na(i)))))
 }
 
+
+get_scores_CL = function(x) {
+  if (is.null(x$fit$runs_CL)) return(NULL)
+  return(x$fit$runs_CL %>% dplyr::select_if(dplyr::where(function(i) any(!is.na(i)))))
+}
 
 
 get_secondBest_run = function(x) {
@@ -352,7 +358,11 @@ get_contexts = function(x) {
 
 get_obj_initial_params = function(x) {
   params = x$fit$init_params
-  # x$fit$exposure = x$fit$params$alpha = params$alpha / rowSums(params$alpha)
+
+  if (!have_groups(x)) {
+    x$fit$exposure = x$fit$params$alpha = params$alpha / rowSums(params$alpha)
+    x$fit$denovo_signatures = params$beta_dn_param / rowSums(params$beta_dn_param)
+  }
   x$fit$groups = x$groups = params$init_clusters
   x$fit$pi = x$fit$params$pi = params$pi_param
 

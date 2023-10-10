@@ -128,6 +128,48 @@ get_list_from_py = function(py_obj, counts, input_catalogue, lr, n_steps, save_s
 }
 
 
+get_list_from_py_clustering = function(py_obj, signatures, lr, n_steps, save_stats=T) {
+  x = list()
+  x$lr = py_obj$lr
+  x$steps = py_obj$n_steps
+
+  x$exposure = py_obj$alpha
+  x$denovo_signatures = signatures
+  x$pi = py_obj$params$pi
+  x$post_probs = py_obj$params$post_probs
+  x$groups = py_obj$groups
+
+  x$params = py_obj$params
+  x$init_params = py_obj$init_params
+
+  x$bic = py_obj$bic
+  x$losses = py_obj$losses
+  x$gradient_norms = py_obj$gradient_norms
+  x$train_params = get_train_params(py_obj)
+  x$hyperparameters = py_obj$hyperparameters
+  try(expr = { x$seed = py_obj$seed })
+
+  if (!save_stats) return(x)
+
+  x$runs_seed = x$runs_scores = x$all_fits = NULL
+  if ("runs_seed" %in% names(py_obj))
+    x$runs_seed = py_obj$runs_seed
+
+  if ("scores_K" %in% names(py_obj))
+    x$runs_K = get_scores_from_py(py_obj$scores_K)
+
+  if ("scores_CL" %in% names(py_obj))
+    x$runs_CL = get_scores_from_py(py_obj$scores_CL) %>% dplyr::rename(G=K)
+
+  if ("all_fits" %in% names(py_obj)) {
+    if (length(py_obj$all_fits) > 0) x$all_fits = NULL
+    x$all_fits = get_fits_from_py(py_obj$all_fits, x$x, x$input_catalogue, lr, n_steps)
+  }
+
+  return(x)
+}
+
+
 get_fits_from_py = function(fits, counts, beta_fixed, lr, n_steps)
   return(
     lapply(names(fits), function(i) {
@@ -141,15 +183,12 @@ get_fits_from_py = function(fits, counts, beta_fixed, lr, n_steps)
 get_scores_from_py = function(scores) {
   if (is.null(scores)) return(NULL)
 
-  print(scores)
-  print(replace_null(scores))
-
   res = replace_null(scores) %>%
-  # res = purrr::discard(scores, is.null) %>%
-    as.data.frame() %>%
+    as.data.frame(optional=TRUE, check_names=FALSE) %>%
     reshape2::melt(value.name="score") %>%
     tidyr::separate("variable", into=c("K", "seed", "score_id"), sep="[.]") %>%
-    tibble::as_tibble()
+    tibble::as_tibble() %>%
+    dplyr::select_if(dplyr::where(function(i) any(!is.na(i))))
 
   return(res)
 }

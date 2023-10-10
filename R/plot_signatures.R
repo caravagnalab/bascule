@@ -10,8 +10,8 @@
 #' @return plot
 #' @export plot_signatures
 
-plot_signatures = function(x, what = "SBS", context = T, cls = NULL,
-                           signames = NULL, catalogue = NULL) {
+plot_signatures = function(x, what="SBS", context=T, cls=NULL,
+                           signames=NULL, catalogue=NULL) {
 
   if (is.null(signames))
     signames = rownames(x %>% get_signatures)
@@ -30,7 +30,7 @@ plot_signatures = function(x, what = "SBS", context = T, cls = NULL,
   else if (is.null(cls) && have_color_palette(x)) cls = get_color_palette(x)
 
   return(
-    plot_signatures_aux(catalogue=a, what="SBS", context=context, cls=cls, signames=signames)
+    plot_signatures_aux(catalogue=a, what=what, context=context, cls=cls, signames=signames)
   )
 }
 

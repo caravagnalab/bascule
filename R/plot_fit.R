@@ -91,15 +91,35 @@ get_samples_high_expos = function(x, x.true, min_expos, sigs=NULL) {
 
 
 
-plot_scores = function(x, which="") {
-  scores = get_K_scores(x)
+plot_scores_K = function(x) {
+  scores = get_scores_K(x)
 
   if (!"groups" %in% colnames(scores)) scores = scores %>% dplyr::mutate(groups=1)
 
   scores %>%
     dplyr::select(dplyr::where(~!all(is.na(.x)))) %>%
-    dplyr::mutate(K=stringr::str_replace_all(K, "k_denovo", "") %>% as.integer(),
-                  seed=stringr::str_replace_all(seed, "seed_", "") %>% as.integer()) %>%
+    dplyr::mutate(K=stringr::str_replace_all(K, "k_denovo:", "") %>% as.integer(),
+                  seed=stringr::str_replace_all(seed, "seed:", "") %>% as.integer()) %>%
+    dplyr::mutate(score=ifelse(score_id=="bic", log(score), score)) %>%
+
+    ggplot() +
+    geom_point(aes(x=K, y=score, color=factor(seed), shape=factor(groups))) +
+    geom_line(aes(x=K, y=score, color=factor(seed), linetype=factor(groups))) +
+    facet_wrap(~score_id, scales="free_y") +
+    theme_bw()
+
+}
+
+
+plot_scores_CL = function(x) {
+  scores = get_scores_CL(x)
+
+  if (!"groups" %in% colnames(scores)) scores = scores %>% dplyr::mutate(groups=1)
+
+  scores %>%
+    dplyr::select(dplyr::where(~!all(is.na(.x)))) %>%
+    dplyr::mutate(K=stringr::str_replace_all(G, "cluster:", "") %>% as.integer(),
+                  seed=stringr::str_replace_all(seed, "seed:", "") %>% as.integer()) %>%
     dplyr::mutate(score=ifelse(score_id=="bic", log(score), score)) %>%
 
     ggplot() +
