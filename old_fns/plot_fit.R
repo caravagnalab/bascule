@@ -97,7 +97,6 @@ plot_scores = function(x, which="") {
   if (!"groups" %in% colnames(scores)) scores = scores %>% dplyr::mutate(groups=1)
 
   scores %>%
-    dplyr::select(dplyr::where(~!all(is.na(.x)))) %>%
     dplyr::mutate(K=stringr::str_replace_all(K, "k_denovo", "") %>% as.integer(),
                   seed=stringr::str_replace_all(seed, "seed_", "") %>% as.integer()) %>%
     dplyr::mutate(score=ifelse(score_id=="bic", log(score), score)) %>%
