@@ -1,49 +1,48 @@
-get_list_from_py = function(py_obj, filter_dn) {
+get_list_from_py = function(py_obj, filter_dn, store_alternatives=TRUE) {
   if (is.null(py_obj)) return(NULL)
 
-  x = list()
+  x = get_list_from_py_aux(py_obj, fn=get_list_from_py,
+                           store_alternatives=store_alternatives)
   x$exposure = py_obj$params$alpha %>% wide_to_long(what="exposures")
   x$beta_denovo = py_obj$params$beta_d %>% wide_to_long(what="beta") %>%
     renormalize_denovo_thr(filter_dn=filter_dn)
   x$beta_fixed = py_obj$params$beta_f %>% wide_to_long(what="beta")
-  x$eps_var = py_obj$params$lambda_epsilon
-  x$pi = py_obj$params$pi
-  x$post_probs = py_obj$params$post_probs
-  x$groups = py_obj$groups
+  return(x)
+}
 
-  x$params$infered_params = py_obj$params
-  x$params$init_params = py_obj$init_params
-  x$params$hyperparameters = py_obj$hyperparameters
 
-  x$QC$bic = py_obj$bic
-  x$QC$losses = py_obj$losses
-  x$QC$gradient_norms = py_obj$gradient_norms
-  x$QC$train_params = get_train_params(py_obj)
+get_list_from_py_clustering = function(py_obj, store_alternatives=TRUE) {
+  x = list()
+  x$pyro = get_list_from_py_aux(py_obj, fn=get_list_from_py_clustering,
+                                store_alternatives=store_alternatives)
+  x$clusters = tibble::tibble(samples = rownames(py_obj$alpha),
+                              clusters = paste0("G",py_obj$groups))
+  x$centroids = py_obj$params$alpha_prior %>%
+    wide_to_long(what="exposures") %>%
+    dplyr::rename(clusters=samples)
+  return(x)
+}
+
+
+get_list_from_py_aux = function(py_obj, fn, store_alternatives=TRUE) {
+  x = list()
+  x$params = list(infered_params = py_obj$params,
+                  init_params = py_obj$init_params,
+                  hyperparameters = py_obj$hyperparameters)
+
+  x$QC = get_QC_from_py(py_obj)
+
+  if (store_alternatives)
+    x$alternatives = get_alternatives_from_py(py_obj, fn=fn)
+
   try(expr = { x$seed = py_obj$seed })
-
-  x$QC$runs_seed = x$QC$runs_scores = x$QC$all_fits = NULL
-  if ("runs_seed" %in% names(py_obj))
-    x$QC$runs_seed = py_obj$runs_seed
-
-  if ("scores_K" %in% names(py_obj))
-    x$QC$runs_K = get_scores_from_py(py_obj$scores_K)
-
-  if ("scores_CL" %in% names(py_obj))
-    x$QC$runs_CL = get_scores_from_py(py_obj$scores_CL) %>% dplyr::rename(G=K)
-
-  if ("all_fits" %in% names(py_obj)) {
-    if (length(py_obj$all_fits) > 0) x$all_fits = NULL
-    x$alternatives$all_fits = get_fits_from_py(py_obj$all_fits)
-  }
 
   return(x)
 }
 
 
-
 get_train_params = function(obj) {
-  if (!obj$store_parameters)
-    return(NULL)
+  if (!obj$store_parameters) return(NULL)
   train_params = obj$train_params
   samples_names = obj$params[["alpha"]] %>% rownames()
   bfixed_names = obj$beta_fixed %>% rownames()
@@ -92,11 +91,13 @@ get_train_params = function(obj) {
 }
 
 
-get_fits_from_py = function(fits) {
+get_fits_from_py = function(fits, fn) {
   return(
     lapply(names(fits), function(i) {
-      fits[[i]]$convert_to_dataframe(counts)
-      get_list_from_py(fits[[i]])
+      py_obj = fits[[i]]
+      if ("x" %in% names(py_obj)) {inp = py_obj$x} else {inp = py_obj$alpha}
+      py_obj$convert_to_dataframe(inp)
+      fn(py_obj)
     }) %>%
       setNames(names(fits))
   )
@@ -107,11 +108,17 @@ get_scores_from_py = function(scores) {
   if (is.null(scores)) return(NULL)
 
   res = replace_null(scores) %>%
-    as.data.frame() %>%
-    reshape2::melt(value.name="score") %>%
-    tidyr::separate("variable", into=c("K", "seed", "score_id"), sep="[.]") %>%
-    dplyr::select_if(function(i) any(!is.na(i))) %>%
-    tibble::as_tibble()
+    as.data.frame(optional=TRUE, check_names=FALSE) %>%
+    reshape2::melt(value.name="score")
+  parname = ifelse(grepl("k_denovo", res$variable[1]), "K", "G")
+
+  res = res %>%
+    tidyr::separate("variable", into=c(parname, "seed", "score_id"), sep="[.]") %>%
+    tibble::as_tibble() %>%
+    dplyr::select_if(dplyr::where(function(i) any(!is.na(i)))) %>%
+    dplyr::mutate(dplyr::across(is.character, function(i)
+      stringr::str_replace_all(i, "k_denovo:|cluster:|seed:", ""))) %>%
+    tidyr::pivot_longer(cols=parname, names_to="parname")
 
   return(res)
 }
@@ -120,6 +127,49 @@ get_scores_from_py = function(scores) {
 replace_null = function(i) {
   j = purrr::map(i, ~ replace(.x, is.null(.x), NA))
   purrr::map(j, ~ (if(is.list(.x)) replace_null(.x) else .x))
+}
+
+
+get_QC_from_py = function(py_obj) {
+  QC = list(lr = py_obj$lr,
+            n_steps = py_obj$n_steps,
+            bic = py_obj$bic,
+            losses = py_obj$losses,
+            gradient_norms = py_obj$gradient_norms,
+            train_params = get_train_params(py_obj))
+
+  if ("scores_K" %in% names(py_obj))
+    QC$scores = get_scores_from_py(py_obj$scores_K)
+  if ("scores_CL" %in% names(py_obj))
+    QC$scores = get_scores_from_py(py_obj$scores_CL)
+
+  return(QC)
+}
+
+
+get_alternatives_from_py = function(py_obj, fn) {
+  alt = list()
+  alt$runs_seed = alt$runs_scores = alt$all_fits = NULL
+
+  if ("x" %in% names(py_obj)) {inp = py_obj$x} else {inp = py_obj$alpha}
+  if ("runs_seed" %in% names(py_obj)) {
+    alt$runs_seed = lapply(py_obj$runs_seed, function(i) {
+      # i[["runs_scores"]] = i[["runs_seed"]] = NULL
+      i$convert_to_dataframe(inp)
+      fn(i, store_alternatives=FALSE)
+    })
+  }
+
+  if ("all_fits" %in% names(py_obj))
+    alt$all_fits = lapply(py_obj$all_fits, function(i) {
+      # i[["all_fits"]] = NULL
+      i$convert_to_dataframe(inp)
+      fn(i, store_alternatives=FALSE)
+    })
+
+  print(names(alt$runs_seed))
+
+  return(alt)
 }
 
 

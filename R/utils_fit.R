@@ -8,7 +8,7 @@ pyfit = function(counts,
                  clusters = NULL,
                  nonparametric = TRUE,
                  dirichlet_prior = TRUE,
-                 beta_fixed = NULL,
+                 reference_cat = NULL,
                  hyperparameters = NULL,
                  CUDA = FALSE,
                  compile = FALSE,
@@ -20,14 +20,13 @@ pyfit = function(counts,
                  seed_list = c(10),
                  regul_denovo = TRUE,
                  regul_fixed = TRUE,
-                 save_all_fits = FALSE,
+                 save_all_fits = TRUE,
                  filter_dn = TRUE
 ) {
 
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
 
-  if (is.null(py))
-    py = reticulate::import("pybasilica")
+  if (is.null(py)) py = reticulate::import("pybasilica")
 
   if (length(k_list) > 1) k_list = reticulate::r_to_py(as.integer(k_list)) else
     k_list = reticulate::r_to_py(list(as.integer(k_list)))
@@ -38,7 +37,7 @@ pyfit = function(counts,
   if (!is.null(clusters)) clusters = as.integer(clusters)
 
   obj = py$fit(x = counts, k_list = k_list, lr = lr, optim_gamma = optim_gamma, n_steps = n_steps,
-               cluster = clusters, beta_fixed = beta_fixed,
+               cluster = clusters, beta_fixed = reference_cat,
                hyperparameters = hyperparameters, nonparametric=nonparametric,
                dirichlet_prior = dirichlet_prior, enforce_sparsity = enforce_sparsity,
                store_parameters = store_parameters, regularizer = regularizer,
@@ -59,12 +58,6 @@ pyfit = function(counts,
 
   # save python object data in a list
   py_obj = get_list_from_py(bestRun, filter_dn=filter_dn)
-  py_obj$alternatives$runs_seed = lapply(py_obj$runs_seed, function(i) {
-    i[["runs_scores"]] = i[["runs_seed"]] = NULL
-    i$convert_to_dataframe(counts)
-    get_list_from_py(i)
-  })
-
   py_obj$alternatives$secondBest = get_list_from_py(secondBest, filter_dn=filter_dn)
   py_obj$time = TIME
 
