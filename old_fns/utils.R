@@ -20,7 +20,7 @@ pyfit = function(counts,
                  seed_list = c(10),
                  regul_denovo = TRUE,
                  regul_fixed = TRUE,
-                 save_all_fits = FALSE
+                 store_fits = FALSE
                  ) {
 
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
@@ -44,7 +44,7 @@ pyfit = function(counts,
                reg_weight = reg_weight, regul_compare = regul_compare,
                regul_denovo = regul_denovo, regul_fixed = regul_fixed,
                stage = stage, seed = seed_list, compile_model = compile,
-               CUDA = CUDA, save_all_fits = save_all_fits)
+               CUDA = CUDA, store_fits = store_fits)
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
 

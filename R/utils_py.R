@@ -1,8 +1,7 @@
-get_list_from_py = function(py_obj, filter_dn, store_alternatives=TRUE) {
+get_list_from_py = function(py_obj, filter_dn) {
   if (is.null(py_obj)) return(NULL)
 
-  x = get_list_from_py_aux(py_obj, fn=get_list_from_py,
-                           store_alternatives=store_alternatives)
+  x = get_list_from_py_aux(py_obj, fn=get_list_from_py)
   x$exposure = py_obj$params$alpha %>% wide_to_long(what="exposures")
   x$beta_denovo = py_obj$params$beta_d %>% wide_to_long(what="beta") %>%
     renormalize_denovo_thr(filter_dn=filter_dn)
@@ -11,10 +10,9 @@ get_list_from_py = function(py_obj, filter_dn, store_alternatives=TRUE) {
 }
 
 
-get_list_from_py_clustering = function(py_obj, store_alternatives=TRUE) {
+get_list_from_py_clustering = function(py_obj) {
   x = list()
-  x$pyro = get_list_from_py_aux(py_obj, fn=get_list_from_py_clustering,
-                                store_alternatives=store_alternatives)
+  x$pyro = get_list_from_py_aux(py_obj, fn=get_list_from_py_clustering)
   x$clusters = tibble::tibble(samples = rownames(py_obj$alpha),
                               clusters = paste0("G",py_obj$groups))
   x$centroids = py_obj$params$alpha_prior %>%
@@ -24,7 +22,7 @@ get_list_from_py_clustering = function(py_obj, store_alternatives=TRUE) {
 }
 
 
-get_list_from_py_aux = function(py_obj, fn, store_alternatives=TRUE) {
+get_list_from_py_aux = function(py_obj, fn) {
   x = list()
   x$params = list(infered_params = py_obj$params,
                   init_params = py_obj$init_params,
@@ -32,8 +30,7 @@ get_list_from_py_aux = function(py_obj, fn, store_alternatives=TRUE) {
 
   x$QC = get_QC_from_py(py_obj)
 
-  if (store_alternatives)
-    x$alternatives = get_alternatives_from_py(py_obj, fn=fn)
+  x$alternatives = get_alternatives_from_py(py_obj, fn=fn)
 
   try(expr = { x$seed = py_obj$seed })
 
@@ -91,15 +88,15 @@ get_train_params = function(obj) {
 }
 
 
-get_fits_from_py = function(fits, fn) {
+get_fits_from_py = function(fits_list, fn) {
   return(
-    lapply(names(fits), function(i) {
-      py_obj = fits[[i]]
+    lapply(names(fits_list), function(i) {
+      py_obj = fits_list[[i]]
       if ("x" %in% names(py_obj)) {inp = py_obj$x} else {inp = py_obj$alpha}
       py_obj$convert_to_dataframe(inp)
       fn(py_obj)
     }) %>%
-      setNames(names(fits))
+      setNames(names(fits_list))
   )
 }
 
@@ -138,10 +135,8 @@ get_QC_from_py = function(py_obj) {
             gradient_norms = py_obj$gradient_norms,
             train_params = get_train_params(py_obj))
 
-  if ("scores_K" %in% names(py_obj))
-    QC$scores = get_scores_from_py(py_obj$scores_K)
-  if ("scores_CL" %in% names(py_obj))
-    QC$scores = get_scores_from_py(py_obj$scores_CL)
+  if ("scores" %in% names(py_obj))
+    QC$scores = get_scores_from_py(py_obj$scores)
 
   return(QC)
 }
@@ -152,22 +147,19 @@ get_alternatives_from_py = function(py_obj, fn) {
   alt$runs_seed = alt$runs_scores = alt$all_fits = NULL
 
   if ("x" %in% names(py_obj)) {inp = py_obj$x} else {inp = py_obj$alpha}
-  if ("runs_seed" %in% names(py_obj)) {
-    alt$runs_seed = lapply(py_obj$runs_seed, function(i) {
-      # i[["runs_scores"]] = i[["runs_seed"]] = NULL
-      i$convert_to_dataframe(inp)
-      fn(i, store_alternatives=FALSE)
-    })
+  if ("fits" %in% names(py_obj)) {
+    # print(py_obj$fits)
+    # fits_tibble = py_obj$fits %>% tibble::as_tibble()
+    alt$fits = lapply(names(py_obj$fits), function(i) {
+      fits_i = py_obj$fits[[i]]
+      lapply(names(fits_i), function(j) {
+        fits_i[[j]]$convert_to_dataframe(inp)
+        tmp = tibble::tibble(V1 = list( fn(fits_i[[j]]) ))
+        colnames(tmp) = j
+        return(tmp)
+      }) %>% dplyr::bind_cols()
+    }) %>% setNames(names(py_obj$fits))
   }
-
-  if ("all_fits" %in% names(py_obj))
-    alt$all_fits = lapply(py_obj$all_fits, function(i) {
-      # i[["all_fits"]] = NULL
-      i$convert_to_dataframe(inp)
-      fn(i, store_alternatives=FALSE)
-    })
-
-  print(names(alt$runs_seed))
 
   return(alt)
 }

@@ -1,7 +1,7 @@
 pyro_clustering = function(exposures, cluster, lr=0.005, n_steps=3000,
                            optim_gamma=0.1, enumer="parallel",
                            hyperparameters=NULL, nonparametric=TRUE,
-                           store_parameters=FALSE, save_all_fits=FALSE,
+                           store_parameters=FALSE, store_fits=FALSE,
                            seed_list=c(10), CUDA=TRUE, py=NULL) {
 
   if (is.null(cluster)) return(NULL)
@@ -15,8 +15,8 @@ pyro_clustering = function(exposures, cluster, lr=0.005, n_steps=3000,
 
   obj = py$fit(alpha=input_expos, cluster=cluster, n_steps=n_steps,
                lr=lr, optim_gamma=optim_gamma, hyperparameters=hyperparameters,
-               enumer=enumer, nonparametric=nonparametric, seed=seed_list,
-               CUDA=CUDA, store_parameters=store_parameters, save_all_fits=save_all_fits)
+               enumer=enumer, nonparametric=nonparametric, seed_list=seed_list,
+               CUDA=CUDA, store_parameters=store_parameters, store_fits=store_fits)
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
 

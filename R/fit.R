@@ -23,7 +23,7 @@ fit = function(counts, k_list, cluster, reference_cat,
                compile = FALSE,
 
                store_parameters = FALSE,
-               save_all_fits = FALSE,
+               store_fits = FALSE,
 
                reg_weight = 0.,
                regularizer = "cosine",
@@ -69,7 +69,7 @@ fit = function(counts, k_list, cluster, reference_cat,
              compile = compile,
 
              store_parameters = store_parameters,
-             save_all_fits = save_all_fits,
+             store_fits = store_fits,
 
              reg_weight = reg_weight,
              regularizer = regularizer,
@@ -98,7 +98,7 @@ fit = function(counts, k_list, cluster, reference_cat,
                                    CUDA = CUDA,
 
                                    store_parameters = store_parameters,
-                                   save_all_fits = save_all_fits,
+                                   store_fits = store_fits,
 
                                    seed_list = seed_list,
                                    py = py)

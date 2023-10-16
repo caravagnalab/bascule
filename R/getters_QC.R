@@ -32,16 +32,19 @@ get_scores = function(x, types=get_types(x)) {
 
 
 # params = list("K"=NA,"G"=NA,"seed"=NA)
-get_alternative_run = function(x, params=list("K"=NA,"G"=NA,"seed"=NA), types=get_types(x)) {
-  G = params$G; K = params$K; seed = params$seed
-  if (all(is.na(params))) return(cli::cli_alert_warning("No input were provided."))
+get_alternative_run = function(x, K=NA, G=NA, seed=NA,
+                               types=get_types(x)) {
+
+  if (all(is.na(c(K,G,seed)))) return(cli::cli_alert_warning("No input were provided."))
 
   if (is.na(seed)) seed = list("nmf"=get_seed(x, what="nmf", types=types),
                                "clustering"=get_seed(x, what="clustering"))
   if (is.na(G)) G = get_G(x, input=TRUE)
   if (is.na(K)) K = get_K(x)
+
   k_vname = paste0("k_denovo:", K)
   g_vname = paste0("cluster:", G)
+
   x$clustering = get_alternatives(x, what="clustering")$runs_seed[[paste0("seed:", seed$clustering)]]
   alter_nmf = get_alternatives(x, what="nmf", types=types)
   x$nmf = lapply(types, function(tid) alter_nmf[[tid]]$runs_seed[[paste0("seed:", seed$nmf[[tid]])]]) %>%
