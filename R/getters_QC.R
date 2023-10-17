@@ -75,3 +75,20 @@ get_pyro_stat = function(x, what, statname, types=get_types(x)) {
 }
 
 
+get_infered_params = function()
+
+
+get_initial_object = function(x, what="clustering") {
+  stopifnot(what=="clustering")
+
+  init_params = get_pyro_stat(x, what=what, statname="params")$init_params
+  x[[what]]$params = init_params
+  x[[what]]$clusters = tibble::tibble(samples=get_samples(x),
+                                      clusters=paste0("G",init_params$init_clusters))
+  x[[what]]$centroids = init_params$alpha_prior %>%
+    wide_to_long(what="exposures") %>%
+    dplyr::rename(clusters=samples)
+  return(x)
+}
+
+

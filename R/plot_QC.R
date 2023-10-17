@@ -1,6 +1,8 @@
 plot_posterior_probs = function(x) {
   if (!have_groups(x)) return(NULL)
-  return(pheatmap::pheatmap(x$clustering$params$infered_params$post_probs, cluster_rows=T, cluster_cols=F))
+
+  params = get_pyro_stat(x,what="clustering",statname="params")$infered_params
+  return(pheatmap::pheatmap(params$post_probs, cluster_rows=T, cluster_cols=F))
 }
 
 

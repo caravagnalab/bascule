@@ -19,7 +19,7 @@ nmf_single_type = function(..., k_list, reference_cat, stage, cohort,
   call_info = match.call()
 
   if (!is.null(reference_cat)) {
-    x_ref = pyfit(..., k_list=0, reference_cat=reference_cat,
+    x_ref = pyfit(..., k_list=0, clusters=NULL, reference_cat=reference_cat,
                   stage="random_noise", filter_dn=FALSE)
 
     x_ref_filt = x_ref %>% filter_sigs_low_expos(min_exp=min_exposure, keep_sigs=keep_sigs)
@@ -29,7 +29,8 @@ nmf_single_type = function(..., k_list, reference_cat, stage, cohort,
     residues = FALSE
   }
 
-  x_dn = pyfit(..., k_list=k_list, reference_cat=catalogue2, stage=stage, filter_dn=filter_dn)
+  x_dn = pyfit(..., k_list=k_list, clusters=NULL, stage=stage,
+               filter_dn=filter_dn, reference_cat=catalogue2)
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
 
