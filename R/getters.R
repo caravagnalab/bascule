@@ -71,8 +71,8 @@ get_signatures_aux = function(x, what, types=get_types(x), matrix=FALSE) {
 
 get_input = function(x, types=get_types(x), samples=get_samples(x),
                      clusters=get_cluster_labels(x), matrix=FALSE) {
-  out = lapply(types, function(t) {
-    w = x$input[[t]]$counts %>%
+  out = lapply(types, function(tid) {
+    w = x$input[[tid]]$counts %>%
       dplyr::filter(samples %in% !!samples)
 
     if(!is.null(clusters)) {

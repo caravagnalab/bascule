@@ -46,10 +46,10 @@ fit = function(counts, k_list, cluster, reference_cat,
   }) %>% setNames(types)
 
   # nmf contains the pyro fits
-  bas$nmf = lapply(types, function(t)
-    pyro_nmf(counts = counts[[t]],
+  bas$nmf = lapply(types, function(tid) {
+    pyro_nmf(counts = counts[[tid]],
              k_list = k_list,
-             reference_cat = reference_cat[[t]],
+             reference_cat = reference_cat[[tid]],
              keep_sigs = keep_sigs,
 
              hyperparameters = hyperparameters,
@@ -79,6 +79,7 @@ fit = function(counts, k_list, cluster, reference_cat,
 
              seed_list = seed_list,
              py = py)
+  }
   ) %>% setNames(types)
 
   # clustering contains the clustering
