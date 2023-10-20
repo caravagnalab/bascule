@@ -18,12 +18,15 @@ get_gradient_norms = function(x, types=get_types(x)) {
 get_scores = function(x, types=get_types(x)) {
   vname = "scores"
   qcs_nmf = get_QC(x, what="nmf", types=types)
-  qcs_clustering = get_QC(x, what="clustering")
 
   scores_nmf = lapply(types, function(tid) qcs_nmf[[tid]][[vname]] %>% as.data.frame() %>%
                         dplyr::mutate(type=tid)) %>%
     do.call(rbind, .)
-  scores_clustering = qcs_clustering[[vname]] %>% dplyr::mutate(type="Clustering")
+
+  if (have_groups(x)) {
+    qcs_clustering = get_QC(x, what="clustering")
+    scores_clustering = qcs_clustering[[vname]] %>% dplyr::mutate(type="Clustering")
+  } else score_clustering = NULL
 
   return(rbind(scores_nmf, scores_clustering) %>%
            dplyr::mutate(dplyr::across(.cols=c("seed","value"), as.integer)) %>%
