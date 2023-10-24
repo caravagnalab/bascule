@@ -78,7 +78,8 @@ fit = function(counts, k_list, cluster, reference_cat,
              regul_fixed = regul_fixed,
 
              seed_list = seed_list,
-             py = py)
+             py = py,
+             type = tid)
   }
   ) %>% setNames(types)
 

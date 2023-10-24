@@ -21,7 +21,8 @@ pyfit = function(counts,
                  regul_denovo = TRUE,
                  regul_fixed = TRUE,
                  store_fits = TRUE,
-                 filter_dn = TRUE
+                 filter_dn = TRUE,
+                 type = ""
 ) {
 
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
@@ -57,8 +58,8 @@ pyfit = function(counts,
   }
 
   # save python object data in a list
-  py_obj = get_list_from_py(bestRun, filter_dn=filter_dn)
-  py_obj$alternatives$secondBest = get_list_from_py(secondBest, filter_dn=filter_dn)
+  py_obj = get_list_from_py(bestRun, filter_dn=filter_dn, type=type)
+  py_obj$alternatives$secondBest = get_list_from_py(secondBest, filter_dn=filter_dn, type=type)
   py_obj$time = TIME
 
   return(py_obj)

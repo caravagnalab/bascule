@@ -1,10 +1,11 @@
 # add args for pyro fit; returns nmf for type t
 pyro_nmf = function(..., k_list, reference_cat, stage, cohort,
-                    filter_dn, min_exposure, keep_sigs) {
+                    filter_dn, min_exposure, keep_sigs, type="") {
 
   pyro_fit = nmf_single_type(..., k_list=k_list, reference_cat=reference_cat,
                              stage=stage, cohort=cohort, filter_dn=filter_dn,
-                             min_exposure=min_exposure, keep_sigs=keep_sigs)
+                             min_exposure=min_exposure, keep_sigs=keep_sigs,
+                             type=type)
 
   nmf_t = list(pyro=pyro_fit, exposure=pyro_fit$exposure,
                beta_fixed=pyro_fit$beta_fixed, beta_denovo=pyro_fit$beta_denovo)
@@ -14,13 +15,13 @@ pyro_nmf = function(..., k_list, reference_cat, stage, cohort,
 
 
 nmf_single_type = function(..., k_list, reference_cat, stage, cohort,
-                           filter_dn, min_exposure, keep_sigs) {
+                           filter_dn, min_exposure, keep_sigs, type="") {
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
   call_info = match.call()
 
   if (!is.null(reference_cat)) {
     x_ref = pyfit(..., k_list=0, clusters=NULL, reference_cat=reference_cat,
-                  stage="random_noise", filter_dn=FALSE)
+                  stage="random_noise", filter_dn=FALSE, type=type)
 
     x_ref_filt = x_ref %>% filter_sigs_low_expos(min_exp=min_exposure, keep_sigs=keep_sigs)
     catalogue2 = long_to_wide(dataframe=x_ref_filt$beta_fixed, what="beta")
@@ -30,7 +31,7 @@ nmf_single_type = function(..., k_list, reference_cat, stage, cohort,
   }
 
   x_dn = pyfit(..., k_list=k_list, clusters=NULL, stage=stage,
-               filter_dn=filter_dn, reference_cat=catalogue2)
+               filter_dn=filter_dn, reference_cat=catalogue2, type=type)
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
 

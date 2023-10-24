@@ -1,12 +1,32 @@
-get_list_from_py = function(py_obj, filter_dn) {
+get_list_from_py = function(py_obj, filter_dn, type="") {
   if (is.null(py_obj)) return(NULL)
 
-  x = get_list_from_py_aux(py_obj, fn=get_list_from_py)
+  py_obj = rename_denovo_py(py_obj, type=type)
+
+  x = get_list_from_py_aux(py_obj, fn=get_list_from_py, type=type)
   x$exposure = py_obj$params$alpha %>% wide_to_long(what="exposures")
   x$beta_denovo = py_obj$params$beta_d %>% wide_to_long(what="beta") %>%
     renormalize_denovo_thr(filter_dn=filter_dn)
   x$beta_fixed = py_obj$params$beta_f %>% wide_to_long(what="beta")
+
   return(x)
+}
+
+
+rename_denovo_py = function(py_obj, type) {
+  if (is.null(py_obj$params$beta_d)) return(py_obj)
+
+  new_dn_names = paste0(type, rownames(py_obj$params$beta_d))
+
+  rownames(py_obj$params$beta_d) = new_dn_names
+  colnames(py_obj$params$alpha)[grepl("^D[1-9]*$", colnames(py_obj$params$alpha))] =
+    new_dn_names
+
+  rownames(py_obj$init_params$beta_dn_param) = new_dn_names
+  colnames(py_obj$init_params$alpha)[grepl("^D[1-9]*$", colnames(py_obj$init_params$alpha))] =
+    new_dn_names
+
+  return(py_obj)
 }
 
 
@@ -22,7 +42,7 @@ get_list_from_py_clustering = function(py_obj) {
 }
 
 
-get_list_from_py_aux = function(py_obj, fn) {
+get_list_from_py_aux = function(py_obj, fn, type="") {
   x = list()
   x$params = list(infered_params = py_obj$params,
                   init_params = py_obj$init_params,
@@ -30,7 +50,7 @@ get_list_from_py_aux = function(py_obj, fn) {
 
   x$QC = get_QC_from_py(py_obj)
 
-  x$alternatives = get_alternatives_from_py(py_obj, fn=fn)
+  x$alternatives = get_alternatives_from_py(py_obj, fn=fn, type=type)
 
   try(expr = { x$seed = py_obj$seed })
 
@@ -142,7 +162,7 @@ get_QC_from_py = function(py_obj) {
 }
 
 
-get_alternatives_from_py = function(py_obj, fn) {
+get_alternatives_from_py = function(py_obj, fn, type="") {
   alt = list()
   alt$runs_seed = alt$runs_scores = alt$all_fits = NULL
 
@@ -154,7 +174,7 @@ get_alternatives_from_py = function(py_obj, fn) {
       fits_i = py_obj$fits[[i]]
       lapply(names(fits_i), function(j) {
         fits_i[[j]]$convert_to_dataframe(inp)
-        tmp = tibble::tibble(V1 = list( fn(fits_i[[j]]) ))
+        tmp = tibble::tibble(V1 = list( fn(fits_i[[j]], type=type) ))
         colnames(tmp) = j
         return(tmp)
       }) %>% dplyr::bind_cols()

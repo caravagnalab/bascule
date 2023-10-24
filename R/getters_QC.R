@@ -26,7 +26,7 @@ get_scores = function(x, types=get_types(x)) {
   if (have_groups(x)) {
     qcs_clustering = get_QC(x, what="clustering")
     scores_clustering = qcs_clustering[[vname]] %>% dplyr::mutate(type="Clustering")
-  } else score_clustering = NULL
+  } else scores_clustering = NULL
 
   return(rbind(scores_nmf, scores_clustering) %>%
            dplyr::mutate(dplyr::across(.cols=c("seed","value"), as.integer)) %>%
