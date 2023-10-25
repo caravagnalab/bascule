@@ -111,12 +111,13 @@ fit = function(counts, k_list, cluster, reference_cat,
 gen_palette = function(x=NULL, types=get_types(x), n=NULL) {
   if (!is.null(n)) return(ggsci::pal_simpsons()(n))
 
-  denovo_names = unique(unlist(get_denovo_signames(x, types=types)))
-
-  ref = COSMIC_color_palette(signames=get_fixed_signames(x, types=types))
-  dn = ggsci::pal_simpsons()(length(denovo_names)) %>%
-    setNames(denovo_names)
-  return(c(ref, dn))
+  # denovo_names = unique(unlist(get_denovo_signames(x, types=types)))
+  #
+  # ref = COSMIC_color_palette(signames=get_fixed_signames(x, types=types))
+  # dn = ggsci::pal_simpsons()(length(denovo_names)) %>%
+  #   setNames(denovo_names)
+  # return(c(ref, dn))
+  return(COSMIC_color_palette(signames=get_signames(x, types=types)))
 }
 
 
