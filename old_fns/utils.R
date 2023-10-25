@@ -90,7 +90,7 @@ get_list_from_py = function(py_obj, counts, input_catalogue, lr, n_steps, save_s
   x$bic = py_obj$bic
   x$losses = py_obj$losses
   x$gradient_norms = py_obj$gradient_norms
-  x$train_params = get_train_params(py_obj)
+  x$train_params = get_train_params_py(py_obj)
   x$hyperparameters = py_obj$hyperparameters
   try(expr = { x$seed = py_obj$seed })
 
@@ -148,7 +148,7 @@ replace_null = function(i) {
 }
 
 
-get_train_params = function(obj) {
+get_train_params_py = function(obj) {
   if (!obj$store_parameters)
     return(NULL)
   train_params = obj$train_params

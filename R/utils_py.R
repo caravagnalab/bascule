@@ -58,7 +58,7 @@ get_list_from_py_aux = function(py_obj, fn, type="") {
 }
 
 
-get_train_params = function(obj) {
+get_train_params_py = function(obj) {
   if (!obj$store_parameters) return(NULL)
   train_params = obj$train_params
   samples_names = obj$params[["alpha"]] %>% rownames()
@@ -69,12 +69,13 @@ get_train_params = function(obj) {
   params = data.frame()
 
   for (i in 1:length(train_params)) {
-    expos = train_params[[i]][["alpha"]] %>% as.data.frame()
+    pars_i = train_params[[i]]
+    expos = pars_i[["alpha"]] %>% as.data.frame()
     rownames(expos) = samples_names
     colnames(expos) = c(bfixed_names, bdenovo_names)
 
-    if ("alpha_prior" %in% names(train_params[[i]])) {
-      centroids = train_params[[i]][["alpha_prior"]] %>% as.data.frame()
+    if ("alpha_prior" %in% names(pars_i)) {
+      centroids = pars_i[["alpha_prior"]] %>% as.data.frame()
       rownames(centroids) = (1:nrow(centroids)) -1
       colnames(centroids) = c(bfixed_names, bdenovo_names)
       centroids = centroids %>% tibble::rownames_to_column(var="rowname") %>%
@@ -82,12 +83,23 @@ get_train_params = function(obj) {
         dplyr::mutate(iteration=i, paramname="centroid")
     } else { centroids = data.frame() }
 
-    if ("pi" %in% names(train_params[[i]])) {
-      pi = train_params[[i]][["pi"]] %>% as.numeric() %>% setNames((sort(unique(centroids$rowname))))
+    if (("beta_w" %in% names(pars_i))) {
+      beta_w = pars_i[["beta_w"]] %>% as.data.frame()
+      if (nrow(beta_w)>0) {
+        rownames(beta_w) = bdenovo_names
+        colnames(beta_w) = c(bfixed_names, "DN")
+        beta_w = beta_w %>% tibble::rownames_to_column(var="rowname") %>%
+          reshape2::melt(id="rowname",variable.name="columnname",value.name="value") %>%
+          dplyr::mutate(iteration=i, paramname="beta_w")
+      } else { beta_w = data.frame() }
+    } else { beta_w = data.frame() }
+
+    if ("pi" %in% names(pars_i)) {
+      pi = pars_i[["pi"]] %>% as.numeric() %>% setNames((sort(unique(centroids$rowname))))
       pi = data.frame("rowname"=names(pi),"value"=pi,"iteration"=i,"paramname"="pi")
     } else { pi = data.frame() }
 
-    sigs = train_params[[i]][["beta_d"]] %>% as.data.frame()
+    sigs = pars_i[["beta_d"]] %>% as.data.frame()
     rownames(sigs) = bdenovo_names
     colnames(sigs) = contexts
 
@@ -100,8 +112,8 @@ get_train_params = function(obj) {
         reshape2::melt(id="rowname",variable.name="columnname",value.name="value") %>%
         dplyr::mutate(iteration=i, paramname="beta_d")
     ) %>% dplyr::bind_rows(centroids) %>%
-      dplyr::bind_rows(pi)
-
+      dplyr::bind_rows(pi) %>%
+      dplyr::bind_rows(beta_w)
   }
 
   return(params)
@@ -153,7 +165,7 @@ get_QC_from_py = function(py_obj) {
             bic = py_obj$bic,
             losses = py_obj$losses,
             gradient_norms = py_obj$gradient_norms,
-            train_params = get_train_params(py_obj))
+            train_params = get_train_params_py(py_obj))
 
   if ("scores" %in% names(py_obj))
     QC$scores = get_scores_from_py(py_obj$scores)
