@@ -1,7 +1,8 @@
 plot_data = function(x, types=get_types(x), samples=get_samples(x),
-                     clusters=get_cluster_labels(x)) {
+                     clusters=get_cluster_labels(x), reconstructed=TRUE) {
 
-  counts_list = get_input(x, types=types, samples=samples, clusters=clusters)
+  counts_list = get_input(x, types=types, samples=samples, clusters=clusters,
+                          reconstructed=reconstructed)
 
   counts = lapply(types, function(tid) {
     counts_list[[tid]] %>% reformat_contexts(what=tid) %>%

@@ -102,3 +102,13 @@ get_initial_object = function(x, what="clustering") {
 }
 
 
+get_losses = function(x, what=get_fittypes(x), types=get_types(x)) {
+  lapply(what, function(whatid) {
+    lapply(types, function(tid) {
+      data.frame(loss=get_QC(x, what=whatid, types=tid)[[1]]$losses,
+                 type=tid, what=whatid)
+    }) %>% do.call(rbind, .)
+  }) %>% do.call(rbind, .)
+
+}
+

@@ -70,10 +70,19 @@ get_signatures_aux = function(x, what, types=get_types(x), matrix=FALSE) {
 
 
 get_input = function(x, types=get_types(x), samples=get_samples(x),
-                     clusters=get_cluster_labels(x), matrix=FALSE) {
+                     clusters=get_cluster_labels(x), matrix=FALSE,
+                     reconstructed=FALSE) {
   out = lapply(types, function(tid) {
-    w = x$input[[tid]]$counts %>%
-      dplyr::filter(samples %in% !!samples)
+    if (reconstructed) {
+      expos = get_exposure(x, types=tid, samples=samples, clusters=clusters, matrix=T)[[tid]]
+      betas = get_signatures(x, types=tid, matrix=T)[[tid]]
+      theta = rowSums(x$input[[tid]]$counts %>% long_to_wide(what="counts"))
+      counts_r = as.matrix(expos*theta) %*% as.matrix(betas)
+      w = counts_r %>% wide_to_long(what="counts")
+    } else {
+      w = x$input[[tid]]$counts %>%
+        dplyr::filter(samples %in% !!samples)
+    }
 
     if(!is.null(clusters)) {
       which_selection = x %>%
@@ -118,6 +127,16 @@ get_exposure = function(x, types=get_types(x), samples=get_samples(x),
 }
 
 
+get_beta_weights = function(x, types=get_types(x)) {
+  lapply(types, function(tid) {
+    get_params(x, what="nmf", types=tid)[[1]]$beta_w %>%
+      tibble::rownames_to_column(var="sigid") %>%
+      reshape2::melt(variable.name="sigs") %>%
+      dplyr::mutate(type=tid)
+  }) %>% do.call(rbind, .)
+}
+
+
 
 # Get cluster labels ("C1", "C2")
 get_cluster_labels = function(x) {
@@ -142,6 +161,12 @@ get_cluster_assignments = function(x, samples=get_samples(x), clusters=get_clust
 get_types = function(x) {
   if (is.null(x)) return(NULL)
   return(x$input %>% names())
+}
+
+
+get_fittypes = function(x) {
+  if (is.null(x)) return(NULL)
+  return(names(x)[names(x)!="input"])
 }
 
 
