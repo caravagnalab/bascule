@@ -22,9 +22,10 @@ plot_alpha_star = function(x, types=get_types(x)) {
 
 
 plot_beta_weights = function(x, types=get_types(x)) {
-  get_beta_weights(x) %>%
+  get_beta_weights(x, types=types) %>%
     ggplot() +
     geom_point(aes(x=sigs, y=sigid, size=value)) +
+    facet_grid(~type, scales="free") +
     theme_bw()
 }
 

@@ -21,7 +21,7 @@ plot_scores = function(x, types=get_types(x)) {
   scores = get_scores(x, types=types)
 
   scores %>%
-    dplyr::mutate(score=ifelse(!grepl("llik", score_id), log(score), score)) %>%
+    # dplyr::mutate(score=ifelse(!grepl("llik", score_id), log(score), score)) %>%
 
     ggplot() +
     geom_point(aes(x=value, y=score, color=factor(seed))) +
