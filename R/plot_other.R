@@ -1,3 +1,19 @@
+plot_fit = function(x) {
+  plots = list(
+    expos = plot_exposures(x),
+    sigs = plot_signatures(x),
+    muts = (plot_data(x, reconstructed=TRUE)+labs(title="Reconstructed")) %>%
+      patchwork::wrap_plots(plot_data(x, reconstructed=FALSE)+labs(title="GT"))
+  )
+
+  omega = plot_beta_weights(x)
+  if (!is.null(omega)) plots[["omega"]] = omega
+
+  design = "AABB\nCCBB\nDDBB"
+  return(patchwork::wrap_plots(plots, design=design))
+}
+
+
 plot_beta_star = function(x, types=get_types(x)) {
   lapply(types, function(tid) {
     get_params(x, what="nmf", type=tid)[[1]]$beta_star %>%
@@ -22,22 +38,14 @@ plot_alpha_star = function(x, types=get_types(x)) {
 
 
 plot_beta_weights = function(x, types=get_types(x)) {
-  get_beta_weights(x, types=types) %>%
+  beta_w = get_beta_weights(x, types=types)
+  if (is.null(beta_w)) return(NULL)
+
+  beta_w %>%
     ggplot() +
     geom_point(aes(x=sigs, y=sigid, size=value)) +
     facet_grid(~type, scales="free") +
     theme_bw()
 }
 
-
-plot_losses = function(x) {
-  losses = get_losses(x)
-  n_iters = losses %>% dplyr::group_by(type, what) %>% dplyr::summarise(n_iters=dplyr::n()) %>% dplyr::pull(n_iters) %>% unique()
-
-  losses %>%
-    ggplot() +
-    geom_line(aes(x=1:n_iters, y=loss)) +
-    facet_grid(what ~ type) +
-    theme_bw()
-}
 

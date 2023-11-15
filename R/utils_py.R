@@ -164,6 +164,8 @@ get_QC_from_py = function(py_obj) {
             n_steps = py_obj$n_steps,
             bic = py_obj$bic,
             losses = py_obj$losses,
+            penalty = py_obj$regs,
+            likelihood = py_obj$likelihoods,
             gradient_norms = py_obj$gradient_norms,
             train_params = get_train_params_py(py_obj))
 

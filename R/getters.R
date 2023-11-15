@@ -128,6 +128,8 @@ get_exposure = function(x, types=get_types(x), samples=get_samples(x),
 
 
 get_beta_weights = function(x, types=get_types(x)) {
+  if (is.null(get_params(x, what="nmf", types=types[1])[[1]]$beta_w))
+    return(NULL)
   lapply(types, function(tid) {
     get_params(x, what="nmf", types=tid)[[1]]$beta_w %>%
       tibble::rownames_to_column(var="sigid") %>%

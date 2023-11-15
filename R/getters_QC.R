@@ -98,13 +98,28 @@ get_initial_object = function(x, what="clustering") {
 }
 
 
-get_losses = function(x, what=get_fittypes(x), types=get_types(x)) {
+get_stats = function(x, what, types, statname) {
   lapply(what, function(whatid) {
     lapply(types, function(tid) {
-      data.frame(loss=get_QC(x, what=whatid, types=tid)[[1]]$losses,
-                 type=tid, what=whatid)
+      data.frame(colname=get_QC(x, what=whatid, types=tid)[[1]][[statname]],
+                 type=tid, what=whatid) %>%
+        dplyr::mutate({{statname}}:=colname, colname=NULL)
     }) %>% do.call(rbind, .)
-  }) %>% do.call(rbind, .)
+  }) %>% do.call(rbind, .) %>% tibble::as_tibble()
+}
 
+
+get_losses = function(x, what=get_fittypes(x), types=get_types(x)) {
+  get_stats(x, what, types, statname="losses")
+}
+
+
+get_likelihoods = function(x, what=get_fittypes(x), types=get_types(x)) {
+  get_stats(x, what, types, statname="likelihood")
+}
+
+
+get_penalty = function(x, what=get_fittypes(x), types=get_types(x)) {
+  get_stats(x, what, types, statname="penalty")
 }
 
