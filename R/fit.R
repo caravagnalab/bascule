@@ -1,5 +1,7 @@
 # counts is a list with input matrices, names are typenames
-fit = function(counts, k_list, cluster, reference_cat,
+fit = function(counts, k_list,
+               cluster=NULL,
+               reference_cat=list("SBS"=COSMIC_filt, "DBS"=COSMIC_dbs),
                keep_sigs = c("SBS1","SBS5"),
 
                hyperparameters = NULL,

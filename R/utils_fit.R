@@ -39,7 +39,7 @@ pyfit = function(counts,
 
   obj = py$fit(x = counts, k_list = k_list, lr = lr, optim_gamma = optim_gamma, n_steps = n_steps,
                cluster = clusters, beta_fixed = reference_cat,
-               hyperparameters = hyperparameters, nonparametric=nonparametric,
+               hyperparameters = hyperparameters, nonparametric = nonparametric,
                dirichlet_prior = dirichlet_prior, enforce_sparsity = enforce_sparsity,
                store_parameters = store_parameters, regularizer = regularizer,
                reg_weight = reg_weight, regul_compare = regul_compare,
