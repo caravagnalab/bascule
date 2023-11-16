@@ -24,7 +24,7 @@
 #' @param seed_list list of seeds to use for distinct runs
 #' @param regul_denovo add
 #' @param regul_fixed add
-#' @param save_all_fits add
+#' @param store_fits add
 #' @param do_initial_fit add
 #'
 #' @return basilica object
@@ -66,7 +66,7 @@ fit = function(x,
                # save_runs_seed=TRUE,
                # initializ_pars_fit=TRUE,
                store_parameters=FALSE,
-               save_all_fits=FALSE,
+               store_fits=FALSE,
                # do_initial_fit=FALSE,
                compile=FALSE,
                CUDA=FALSE,
@@ -137,7 +137,7 @@ fit = function(x,
     store_parameters = store_parameters,
     regul_denovo = regul_denovo,
     regul_fixed = regul_fixed,
-    save_all_fits = save_all_fits
+    store_fits = store_fits
     # do_initial_fit = do_initial_fit
     ) %>%
 

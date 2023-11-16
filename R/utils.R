@@ -25,7 +25,7 @@ pyfit = function(counts,
                  regul_denovo = TRUE,
                  regul_fixed = TRUE,
                  # verbose = FALSE,
-                 save_all_fits = FALSE
+                 store_fits = FALSE
                  # do_initial_fit = FALSE
                  ) {
 
@@ -49,12 +49,12 @@ pyfit = function(counts,
                store_parameters = store_parameters, regularizer = regularizer,
                reg_weight = reg_weight, regul_compare = regul_compare,
                regul_denovo = regul_denovo, regul_fixed = regul_fixed,
-               stage = stage, seed = seed_list, compile_model = compile,
+               stage = stage, seed_list = seed_list, compile_model = compile,
                CUDA = CUDA,
                # verbose = verbose,
                # initializ_pars_fit = initializ_pars_fit, save_runs_seed = save_runs_seed,
                # initializ_seed = initializ_seed,
-               save_all_fits = save_all_fits) # do_initial_fit = do_initial_fit
+               store_fits = store_fits) # do_initial_fit = do_initial_fit
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
 
@@ -113,11 +113,8 @@ get_list_from_py = function(py_obj, counts, input_catalogue, lr, n_steps, save_s
   if ("runs_seed" %in% names(py_obj))
     x$runs_seed = py_obj$runs_seed
 
-  if ("scores_K" %in% names(py_obj))
-    x$runs_K = get_scores_from_py(py_obj$scores_K)
-
-  if ("scores_CL" %in% names(py_obj))
-    x$runs_CL = get_scores_from_py(py_obj$scores_CL) %>% dplyr::rename(G=K)
+  if ("scores" %in% names(py_obj))
+    x$scores = get_scores_from_py(py_obj$scores)
 
   if ("all_fits" %in% names(py_obj)) {
     if (length(py_obj$all_fits) > 0) x$all_fits = NULL
@@ -185,13 +182,33 @@ get_scores_from_py = function(scores) {
 
   res = replace_null(scores) %>%
     as.data.frame(optional=TRUE, check_names=FALSE) %>%
-    reshape2::melt(value.name="score") %>%
-    tidyr::separate("variable", into=c("K", "seed", "score_id"), sep="[.]") %>%
+    reshape2::melt(value.name="score")
+  parname = ifelse(grepl("k_denovo", res$variable[1]), "K", "G")
+
+  res = res %>%
+    tidyr::separate("variable", into=c(parname, "seed", "score_id"), sep="[.]") %>%
     tibble::as_tibble() %>%
-    dplyr::select_if(dplyr::where(function(i) any(!is.na(i))))
+    dplyr::select_if(dplyr::where(function(i) any(!is.na(i)))) %>%
+    dplyr::mutate(dplyr::across(is.character, function(i)
+      stringr::str_replace_all(i, "k_denovo:|cluster:|seed:", ""))) %>%
+    tidyr::pivot_longer(cols=parname, names_to="parname")
 
   return(res)
 }
+
+
+# get_scores_from_py = function(scores) {
+#   if (is.null(scores)) return(NULL)
+#
+#   res = replace_null(scores) %>%
+#     as.data.frame(optional=TRUE, check_names=FALSE) %>%
+#     reshape2::melt(value.name="score") %>%
+#     tidyr::separate("variable", into=c("K", "seed", "score_id"), sep="[.]") %>%
+#     tibble::as_tibble() %>%
+#     dplyr::select_if(dplyr::where(function(i) any(!is.na(i))))
+#
+#   return(res)
+# }
 
 
 replace_null = function(i) {
