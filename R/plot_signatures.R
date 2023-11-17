@@ -1,10 +1,10 @@
 plot_signatures = function(x, types=get_types(x), context=T, cls=NULL,
                            signames=get_signames(x)) {
 
-  signatures = lapply(types, function(t)
-    get_signatures(x, types=t)[[t]] %>%
-      reformat_contexts(what=t) %>%
-      dplyr::mutate(type=t)) %>%
+  signatures = lapply(types, function(tid)
+    get_signatures(x, types=tid)[[tid]] %>%
+      reformat_contexts(what=tid) %>%
+      dplyr::mutate(type=tid)) %>%
     do.call(rbind, .) %>% dplyr::filter(sigs %in% unlist(signames))
 
   if (is.null(cls)) cls = gen_palette(x, types=types)

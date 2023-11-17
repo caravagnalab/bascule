@@ -14,31 +14,28 @@
 #' @export plot_similarity_reference
 
 plot_similarity_reference = function(x, reference=NULL, type="SBS", similarity_cutoff=0.8,
-                                      by_subs=FALSE, context=T, add_pheatmap=T,
-                                      similarity="cosine") {
+                                     context=T, add_pheatmap=T) {
 
-  if (is.null(reference))
-    reference = get_fixed_signatures(x, types=type, matrix=T)[[1]]
+  if (is.null(reference)) reference = get_fixed_signatures(x, types=type, matrix=T)[[type]]
+  reference = reference[!rownames(reference) %in% get_signames(x, types=type)[[type]], ]
+  if (nrow(reference) == 0) return(NULL)
+  signatures = get_signatures(x, types=type, matrix=T)[[type]]
+  denovo_sigs = get_denovo_signatures(x, types=type, matrix=F)[[type]]
+  reference_sigs = get_fixed_signatures(x, types=type, matrix=F)[[type]] %>%
+    dplyr::add_row(reference %>% wide_to_long(what="beta"))
 
   # Similarity to the reference
-  cosine_matrix <- cosine.matrix(
-    reference,
-    get_signatures(x, types=type, matrix=T)[[1]]
-  )
-
-  cosine_matrix = cosine_matrix[sort(rownames(cosine_matrix)), sort(colnames(cosine_matrix))]
+  cosine_matrix = lsa::cosine(t(rbind(reference, signatures)))
+  cosine_matrix = cosine_matrix[rownames(reference), rownames(signatures)]
 
   # Nice colors
-  color_gradient = (RColorBrewer::brewer.pal(10, 'Spectral')) %>% rev
+  color_gradient = (RColorBrewer::brewer.pal(10, "Spectral")) %>% rev
   color_gradient[1:5] = color_gradient[1:5] %>% ggplot2::alpha(0.7)
   color_breaks = seq(0, 1, 0.1)
 
   # Numbers where worth
   numbers = cosine_matrix %>% round(2)
   numbers[numbers < 0.5] = ''
-
-  BList = color_BList = NULL
-  EList = NULL
 
   cluster_rows = cluster_cols = TRUE
   if (dim(cosine_matrix)[1]==1) cluster_rows = FALSE
@@ -51,66 +48,53 @@ plot_similarity_reference = function(x, reference=NULL, type="SBS", similarity_c
     cluster_cols = cluster_cols,
     color = color_gradient,
     breaks = color_breaks,
-    border_color = 'white',
+    border_color = "white",
     cellwidth = 25,
     cellheight = 15,
-    annotation_row = BList,
-    annotation_col = EList,
-    annotation_colors = list(blacklist = color_BList, detection = color_EList),
     display_numbers = numbers
   ) %>% ggplotify::as.ggplot()
 
   # De novo comparisons
-  if(get_denovo_signames(x)[[type]] %>% length() > 0)
-  {
-    signames = get_denovo_signames(bas_fit, types=type)[[type]]
-    cosine_matrix_dn = tibble::as_tibble(cosine_matrix)[, signames] %>%
+  if(nrow(denovo_sigs) > 0) {
+    denovo_signames = denovo_sigs$sigs %>% unique()
+    cosine_matrix_dn = tibble::as_tibble(cosine_matrix)[, denovo_signames] %>%
       apply(2, which.max)
 
-    cosine_matrix_dnm = tibble::as_tibble(cosine_matrix[, signames]) %>%
+    cosine_matrix_dnm = tibble::as_tibble(cosine_matrix[, denovo_signames]) %>%
       apply(2, max)
 
     extra_plots = NULL
 
-    for(i in 1:length(cosine_matrix_dn))
-    {
-      target = get_fixed_signatures(x, types=type)[[type]] %>%
+    colpalette = COSMIC_color_palette(signames=unique(c(rownames(cosine_matrix), colnames(cosine_matrix))))
+    for(i in 1:length(cosine_matrix_dn)) {
+      ref = reference_sigs %>%
         dplyr::filter(sigs == rownames(cosine_matrix)[cosine_matrix_dn[i]])
 
-      reference = get_denovo_signatures(x, types=type)[[type]] %>%
-        dplyr::filter(sigs == signames[i]) %>%
+      dn = denovo_sigs %>%
+        dplyr::filter(sigs == names(cosine_matrix_dn)[i]) %>%
         dplyr::mutate(value = -1 * value)
 
-      sigs = dplyr::bind_rows(target, reference)
-
-      sigs = sigs %>% reformat_contexts(what="SBS")
-      print(sigs)
+      sigs = dplyr::bind_rows(ref, dn) %>% reformat_contexts(what="SBS")
 
       max_range = sigs$value %>% abs %>% max
       brange = seq(- max_range, max_range, max_range/5) %>% round(3)
 
-      col = gen_palette(x, types=type)
-
       plt = ggplot2::ggplot(sigs) +
-        ggplot2::geom_bar(
-          ggplot2::aes(x = context, y = value, fill = sigs),
-          stat = "identity",
-          position = "identity") +
-        ggplot2::facet_wrap(~variant, nrow = 1) +
+        ggplot2::geom_bar(ggplot2::aes(x=context, y=value, fill=sigs),
+                          stat="identity", position="identity") +
+        ggplot2::facet_wrap(~ variant, nrow=1) +
         ggplot2::theme_bw() +
-        ggplot2::theme(
-          axis.text.x = ggplot2::element_text(angle = 90, hjust = 0),
-          axis.text.y = ggplot2::element_blank()
-        ) +
+        ggplot2::theme(axis.text.x=ggplot2::element_text(angle=90, hjust=0),
+                       axis.text.y=ggplot2::element_blank()) +
         ggplot2::ylim(-max_range, max_range) +
-        ggplot2::scale_fill_manual(values = col) +
+        ggplot2::scale_fill_manual(values=colpalette) +
         ggplot2::labs(
-          title = bquote(
-            .(names(col)[1])~'vs'~
-              .(names(col)[2])~"cosine similarity"~theta~ '='~.(cosine_matrix_dnm[i]))
+          title=bquote(
+            .(unique(ref$sigs)) ~ "vs" ~
+              .(unique(dn$sigs))~"cosine similarity" ~ theta ~ "=" ~ .(cosine_matrix_dnm[i]))
         )
 
-      if(context == F){ plt = plt + theme(axis.ticks.x = element_blank(),axis.text.x = element_blank()) + labs(x = "")}
+      if(context == F) { plt = plt + theme(axis.ticks.x=element_blank(), axis.text.x=element_blank()) + labs(x="")}
 
       extra_plots = append(extra_plots, list(plt))
     }
