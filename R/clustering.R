@@ -30,8 +30,7 @@ pyro_clustering = function(exposures, cluster, lr=0.005, n_steps=3000,
 
   # save python object data in a list
   pyro_fit = get_list_from_py_clustering(bestRun)
-  pyro_fit$pyro$alternatives$secondBest = get_list_from_py_clustering(secondBest,
-                                                                      filter_dn=filter_dn)
+  pyro_fit$pyro$alternatives$secondBest = get_list_from_py_clustering(secondBest)
   pyro_fit$pyro$time = TIME
 
   # clustering = list(pyro=pyro_fit,

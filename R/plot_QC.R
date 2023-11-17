@@ -21,25 +21,22 @@ plot_scores = function(x, types=get_types(x)) {
   scores = get_scores(x, types=types)
 
   scores %>%
-    # dplyr::mutate(score=ifelse(!grepl("llik", score_id), log(score), score)) %>%
-
     ggplot() +
-    geom_point(aes(x=value, y=score, color=factor(seed))) +
-    geom_line(aes(x=value, y=score, color=factor(seed))) +
+    geom_point(aes(x=as.integer(value), y=score, color=factor(seed))) +
+    geom_line(aes(x=as.integer(value), y=score, color=factor(seed))) +
     ggh4x::facet_nested_wrap(type + parname ~score_id, scales="free",
                              nrow=length(unique(scores$type))) +
-    theme_bw() + labs(title="Scores") + xlab("K") + ylab("Score")
+    theme_bw() + labs(title="Scores") + xlab("") + ylab("Score")
 
 }
 
 
 plot_losses = function(x) {
   losses = get_losses(x)
-  n_iters = losses %>% dplyr::group_by(type, what) %>% dplyr::summarise(n_iters=dplyr::n()) %>% dplyr::pull(n_iters) %>% unique()
 
   losses %>%
     ggplot() +
-    geom_line(aes(x=1:n_iters, y=losses)) +
+    geom_line(aes(x=iteration, y=losses)) +
     facet_grid(what ~ type) +
     theme_bw() + xlab("Iterations") + ylab("Loss") +
     labs(title="Loss")
@@ -48,12 +45,10 @@ plot_losses = function(x) {
 
 plot_likelihoods = function(x) {
   likelihoods = get_likelihoods(x)
-  n_iters = likelihoods %>% dplyr::group_by(type, what) %>%
-    dplyr::summarise(n_iters=dplyr::n()) %>% dplyr::pull(n_iters) %>% unique()
 
   likelihoods %>%
     ggplot() +
-    geom_line(aes(x=1:n_iters, y=likelihood)) +
+    geom_line(aes(x=iteration, y=likelihood)) +
     facet_grid(what ~ type) +
     theme_bw() + xlab("Iterations") + ylab("Log-likelihood") +
     labs(title="Log-likelihood")
@@ -62,11 +57,10 @@ plot_likelihoods = function(x) {
 
 plot_penalty = function(x) {
   penalty = get_penalty(x)
-  n_iters = penalty %>% dplyr::group_by(type, what) %>% dplyr::summarise(n_iters=dplyr::n()) %>% dplyr::pull(n_iters) %>% unique()
 
   penalty %>%
     ggplot() +
-    geom_line(aes(x=1:n_iters, y=penalty)) +
+    geom_line(aes(x=iteration, y=penalty)) +
     facet_grid(what ~ type) +
     theme_bw() + xlab("Iterations") + ylab("Penalty") +
     labs(title="Penalty")

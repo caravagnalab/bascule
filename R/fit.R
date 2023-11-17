@@ -62,9 +62,6 @@ fit = function(counts, k_list,
 
              stage = stage,  # remove
 
-             dirichlet_prior = dirichlet_prior,  # remove
-             enforce_sparsity = enforce_sparsity,  # remove
-
              filter_dn = filter_dn,
              min_exposure = min_exposure,
              CUDA = CUDA,
@@ -72,12 +69,6 @@ fit = function(counts, k_list,
 
              store_parameters = store_parameters,
              store_fits = store_fits,
-
-             reg_weight = reg_weight,
-             regularizer = regularizer,
-             regul_compare = regul_compare,
-             regul_denovo = regul_denovo,
-             regul_fixed = regul_fixed,
 
              seed_list = seed_list,
              py = py,

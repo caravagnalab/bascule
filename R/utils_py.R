@@ -31,6 +31,7 @@ rename_denovo_py = function(py_obj, type) {
 
 
 get_list_from_py_clustering = function(py_obj) {
+  if (is.null(py_obj)) return(NULL)
   x = list()
   x$pyro = get_list_from_py_aux(py_obj, fn=get_list_from_py_clustering)
   x$clusters = tibble::tibble(samples = rownames(py_obj$alpha),

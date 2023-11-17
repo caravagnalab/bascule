@@ -1,7 +1,7 @@
 get_gradient_norms = function(x, types=get_types(x)) {
   vname = "gradient_norms"
   qcs_nmf = get_QC(x, what="nmf", types=types)
-  qcs_clustering = get_QC(x, what="clustering")
+  qcs_clustering = get_QC(x, what="clustering")[[1]]
   norms_nmf = lapply(types, function(tid) qcs_nmf[[tid]][[vname]] %>% as.data.frame() %>%
            tibble::rownames_to_column(var="step") %>%
            reshape2::melt(id="step", variable.name="parameter", value.name="value") %>%
@@ -24,7 +24,7 @@ get_scores = function(x, types=get_types(x)) {
     do.call(rbind, .)
 
   if (have_groups(x)) {
-    qcs_clustering = get_QC(x, what="clustering")
+    qcs_clustering = get_QC(x, what="clustering")[[1]]
     scores_clustering = qcs_clustering[[vname]] %>% dplyr::mutate(type="Clustering")
   } else scores_clustering = NULL
 
@@ -69,7 +69,7 @@ get_pyro_stat = function(x, what, statname, types=get_types(x)) {
   if (what=="nmf") return(
     lapply(types, function(tid) x[[what]][[tid]][["pyro"]][[statname]]) %>% setNames(types)
   )
-  if (what=="clustering") return(x[[what]][["pyro"]][[statname]])
+  if (what=="clustering") return(list(x[[what]][["pyro"]][[statname]]))
   cli::cli_alert_warning("`what` must be either 'nmf' or 'clustering'")
 }
 
@@ -101,6 +101,8 @@ get_initial_object = function(x, what="clustering") {
 get_stats = function(x, what, types, statname) {
   lapply(what, function(whatid) {
     lapply(types, function(tid) {
+      stat_i = get_QC(x, what=whatid, types=tid)[[1]][[statname]]
+      if (is.null(stat_i) || length(stat_i)==0) return(data.frame())
       data.frame(colname=get_QC(x, what=whatid, types=tid)[[1]][[statname]],
                  type=tid, what=whatid) %>%
         dplyr::mutate({{statname}}:=colname, colname=NULL)
@@ -110,16 +112,22 @@ get_stats = function(x, what, types, statname) {
 
 
 get_losses = function(x, what=get_fittypes(x), types=get_types(x)) {
-  get_stats(x, what, types, statname="losses")
+  get_stats(x, what, types, statname="losses") %>%
+    dplyr::group_by(type, what) %>%
+    dplyr::mutate(iteration=1:dplyr::n())
 }
 
 
 get_likelihoods = function(x, what=get_fittypes(x), types=get_types(x)) {
-  get_stats(x, what, types, statname="likelihood")
+  get_stats(x, what, types, statname="likelihood") %>%
+    dplyr::group_by(type, what) %>%
+    dplyr::mutate(iteration=1:dplyr::n())
 }
 
 
 get_penalty = function(x, what=get_fittypes(x), types=get_types(x)) {
-  get_stats(x, what, types, statname="penalty")
+  get_stats(x, what, types, statname="penalty") %>%
+    dplyr::group_by(type, what) %>%
+    dplyr::mutate(iteration=1:dplyr::n())
 }
 

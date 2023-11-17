@@ -9,7 +9,6 @@ pyro_nmf = function(..., k_list, reference_cat, stage, cohort,
 
   nmf_t = list(pyro=pyro_fit, exposure=pyro_fit$exposure,
                beta_fixed=pyro_fit$beta_fixed, beta_denovo=pyro_fit$beta_denovo)
-  # x$nmf[[type]] = nmf_t
   return(nmf_t)
 }
 
@@ -45,12 +44,13 @@ nmf_single_type = function(..., k_list, reference_cat, stage, cohort,
 
 renormalize_denovo_thr = function(beta_denovo, thr=0.02, filter_dn=TRUE) {
   if (is.null(beta_denovo)) return(NULL)
+  if (!filter_dn) return(beta_denovo)
 
   return(
     beta_denovo %>%
       dplyr::mutate(value=replace(value, value<thr, 0)) %>%
       dplyr::group_by(sigs) %>%
-      dplyr::mutate(value=value/sum(value)) %>%
+      dplyr::mutate(value=value/(sum(value)+1e-10)) %>%
       dplyr::ungroup()
   )
 }
