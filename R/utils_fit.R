@@ -14,7 +14,7 @@ pyfit = function(counts,
                  seed_list = c(10),
                  store_fits = TRUE,
                  store_parameters = FALSE,
-                 filter_dn = TRUE,
+                 filter_dn = FALSE,
                  type = ""
 ) {
 

@@ -19,7 +19,7 @@ fit = function(counts, k_list,
                dirichlet_prior = TRUE,  # remove
                enforce_sparsity = TRUE,  # remove
 
-               filter_dn = TRUE,
+               filter_dn = FALSE,
                min_exposure = 0.2,
                CUDA = TRUE,
                compile = FALSE,

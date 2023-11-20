@@ -1,4 +1,4 @@
-get_list_from_py = function(py_obj, filter_dn=TRUE, type="") {
+get_list_from_py = function(py_obj, filter_dn=FALSE, type="") {
   if (is.null(py_obj)) return(NULL)
 
   py_obj = rename_denovo_py(py_obj, type=type)

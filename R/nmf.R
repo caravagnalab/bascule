@@ -42,7 +42,7 @@ nmf_single_type = function(..., k_list, reference_cat, stage, cohort,
 }
 
 
-renormalize_denovo_thr = function(beta_denovo, thr=0.02, filter_dn=TRUE) {
+renormalize_denovo_thr = function(beta_denovo, thr=0.02, filter_dn=FALSE) {
   if (is.null(beta_denovo)) return(NULL)
   if (!filter_dn) return(beta_denovo)
 
