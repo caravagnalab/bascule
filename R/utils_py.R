@@ -19,14 +19,29 @@ rename_denovo_py = function(py_obj, type) {
   new_dn_names = paste0(type, rownames(py_obj$params$beta_d))
 
   rownames(py_obj$params$beta_d) = new_dn_names
-  colnames(py_obj$params$alpha)[grepl("^D[1-9]*$", colnames(py_obj$params$alpha))] =
+  colnames(py_obj$params$alpha)[grepl("^D[0-9]*$", colnames(py_obj$params$alpha))] =
     new_dn_names
 
   rownames(py_obj$init_params$beta_dn_param) = new_dn_names
-  colnames(py_obj$init_params$alpha)[grepl("^D[1-9]*$", colnames(py_obj$init_params$alpha))] =
+  colnames(py_obj$init_params$alpha)[grepl("^D[0-9]*$", colnames(py_obj$init_params$alpha))] =
     new_dn_names
 
   return(py_obj)
+}
+
+
+rename_dn_expos = function(x) {
+  for (tid in get_types(x)) {
+    signames = get_signames(x, types=tid)[[tid]]
+    expos = get_exposure(x, types=tid, matrix=T)[[tid]]
+    colnames(expos) = signames
+
+    x$nmf[[tid]]$exposure = wide_to_long(expos, what="exposures")
+    x$nmf[[tid]]$pyro$params$infered_params$alpha = expos
+    colnames(x$nmf[[tid]]$pyro$params$init_params$alpha) = signames
+  }
+
+  return(x)
 }
 
 
