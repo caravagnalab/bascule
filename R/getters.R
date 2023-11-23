@@ -207,5 +207,12 @@ long_to_wide = function(dataframe, what) {
 }
 
 
+get_centroids = function(x, matrix=F) {
+  if (matrix)
+    return(x$clustering$centroids %>% tidyr::pivot_wider(names_from="sigs", values_from="value") %>%
+             tibble::column_to_rownames(var="clusters"))
+  return(x$clustering$centroids)
+}
+
 
 

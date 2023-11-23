@@ -1,3 +1,4 @@
+
 plot_beta_star = function(x, types=get_types(x)) {
   lapply(types, function(tid) {
     get_params(x, what="nmf", type=tid)[[1]]$beta_star %>%

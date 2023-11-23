@@ -1,7 +1,7 @@
 plot_posterior_probs = function(x) {
   if (!have_groups(x)) return(NULL)
 
-  params = get_pyro_stat(x,what="clustering",statname="params")$infered_params
+  params = get_pyro_stat(x,what="clustering",statname="params")[[1]]$infered_params
   return(pheatmap::pheatmap(params$post_probs, cluster_rows=T, cluster_cols=F))
 }
 
@@ -37,19 +37,19 @@ plot_losses = function(x) {
   losses %>%
     ggplot() +
     geom_line(aes(x=iteration, y=losses)) +
-    facet_grid(what ~ type) +
+    facet_grid(what ~ type, scales="free") +
     theme_bw() + xlab("Iterations") + ylab("Loss") +
     labs(title="Loss")
 }
 
 
 plot_likelihoods = function(x) {
-  likelihoods = get_likelihoods(x)
+  likelihoods = get_likelihoods(x, what="nmf")
 
   likelihoods %>%
     ggplot() +
     geom_line(aes(x=iteration, y=likelihood)) +
-    facet_grid(what ~ type) +
+    facet_grid(what ~ type, scales="free") +
     theme_bw() + xlab("Iterations") + ylab("Log-likelihood") +
     labs(title="Log-likelihood")
 }
@@ -57,11 +57,12 @@ plot_likelihoods = function(x) {
 
 plot_penalty = function(x) {
   penalty = get_penalty(x)
+  if (is.null(penalty)) return(NULL)
 
   penalty %>%
     ggplot() +
     geom_line(aes(x=iteration, y=penalty)) +
-    facet_grid(what ~ type) +
+    facet_grid(what ~ type, scales="free") +
     theme_bw() + xlab("Iterations") + ylab("Penalty") +
     labs(title="Penalty")
 }

@@ -31,15 +31,35 @@ rename_denovo_py = function(py_obj, type) {
 
 
 rename_dn_expos = function(x) {
+  map_names = c()
   for (tid in get_types(x)) {
     signames = get_signames(x, types=tid)[[tid]]
     expos = get_exposure(x, types=tid, matrix=T)[[tid]]
+
+    if (all(signames == colnames(expos))) {
+      map_names = c(map_names, signames) %>% setNames(c(names(map_names), signames))
+      next
+    }
+
+    map_names = c(map_names, signames) %>% setNames(c(names(map_names), colnames(expos)))
     colnames(expos) = signames
 
     x$nmf[[tid]]$exposure = wide_to_long(expos, what="exposures")
     x$nmf[[tid]]$pyro$params$infered_params$alpha = expos
     colnames(x$nmf[[tid]]$pyro$params$init_params$alpha) = signames
   }
+
+  centroids = get_centroids(x, matrix=T)
+  alpha_prior_names = colnames(centroids)
+  new_names = data.frame(alpha_prior_names) %>%
+    tidyr::separate(alpha_prior_names, into=c("var_id", "old_sigs")) %>%
+    dplyr::mutate(new_sig=ifelse(old_sigs %in% names(map_names), map_names[old_sigs], old_sigs)) %>%
+    dplyr::mutate(new_signame=paste(var_id, new_sig, sep="_"), old_signame=paste(var_id, old_sigs, sep="_"))
+  map_names2 = new_names$new_signame %>% setNames(new_names$old_signame)
+
+  colnames(x$clustering$pyro$params$infered_params$alpha_prior) = map_names2
+  colnames(x$clustering$pyro$params$init_params$alpha_prior_param) = map_names2
+  x$clustering$centroids = x$clustering$centroids %>% dplyr::mutate(sigs=map_names2[sigs])
 
   return(x)
 }
@@ -169,8 +189,8 @@ get_scores_from_py = function(scores) {
 }
 
 
-replace_null = function(i) {
-  j = purrr::map(i, ~ replace(.x, is.null(.x), NA))
+replace_null = function(i, value=NA) {
+  j = purrr::map(i, ~ replace(.x, is.null(.x), value))
   purrr::map(j, ~ (if(is.list(.x)) replace_null(.x) else .x))
 }
 

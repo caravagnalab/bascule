@@ -30,26 +30,12 @@ plot_exposures = function(x, types=get_types(x), samples=get_samples(x),
 
 
 plot_centroids = function(x, cls=NULL, sigs_levels=NULL, flip_coord=FALSE, sort_by=NULL) {
-  a_pr = get_centroids(x, normalize=T)
-  grps = rownames(a_pr)
-  a_pr = a_pr[as.character(grps),]
-  rownames(a_pr) = paste0("G", grps %>% stringr::str_replace_all("G",""))
-
-  if (is.null(cls) && !have_color_palette(x))
-    cls = gen_palette(ncol(a_pr)) %>% setNames(colnames(a_pr))
-  else if (is.null(cls) && have_color_palette(x))
-    cls = get_color_palette(x)
-
-  if (is.null(sigs_levels))
-    sigs_levels = sort(colnames(a_pr %>% dplyr::select(-dplyr::contains("groups"))))
-
-  a_pr = a_pr %>% as.data.frame() %>% tibble::rownames_to_column(var="sample") %>%
-    reshape2::melt(id="sample", variable.name="Signature", value.name="alpha")
+  a_pr = get_centroids(x) %>% dplyr::mutate(clusters=paste0("G",stringr::str_replace_all(clusters,"G","")), type="Clustering") %>%
+    dplyr::rename(samples=clusters)
 
   return(
-    plot_exposures_aux(expos=a_pr, cls=cls, titlee="Centroids", sigs_level=sigs_levels,
-                       sample_name=TRUE, flip_coor=flip_coord, facet=FALSE,
-                       sample_levels=paste0("G", sort(grps) %>% stringr::str_replace_all("G","")))
+    plot_exposures_aux(exposures=a_pr, cls=cls, titlee="Centroids",
+                       sample_name=TRUE, sample_levels=NULL)
   )
 }
 

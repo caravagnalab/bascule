@@ -67,7 +67,11 @@ get_QC = function(x, what, types=get_types(x)) {
 get_pyro_stat = function(x, what, statname, types=get_types(x)) {
   what = tolower(what)
   if (what=="nmf") return(
-    lapply(types, function(tid) x[[what]][[tid]][["pyro"]][[statname]]) %>% setNames(types)
+    lapply(types, function(tid) {
+      val = x[[what]][[tid]][["pyro"]][[statname]]
+      if (is.null(val)) return(NULL)
+      return(val)
+    }) %>% setNames(types)
   )
   if (what=="clustering") return(list(x[[what]][["pyro"]][[statname]]))
   cli::cli_alert_warning("`what` must be either 'nmf' or 'clustering'")
@@ -80,7 +84,7 @@ get_params = function(x, what, types=get_types(x)) {
     return(
       lapply(types, function(tid) params[[tid]]$infered_params)
     )
-  return(params$infered_params)
+  return(params[[1]]$infered_params)
 }
 
 
@@ -102,7 +106,7 @@ get_stats = function(x, what, types, statname) {
   lapply(what, function(whatid) {
     lapply(types, function(tid) {
       stat_i = get_QC(x, what=whatid, types=tid)[[1]][[statname]]
-      if (is.null(stat_i) || length(stat_i)==0) return(data.frame())
+      if (is.null(stat_i) || all(sapply(stat_i, is.null)) || length(stat_i)==0) return(data.frame())
       data.frame(colname=get_QC(x, what=whatid, types=tid)[[1]][[statname]],
                  type=tid, what=whatid) %>%
         dplyr::mutate({{statname}}:=colname, colname=NULL)
@@ -126,7 +130,10 @@ get_likelihoods = function(x, what=get_fittypes(x), types=get_types(x)) {
 
 
 get_penalty = function(x, what=get_fittypes(x), types=get_types(x)) {
-  get_stats(x, what, types, statname="penalty") %>%
+  penalty = get_stats(x, what, types, statname="penalty")
+  if (nrow(penalty) == 0) return(NULL)
+
+  penalty %>%
     dplyr::group_by(type, what) %>%
     dplyr::mutate(iteration=1:dplyr::n())
 }
