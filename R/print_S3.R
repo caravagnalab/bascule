@@ -27,7 +27,7 @@ print.basilica_obj = function(x, ...)
     writeLines(paste0("\t", capture.output(get_fixed_signatures(x, matrix=T)[[t]][, 1:ncol] %>% print())))
 
 
-    if (!is.null(x$fit$denovo_signatures)) {
+    if (!is.null(get_denovo_signatures(x))) {
       cli::cli_h3("De novo signatures (5 columns shown max)"%>% crayon::yellow())
 
       writeLines(paste0("\t", capture.output(
