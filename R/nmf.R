@@ -42,6 +42,23 @@ nmf_single_type = function(..., k_list, reference_cat, stage, cohort,
 }
 
 
+set_attribute = function(x, what, type, name, value) {
+  if (what == "nmf") x[[what]][[type]][[name]] = value
+  if (what == "clustering") x[[what]][[name]] = value
+  return(x)
+}
+
+
+filter_denovo = function(x, types=get_types(x), thr=0.02) {
+  for (tid in types) {
+    denovo = get_denovo_signatures(x, types=tid, matrix=F)[[tid]] %>%
+      renormalize_denovo_thr(thr=thr, filter_dn=T)
+    x = set_attribute(x, what="nmf", type=tid, name="beta_denovo", value=denovo)
+  }
+  return(x)
+}
+
+
 renormalize_denovo_thr = function(beta_denovo, thr=0.02, filter_dn=FALSE) {
   if (is.null(beta_denovo)) return(NULL)
   if (!filter_dn) return(beta_denovo)
