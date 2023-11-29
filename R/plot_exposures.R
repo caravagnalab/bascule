@@ -9,14 +9,8 @@ plot_exposures = function(x, types=get_types(x), samples=get_samples(x),
       dplyr::mutate(type=t)) %>%
     do.call(rbind, .)
 
-  # if (!have_groups(x)) add_centroid = FALSE
-
   if (is.null(cls)) cls = gen_palette(x, types=types)
   if (is.null(sigs_levels)) sigs_levels = sort(get_signames(x, types=types) %>% unlist(use.names=F))
-
-  # if (add_centroid)
-  #   p_centr = plot_centroids(x, cls=cls, sigs_levels=sigs_levels,
-  #                            flip_coord=flip_coord, sort_by=sort_by)
 
   p = plot_exposures_aux(exposures=exposures, cls=cls, titlee="Exposure",
                          sigs_level=sigs_levels, sample_name=sample_name,
@@ -28,10 +22,22 @@ plot_exposures = function(x, types=get_types(x), samples=get_samples(x),
   return(p)
 }
 
+match_type = function(types, sigs) {
+  sapply(sigs, function(sid) {
+    matches = sapply(types, function(tid) grepl(tid, x=sid))
+    return(names(matches[matches==TRUE]))
+  }) %>% setNames(NULL)
+}
 
-plot_centroids = function(x, cls=NULL, sigs_levels=NULL, flip_coord=FALSE, sort_by=NULL) {
-  a_pr = get_centroids(x) %>% dplyr::mutate(clusters=paste0("G",stringr::str_replace_all(clusters,"G","")), type="Clustering") %>%
-    dplyr::rename(samples=clusters)
+
+plot_centroids = function(x, type=get_types(x), cls=NULL, sigs_levels=NULL, flip_coord=FALSE, sort_by=NULL) {
+  a_pr = get_centroids(x) %>%
+    dplyr::mutate(clusters=paste0("G",stringr::str_replace_all(clusters,"G",""))) %>%
+    tidyr::separate(col="sigs", into=c("else","sigs"), sep="_") %>% dplyr::mutate("else"=NULL) %>%
+    dplyr::rename(samples=clusters) %>%
+    dplyr::mutate(type=match_type(types, sigs))
+
+  if (is.null(cls)) cls = gen_palette(x, types=types)
 
   return(
     plot_exposures_aux(exposures=a_pr, cls=cls, titlee="Centroids",
