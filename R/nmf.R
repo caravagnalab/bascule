@@ -1,9 +1,9 @@
 # add args for pyro fit; returns nmf for type t
-pyro_nmf = function(..., k_list, reference_cat, stage, cohort,
+pyro_nmf = function(..., k_list, reference_cat, cohort,
                     filter_dn, min_exposure, keep_sigs, type="") {
 
   pyro_fit = nmf_single_type(..., k_list=k_list, reference_cat=reference_cat,
-                             stage=stage, cohort=cohort, filter_dn=filter_dn,
+                             cohort=cohort, filter_dn=filter_dn,
                              min_exposure=min_exposure, keep_sigs=keep_sigs,
                              type=type)
 
@@ -13,7 +13,7 @@ pyro_nmf = function(..., k_list, reference_cat, stage, cohort,
 }
 
 
-nmf_single_type = function(..., k_list, reference_cat, stage, cohort,
+nmf_single_type = function(..., k_list, reference_cat, cohort,
                            filter_dn, min_exposure, keep_sigs, type="") {
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
   call_info = match.call()
@@ -29,7 +29,7 @@ nmf_single_type = function(..., k_list, reference_cat, stage, cohort,
     residues = FALSE
   }
 
-  x_dn = pyfit(..., k_list=k_list, clusters=NULL, stage=stage,
+  x_dn = pyfit(..., k_list=k_list, clusters=NULL, stage="",
                filter_dn=filter_dn, reference_cat=catalogue2, type=type)
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")

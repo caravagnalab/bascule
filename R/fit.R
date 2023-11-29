@@ -11,13 +11,8 @@ fit = function(counts, k_list,
                n_steps = 3000,
                py = NULL,
 
-               stage = "",  # remove
-
                enumer = "parallel",
                nonparametric = TRUE,
-
-               dirichlet_prior = TRUE,  # remove
-               enforce_sparsity = TRUE,  # remove
 
                filter_dn = FALSE,
                min_exposure = 0.2,
@@ -26,12 +21,6 @@ fit = function(counts, k_list,
 
                store_parameters = FALSE,
                store_fits = FALSE,
-
-               reg_weight = 0.,
-               regularizer = "cosine",
-               regul_compare = NULL,
-               regul_denovo = TRUE,
-               regul_fixed = TRUE,
 
                seed_list = c(10)) {
   if (!is.list(counts)) counts = list("T1"=counts)
@@ -60,8 +49,6 @@ fit = function(counts, k_list,
              optim_gamma = optim_gamma,
              n_steps = n_steps,
 
-             stage = stage,  # remove
-
              filter_dn = filter_dn,
              min_exposure = min_exposure,
              CUDA = CUDA,
@@ -77,27 +64,91 @@ fit = function(counts, k_list,
   ) %>% setNames(types)
 
   # clustering contains the clustering
-  exposures = get_exposure(bas, matrix=TRUE)
-  bas$clustering = pyro_clustering(exposures = exposures,
-                                   cluster = cluster,
+  bas = fit_clustering(bas,
+                       cluster = cluster,
 
-                                   enumer = enumer,
-                                   nonparametric = nonparametric,
+                       enumer = enumer,
+                       nonparametric = nonparametric,
 
-                                   hyperparameters = hyperparameters,
+                       hyperparameters = hyperparameters,
 
-                                   lr = lr,
-                                   optim_gamma = optim_gamma,
-                                   n_steps = n_steps,
+                       lr = lr,
+                       optim_gamma = optim_gamma,
+                       n_steps = n_steps,
 
-                                   CUDA = CUDA,
+                       CUDA = CUDA,
 
-                                   store_parameters = store_parameters,
-                                   store_fits = store_fits,
+                       store_parameters = store_parameters,
+                       store_fits = store_fits,
 
-                                   seed_list = seed_list,
-                                   py = py)
+                       seed_list = seed_list,
+                       py = py)
+
+  # exposures = get_exposure(bas, matrix=TRUE)
+  # bas$clustering = pyro_clustering(exposures = exposures,
+  #                                  cluster = cluster,
+  #
+  #                                  enumer = enumer,
+  #                                  nonparametric = nonparametric,
+  #
+  #                                  hyperparameters = hyperparameters,
+  #
+  #                                  lr = lr,
+  #                                  optim_gamma = optim_gamma,
+  #                                  n_steps = n_steps,
+  #
+  #                                  CUDA = CUDA,
+  #
+  #                                  store_parameters = store_parameters,
+  #                                  store_fits = store_fits,
+  #
+  #                                  seed_list = seed_list,
+  #                                  py = py)
   return(bas)
+}
+
+
+
+fit_clustering = function(x,
+                          cluster,
+                          hyperparameters = NULL,
+
+                          lr = 0.005,
+                          optim_gamma = 0.1,
+                          n_steps = 3000,
+                          py = NULL,
+
+                          enumer = "parallel",
+                          nonparametric = TRUE,
+
+                          CUDA = TRUE,
+                          compile = FALSE,
+
+                          store_parameters = FALSE,
+                          store_fits = FALSE,
+
+                          seed_list = c(10)) {
+  exposures = get_exposure(x, matrix=TRUE)
+  x$clustering = pyro_clustering(exposures = exposures,
+                                 cluster = cluster,
+
+                                 enumer = enumer,
+                                 nonparametric = nonparametric,
+
+                                 hyperparameters = hyperparameters,
+
+                                 lr = lr,
+                                 optim_gamma = optim_gamma,
+                                 n_steps = n_steps,
+
+                                 CUDA = CUDA,
+
+                                 store_parameters = store_parameters,
+                                 store_fits = store_fits,
+
+                                 seed_list = seed_list,
+                                 py = py)
+  return(x)
 }
 
 

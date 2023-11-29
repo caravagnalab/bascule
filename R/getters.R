@@ -139,6 +139,13 @@ get_beta_weights = function(x, types=get_types(x)) {
 }
 
 
+get_mixing_proportions = function(x) {
+  if (!have_groups(x)) return(NULL)
+  pis = get_params(x, what="clustering")$pi
+  data.frame(value=pis, clusters=paste0("G",1:length(pis)-1))
+}
+
+
 
 # Get cluster labels ("C1", "C2")
 get_cluster_labels = function(x) {

@@ -1,3 +1,21 @@
+plot_mixture_weights = function(x) {
+  pis = get_mixing_proportions(x)
+  cls = gen_palette(n=nrow(pis)) %>% setNames(pis$clusters)
+
+  return(
+    pis %>%
+      # dplyr::rename(mixt_w=weights) %>%
+      ggplot() +
+      geom_bar(aes(x=clusters, y=value, fill=clusters), stat="identity") +
+      # geom_bar(aes(x=labels, y=ISs, fill=labels), stat="identity") +
+      scale_fill_manual(values=cls) +
+      guides(fill="none") +
+      xlab("Clusters") + theme_bw() +
+      theme(axis.title.y.right=element_text(angle=90))
+  )
+}
+
+
 
 plot_beta_star = function(x, types=get_types(x)) {
   lapply(types, function(tid) {

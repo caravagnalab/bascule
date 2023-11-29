@@ -89,10 +89,13 @@ get_params = function(x, what, types=get_types(x)) {
 
 
 get_initial_object = function(x, what="clustering") {
-  stopifnot(what=="clustering")
+  if (what!="clustering" || !have_groups(x)) {
+    cli::cli_alert_warning("what != 'clustering' or no groups are in the input object, the input object will be returned.")
+    return(x)
+  }
 
   init_params = get_pyro_stat(x, what=what, statname="params")[[1]]$init_params
-  x[[what]]$pyro$params = init_params
+  x[[what]]$pyro$params$infered_params = init_params
   x[[what]]$clusters = tibble::tibble(samples=get_samples(x),
                                       clusters=paste0("G",init_params$init_clusters))
   x[[what]]$centroids = init_params$alpha_prior %>%
