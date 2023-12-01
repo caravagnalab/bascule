@@ -73,7 +73,8 @@ get_list_from_py_clustering = function(py_obj, type="") {
                               clusters = paste0("G",py_obj$groups))
   x$centroids = py_obj$params$alpha_prior %>%
     wide_to_long(what="exposures") %>%
-    dplyr::rename(clusters=samples)
+    dplyr::rename(clusters=samples) %>%
+    dplyr::mutate(clusters=paste0("G", as.integer(clusters)-1))
   return(x)
 }
 
@@ -95,64 +96,43 @@ get_list_from_py_aux = function(py_obj, fn, type="") {
 
 
 get_train_params_py = function(obj) {
-  if (!obj$store_parameters) return(NULL)
-  train_params = obj$train_params
-  samples_names = obj$params[["alpha"]] %>% rownames()
-  bfixed_names = obj$beta_fixed %>% rownames()
-  bdenovo_names = obj$params[["beta_d"]] %>% rownames()
-  contexts = obj$params[["beta_d"]] %>% colnames()
+  if (!obj$store_parameters || is.null(obj$params)) return(NULL)
+  train_params = obj[["train_params"]]
 
   params = data.frame()
-
-  for (i in 1:length(train_params)) {
+  lapply(1:length(train_params), function(i) {
     pars_i = train_params[[i]]
-    expos = pars_i[["alpha"]] %>% as.data.frame()
-    rownames(expos) = samples_names
-    colnames(expos) = c(bfixed_names, bdenovo_names)
 
-    if ("alpha_prior" %in% names(pars_i)) {
-      centroids = pars_i[["alpha_prior"]] %>% as.data.frame()
-      rownames(centroids) = (1:nrow(centroids)) -1
-      colnames(centroids) = c(bfixed_names, bdenovo_names)
-      centroids = centroids %>% tibble::rownames_to_column(var="rowname") %>%
-        reshape2::melt(id="rowname",variable.name="columnname",value.name="value") %>%
-        dplyr::mutate(iteration=i, paramname="centroid")
-    } else { centroids = data.frame() }
+    expos = centroid = pi = sigs = data.frame()
+    if (!is.null(pars_i[["alpha"]])) {
+      expos = wide_to_long(reticulate::py_to_r(pars_i[["alpha"]]), what="exposures") %>%
+        dplyr::mutate(parname="alpha") %>%
+        dplyr::rename(rowname=samples, columnname=sigs)
+    }
 
-    if (("beta_w" %in% names(pars_i))) {
-      beta_w = pars_i[["beta_w"]] %>% as.data.frame()
-      if (nrow(beta_w)>0) {
-        rownames(beta_w) = bdenovo_names
-        colnames(beta_w) = c(bfixed_names, "DN")
-        beta_w = beta_w %>% tibble::rownames_to_column(var="rowname") %>%
-          reshape2::melt(id="rowname",variable.name="columnname",value.name="value") %>%
-          dplyr::mutate(iteration=i, paramname="beta_w")
-      } else { beta_w = data.frame() }
-    } else { beta_w = data.frame() }
+    if (!is.null(pars_i[["alpha_prior"]])) {
+      centroid = wide_to_long(reticulate::py_to_r(pars_i[["alpha_prior"]]), what="exposures") %>%
+        dplyr::mutate(parname="centroid") %>%
+        dplyr::rename(rowname=samples, columnname=sigs)
+    }
 
-    if ("pi" %in% names(pars_i)) {
-      pi = pars_i[["pi"]] %>% as.numeric() %>% setNames((sort(unique(centroids$rowname))))
-      pi = data.frame("rowname"=names(pi),"value"=pi,"iteration"=i,"paramname"="pi")
-    } else { pi = data.frame() }
+    if (!is.null(pars_i[["pi"]]))
+      pi = data.frame("rowname"=sort(unique(centroid$rowname)),
+                      "columnname"="",
+                      "value"= pars_i[["pi"]] %>% as.numeric() %>% setNames((sort(unique(centroid$rowname)))),
+                      "parname"="pi")
 
-    sigs = pars_i[["beta_d"]] %>% as.data.frame()
-    rownames(sigs) = bdenovo_names
-    colnames(sigs) = contexts
+    if (!is.null(pars_i[["beta_d"]])) {
+      sigs = wide_to_long(reticulate::py_to_r(pars_i[["beta_d"]]), what="beta") %>%
+        dplyr::mutate(parname="beta_denovo") %>%
+        dplyr::rename(rowname=sigs, columnname=features)
+    }
 
-    params = params %>% dplyr::bind_rows(
-      expos %>% tibble::rownames_to_column(var="rowname") %>%
-        reshape2::melt(id="rowname",variable.name="columnname",value.name="value") %>%
-        dplyr::mutate(iteration=i, paramname="alpha")
-    ) %>% dplyr::bind_rows(
-      sigs %>% tibble::rownames_to_column(var="rowname") %>%
-        reshape2::melt(id="rowname",variable.name="columnname",value.name="value") %>%
-        dplyr::mutate(iteration=i, paramname="beta_d")
-    ) %>% dplyr::bind_rows(centroids) %>%
-      dplyr::bind_rows(pi) %>%
-      dplyr::bind_rows(beta_w)
-  }
 
-  return(params)
+    dplyr::bind_rows(expos, centroid, pi, sigs) %>%
+      dplyr::mutate(iteration=i)
+  }) %>% do.call(rbind, .) %>% tibble::as_tibble()
+
 }
 
 

@@ -8,6 +8,8 @@
 
 plot_fit = function(x) {
   omega = plot_beta_weights(x)
+  centroids = plot_centroids(x)
+  mixing_prop = plot_mixture_weights(x)
   if (is.null(omega)) ncols = 1 else ncols = 2
   plots = list(
     expos = plot_exposures(x),
@@ -18,7 +20,11 @@ plot_fit = function(x) {
   if (!is.null(omega)) {
     plots[["omega"]] = omega
     design = "AABB\nCCBB\nDDBB"
-  } else { design = "AABB\nCCBB\nCCBB" }
+  } else if (have_groups(x)) {
+    plots[["centroids"]] = centroids
+    plots[["mixing_prop"]] = mixing_prop
+    design = "AADE\nCCBB\nCCBB\nCCBB" } else {
+      design = "AABB\nCCBB\nCCBB" }
 
-  return(patchwork::wrap_plots(plots, design=design))
+  return(patchwork::wrap_plots(plots, design=design, guides="collect"))
 }

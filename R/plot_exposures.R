@@ -31,6 +31,7 @@ match_type = function(types, sigs) {
 
 
 plot_centroids = function(x, types=get_types(x), cls=NULL, sigs_levels=NULL, flip_coord=FALSE, sort_by=NULL) {
+  if (!have_groups(x)) return(NULL)
   a_pr = get_centroids(x) %>%
     dplyr::mutate(clusters=paste0("G",stringr::str_replace_all(clusters,"G",""))) %>%
     tidyr::separate(col="sigs", into=c("else","sigs"), sep="_") %>% dplyr::mutate("else"=NULL) %>%

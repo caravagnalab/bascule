@@ -1,4 +1,5 @@
 plot_mixture_weights = function(x) {
+  if (!have_groups(x)) return(NULL)
   pis = get_mixing_proportions(x)
   cls = gen_palette(n=nrow(pis)) %>% setNames(pis$clusters)
 

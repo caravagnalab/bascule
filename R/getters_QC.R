@@ -88,6 +88,17 @@ get_params = function(x, what, types=get_types(x)) {
 }
 
 
+get_train_params = function(x, what, types=get_types(x)) {
+  qc = get_QC(x, what=what, types=types)
+  if (what=="nmf")
+    lapply(types, function(tid) qc[[tid]][["train_params"]]) %>%
+      setNames(types)
+  else
+    qc[[1]][["train_params"]]
+}
+
+
+
 get_initial_object = function(x, what="clustering") {
   if (what!="clustering" || !have_groups(x)) {
     cli::cli_alert_warning("what != 'clustering' or no groups are in the input object, the input object will be returned.")
