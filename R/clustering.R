@@ -5,11 +5,13 @@ pyro_clustering = function(exposures, cluster, lr=0.005, n_steps=3000,
                            seed_list=c(10), CUDA=TRUE, py=NULL) {
 
   if (is.null(cluster)) return(NULL)
+  if (length(cluster)==1) cluster = c(cluster)
+  if (min(cluster)==1) cluster = cluster + 1
 
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
 
   if (is.null(py)) py = reticulate::import("pybasilica")
-  cluster = reticulate::r_to_py(list(as.integer(cluster)))
+  cluster = reticulate::r_to_py(as.integer(cluster))
   seed_list = reticulate::r_to_py(as.integer(seed_list))
   input_expos = reticulate::r_to_py(exposures %>% setNames(NULL))
 
