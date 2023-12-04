@@ -6,7 +6,6 @@ pyro_clustering = function(exposures, cluster, lr=0.005, n_steps=3000,
 
   if (is.null(cluster)) return(NULL)
   if (length(cluster)==1) cluster = c(cluster)
-  if (min(cluster)==1) cluster = cluster + 1
 
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
 
