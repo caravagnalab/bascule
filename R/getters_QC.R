@@ -56,8 +56,10 @@ get_alternative_run = function(x, K=get_n_denovo(x), G=get_n_groups(x),
                                seed=get_seed(x), types=get_types(x)) {
   grps = paste0("cluster:",G)
   sigs = paste0("k_denovo:",K) %>% setNames(names(K))
-  if (have_groups(x))
+  if (have_groups(x)) {
     x$clustering = get_alternatives(x, what="clustering")[[1]]$fits[[grps]][[paste0("seed:",seed$clustering)]][[1]]
+
+  }
 
   alter_nmf = get_alternatives(x, what="nmf", types=types)
   x$nmf = lapply(types, function(tid) {

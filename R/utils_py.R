@@ -203,7 +203,7 @@ get_alternatives_from_py = function(py_obj, fn, type="") {
     alt$fits = lapply(names(py_obj$fits), function(i) {
       fits_i = py_obj$fits[[i]]
       lapply(names(fits_i), function(j) {
-        fits_i[[j]]$convert_to_dataframe(inp)
+        fits_i[[j]] # $convert_to_dataframe(inp)
         tmp = tibble::tibble(V1 = list( fn(fits_i[[j]], type=type) ))
         colnames(tmp) = j
         return(tmp)
