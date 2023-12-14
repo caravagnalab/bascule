@@ -1,5 +1,5 @@
 ## Functions ####
-filter_cosmic_catalogue = function(catalogue, sbs5=COSMIC_catalogue["SBS5",]) {
+filter_cosmic_catalogue = function(catalogue, sbs5=COSMIC_sbs["SBS5",]) {
   rm_sigs = list(
     not_validated = paste0("SBS", c(8, 9, "10c", "10d", 12, 16, "17a",
                                     19, 23, 29, 32, 33, 34, 37, 38, 39, 40,
@@ -124,8 +124,8 @@ long_to_wide = function(cat_long) {
 
 wide_to_long = function(cat_wide) {
   if (!is.data.frame(cat_wide)) {
-    final = create_empty_long()
-    for (i in names(cat_wide))
+    final = create_empty_df_long()
+    for (i in rownames(cat_wide))
       final = final %>%
         dplyr::add_row(
           cat_wide %>%

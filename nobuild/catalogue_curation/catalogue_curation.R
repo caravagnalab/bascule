@@ -4,14 +4,16 @@ source("~/GitHub/basilica/nobuild/catalogue_curation/helper_fns.R")
 ## Datasets ####
 
 COSMIC_merged = readRDS("~/GitHub/basilica/nobuild/catalogue_curation/COSMIC_merged.rds")
-COSMIC_filt_merged = filter_cosmic_catalogue(COSMIC_merged, sbs5=COSMIC_catalogue["SBS5",])
+COSMIC_filt_merged = filter_cosmic_catalogue(COSMIC_merged, sbs5=COSMIC_sbs["SBS5",])
 usethis::use_data(COSMIC_filt_merged, overwrite=T)
 save(COSMIC_filt_merged, file="~/GitHub/basilica/nobuild/catalogue_curation/COSMIC_filt_merged.rda")
 
-COSMIC_filt = filter_cosmic_catalogue(COSMIC_catalogue, sbs5=COSMIC_catalogue["SBS5",])
-usethis::use_data(COSMIC_filt, overwrite=T)
-save(COSMIC_filt, file="~/GitHub/basilica/nobuild/catalogue_curation/COSMIC_filt.rda")
+catalogue = COSMIC_sbs
+COSMIC_sbs_filt = filter_cosmic_catalogue(catalogue, sbs5=catalogue["SBS5",])
+usethis::use_data(COSMIC_sbs_filt, overwrite=T)
+save(COSMIC_sbs_filt, file="~/GitHub/basilica/nobuild/catalogue_curation/COSMIC_filt.rda")
 
+catalogue = COSMIC_sbs_filt
 cosine.all = compute_similarity(catalogue)
 # cosine.filt_perc = compute_similarity(long_to_wide(catalogue_long.filt_perc))
 cosine.filt = compute_similarity(long_to_wide(catalogue_long.filt))
