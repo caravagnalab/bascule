@@ -152,25 +152,4 @@ fit_clustering = function(x,
 }
 
 
-gen_palette = function(x=NULL, types=get_types(x), n=NULL) {
-  if (!is.null(n)) return(ggsci::pal_simpsons()(n))
-
-  # denovo_names = unique(unlist(get_denovo_signames(x, types=types)))
-  #
-  # ref = COSMIC_color_palette(signames=get_fixed_signames(x, types=types))
-  # dn = ggsci::pal_simpsons()(length(denovo_names)) %>%
-  #   setNames(denovo_names)
-  # return(c(ref, dn))
-  return(COSMIC_color_palette(signames=get_signames(x, types=types)))
-}
-
-
-COSMIC_color_palette = function(signames=get_signames(x), seed=14) {
-  N = length(unique(unlist(signames)))
-  set.seed(seed)
-  colss = Polychrome::createPalette(N, c("#856de3","#9e461c"), target="normal", range=c(15,80), M=1000)[1:N]
-  names(colss) = unique(unlist(signames))
-  return(colss)
-}
-
 

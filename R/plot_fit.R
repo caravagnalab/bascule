@@ -14,8 +14,7 @@ plot_fit = function(x) {
   plots = list(
     expos = plot_exposures(x),
     sigs = plot_signatures(x),
-    muts = (plot_data(x, reconstructed=TRUE)+labs(title="Reconstructed")) %>%
-      patchwork::wrap_plots(plot_data(x, reconstructed=FALSE)+labs(title="GT"), ncol=ncols)
+    muts = plot_data(x, reconstructed=FALSE)
   )
   if (!is.null(omega)) {
     plots[["omega"]] = omega
@@ -23,8 +22,8 @@ plot_fit = function(x) {
   } else if (have_groups(x)) {
     plots[["centroids"]] = centroids
     plots[["mixing_prop"]] = mixing_prop
-    design = "AADE\nCCBB\nCCBB\nCCBB" } else {
-      design = "AABB\nCCBB\nCCBB" }
+    design = "AADE\nBBBB\nCCCC\nCCCC" } else {
+      design = "AABB\nBBBB\nCCCC" }
 
   return(patchwork::wrap_plots(plots, design=design, guides="collect"))
 }

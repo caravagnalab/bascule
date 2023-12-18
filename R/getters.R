@@ -71,7 +71,7 @@ get_signatures_aux = function(x, what, types=get_types(x), matrix=FALSE) {
 
 get_input = function(x, types=get_types(x), samples=get_samples(x),
                      clusters=get_cluster_labels(x), matrix=FALSE,
-                     reconstructed=FALSE) {
+                     reconstructed=FALSE, add_groups=FALSE) {
   out = lapply(types, function(tid) {
     if (reconstructed) {
       expos = get_exposure(x, types=tid, samples=samples, clusters=clusters, matrix=T)[[tid]]
@@ -85,18 +85,18 @@ get_input = function(x, types=get_types(x), samples=get_samples(x),
     }
 
     if(!is.null(clusters)) {
-      which_selection = x %>%
-        get_cluster_assignments(samples=samples, clusters=clusters) %>%
-        dplyr::pull(samples)
+      clusters_df = x %>%
+        get_cluster_assignments(samples=samples, clusters=clusters)
 
-      w = w %>% dplyr::filter(samples %in% which_selection)
+      w = w %>% dplyr::right_join(clusters_df)
     }
 
     return(w)
     }) %>% setNames(types)
 
   if(matrix)
-    out = lapply(out, function(df_t) long_to_wide(df_t, what="counts")) %>%
+    out = lapply(out, function(df_t)
+      long_to_wide(df_t %>% dplyr::select(-dplyr::contains("clusters")), what="counts")) %>%
       setNames(types)
   return(out)
 }
@@ -141,7 +141,8 @@ get_beta_weights = function(x, types=get_types(x)) {
 
 get_mixing_proportions = function(x) {
   if (!have_groups(x)) return(NULL)
-  pis = get_params(x, what="clustering")$pi
+  pis = get_params(x, what="clustering")[["pi"]]
+  if (is.null(pis)) return(NULL)
   data.frame(value=pis, clusters=paste0("G",1:length(pis)-1))
 }
 
@@ -216,7 +217,8 @@ long_to_wide = function(dataframe, what) {
 
 get_centroids = function(x, matrix=F) {
   if (matrix)
-    return(x$clustering$centroids %>% tidyr::pivot_wider(names_from="sigs", values_from="value") %>%
+    return(x$clustering$centroids %>%
+             tidyr::pivot_wider(names_from="sigs", values_from="value") %>%
              tibble::column_to_rownames(var="clusters"))
   return(x$clustering$centroids)
 }

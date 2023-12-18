@@ -75,5 +75,57 @@ filter_sigs_low_expos = function(x, min_exp=0.15, keep_sigs=NULL) {
 }
 
 
+rename_object = function(x, map_names, types=get_types(x)) {
+  ## MISSING CONVERSION OF STORED OBJECTS
+  mapp = names(map_names) %>% setNames(map_names)
+  for (tid in types) {
+    alpha_long = get_exposure(x)[[tid]] %>%
+      dplyr::mutate(sigs=mapp[sigs])
+    dn_long = get_denovo_signatures(x)[[tid]] %>%
+      dplyr::mutate(sigs=mapp[sigs])
 
+    x$nmf[[tid]]$exposure = x$nmf[[tid]]$pyro$exposure = alpha_long
+    x$nmf[[tid]]$beta_denovo = x$nmf[[tid]]$pyro$beta_denovo = dn_long
+
+    x$nmf[[tid]]$pyro$params$infered_params$alpha = alpha_long %>% long_to_wide(what="exposures")
+    x$nmf[[tid]]$pyro$params$infered_params$beta_d = dn_long %>% long_to_wide(what="beta")
+
+    x$nmf[[tid]]$pyro$params$init_params$alpha = x$nmf[[tid]]$pyro$params$init_params$alpha %>%
+      wide_to_long(what="exposures") %>% dplyr::mutate(sigs=mapp[sigs]) %>% long_to_wide(what="exposures")
+    x$nmf[[tid]]$pyro$params$init_params$beta_dn_param = x$nmf[[tid]]$pyro$params$init_params$beta_dn_param %>%
+      wide_to_long(what="beta") %>% dplyr::mutate(sigs=mapp[sigs]) %>% long_to_wide(what="beta")
+  }
+
+  new_colnames = colnames(x$clustering$pyro$params$infered_params$alpha_prior)
+  for (new_name in names(map_names)) {
+    old_name = map_names[[new_name]]
+    new_colnames = new_colnames %>%
+      stringr::str_replace_all(pattern=old_name, replacement=new_name)
+  }
+
+  colnames(x$clustering$pyro$params$infered_params$alpha_prior) =
+    colnames(x$clustering$pyro$params$init_params$alpha_prior) =
+    colnames(x$clustering$pyro$params$init_params$variances) =
+    new_colnames
+
+  x$clustering$centroids = x$clustering$pyro$params$infered_params$alpha_prior %>%
+    wide_to_long(what="exposures") %>%
+    dplyr::rename(clusters=samples) %>%
+    dplyr::mutate(clusters=paste0("G",as.integer(clusters)-1))
+
+  return(x)
+}
+
+
+convert_dn_names = function(x, x.simul) {
+  assigned_missing = get_assigned_missing(x, x.simul)
+
+  map_names = lapply(names(assigned_missing), function(tid) {
+    am_t = assigned_missing[[tid]]
+    # names -> reference names; values -> fit names
+    c(am_t$assigned_tp, am_t$added_fp %>% setNames(am_t$added_fp))
+  }) %>% unlist()
+
+  rename_object(x, map_names)
+}
 

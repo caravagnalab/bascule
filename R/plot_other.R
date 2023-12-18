@@ -1,14 +1,12 @@
 plot_mixture_weights = function(x) {
-  if (!have_groups(x)) return(NULL)
   pis = get_mixing_proportions(x)
+  if (!have_groups(x) || is.null(pis)) return(NULL)
   cls = gen_palette(n=nrow(pis)) %>% setNames(pis$clusters)
 
   return(
     pis %>%
-      # dplyr::rename(mixt_w=weights) %>%
       ggplot() +
       geom_bar(aes(x=clusters, y=value, fill=clusters), stat="identity") +
-      # geom_bar(aes(x=labels, y=ISs, fill=labels), stat="identity") +
       scale_fill_manual(values=cls) +
       guides(fill="none") +
       xlab("Clusters") + theme_bw() +

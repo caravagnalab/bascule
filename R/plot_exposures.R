@@ -16,8 +16,8 @@ plot_exposures = function(x, types=get_types(x), samples=get_samples(x),
                          sigs_level=sigs_levels, sample_name=sample_name,
                          sort_by=sort_by)
 
-  if (add_centroid)
-    p = patchwork::wrap_plots(p, p_centr, ncol=2, widths=c(9,1), guides="collect")
+  # if (add_centroid)
+  #   p = patchwork::wrap_plots(p, p_centr, ncol=2, widths=c(9,1), guides="collect")
 
   return(p)
 }
@@ -25,18 +25,22 @@ plot_exposures = function(x, types=get_types(x), samples=get_samples(x),
 match_type = function(types, sigs) {
   sapply(sigs, function(sid) {
     matches = sapply(types, function(tid) grepl(tid, x=sid))
-    return(names(matches[matches==TRUE]))
+    which_m = names(matches[matches==TRUE])
+    if (length(which_m)==1) return(which_m)
+    return(NA)
   }) %>% setNames(NULL)
 }
 
 
 plot_centroids = function(x, types=get_types(x), cls=NULL, sigs_levels=NULL, flip_coord=FALSE, sort_by=NULL) {
-  if (!have_groups(x)) return(NULL)
-  a_pr = get_centroids(x) %>%
+  centr = get_centroids(x)
+  if (!have_groups(x) || is.null(centr)) return(NULL)
+  a_pr = centr %>%
     dplyr::mutate(clusters=paste0("G",stringr::str_replace_all(clusters,"G",""))) %>%
     tidyr::separate(col="sigs", into=c("else","sigs"), sep="_") %>% dplyr::mutate("else"=NULL) %>%
     dplyr::rename(samples=clusters) %>%
-    dplyr::mutate(type=match_type(types, sigs))
+    dplyr::mutate(type=match_type(types, sigs)) %>%
+    dplyr::filter(!is.na(type))
 
   if (is.null(cls)) cls = gen_palette(x, types=types)
 

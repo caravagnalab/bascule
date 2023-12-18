@@ -30,4 +30,39 @@ reformat_contexts = function(signatures, what) {
 }
 
 
+gen_palette = function(x=NULL, types=get_types(x), n=NULL) {
+  if (!is.null(n)) return(ggsci::pal_simpsons()(n))
+  return(gen_palette_aux(signames=get_signames(x, types=types)))
+}
+
+
+COSMIC_color_palette = function(seed=55) {
+  catalogues = list(COSMIC_sbs_filt, COSMIC_filt_merged,
+                    COSMIC_dbs, COSMIC_cn, COSMIC_indels, COSMIC_sbs)
+  sigs = sapply(catalogues, rownames) %>% unlist() %>% unique()
+  set.seed(seed)
+  return(Polychrome::createPalette(length(sigs), c("#6B8E23","#4169E1"), M=1000,
+                                   target="normal", range=c(15,80)) %>%
+           setNames(sigs))
+}
+
+
+gen_palette_aux = function(signames=get_signames(x), seed=14) {
+  types = names(signames)
+
+  colss = lapply(types, function(tid) {
+    cosmic_cols = COSMIC_color_palette()
+    ref_sigs = intersect(signames[[tid]], names(cosmic_cols))
+    dn_sigs = setdiff(signames[[tid]], names(cosmic_cols))
+    n_dn = length(dn_sigs)
+    set.seed(seed)
+    dn_cols = Polychrome::createPalette(n_dn, c("#483D8B","#9e461c"), M=1000,
+                                        target="normal", range=c(15,80))[1:n_dn] %>%
+      setNames(dn_sigs)
+    c(cosmic_cols[ref_sigs], dn_cols)
+  }) %>% unlist()
+
+  return(colss)
+}
+
 

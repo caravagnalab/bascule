@@ -105,7 +105,7 @@ get_params = function(x, what, types=get_types(x)) {
   params = get_pyro_stat(x, what=what, types=types, statname="params")
   if (what == "nmf")
     return(
-      lapply(types, function(tid) params[[tid]]$infered_params)
+      lapply(types, function(tid) params[[tid]]$infered_params) %>% setNames(types)
     )
   return(params[[1]]$infered_params)
 }

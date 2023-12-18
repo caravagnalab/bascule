@@ -65,7 +65,7 @@ plot_similarity_reference = function(x, reference=NULL, type="SBS", similarity_c
 
     extra_plots = NULL
 
-    colpalette = COSMIC_color_palette(signames=unique(c(rownames(cosine_matrix), colnames(cosine_matrix))))
+    colpalette = gen_palette_aux(signames=unique(c(rownames(cosine_matrix), colnames(cosine_matrix))))
     for(i in 1:length(cosine_matrix_dn)) {
       ref = reference_sigs %>%
         dplyr::filter(sigs == rownames(cosine_matrix)[cosine_matrix_dn[i]])
