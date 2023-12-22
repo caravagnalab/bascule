@@ -96,22 +96,24 @@ rename_object = function(x, map_names, types=get_types(x)) {
       wide_to_long(what="beta") %>% dplyr::mutate(sigs=mapp[sigs]) %>% long_to_wide(what="beta")
   }
 
-  new_colnames = colnames(x$clustering$pyro$params$infered_params$alpha_prior)
-  for (new_name in names(map_names)) {
-    old_name = map_names[[new_name]]
-    new_colnames = new_colnames %>%
-      stringr::str_replace_all(pattern=old_name, replacement=new_name)
+  if (!have_groups(x)) {
+    new_colnames = colnames(x$clustering$pyro$params$infered_params$alpha_prior)
+    for (new_name in names(map_names)) {
+      old_name = map_names[[new_name]]
+      new_colnames = new_colnames %>%
+        stringr::str_replace_all(pattern=old_name, replacement=new_name)
+    }
+
+    colnames(x$clustering$pyro$params$infered_params$alpha_prior) =
+      colnames(x$clustering$pyro$params$init_params$alpha_prior) =
+      colnames(x$clustering$pyro$params$init_params$variances) =
+      new_colnames
+
+    x$clustering$centroids = x$clustering$pyro$params$infered_params$alpha_prior %>%
+      wide_to_long(what="exposures") %>%
+      dplyr::rename(clusters=samples) %>%
+      dplyr::mutate(clusters=paste0("G",as.integer(clusters)-1))
   }
-
-  colnames(x$clustering$pyro$params$infered_params$alpha_prior) =
-    colnames(x$clustering$pyro$params$init_params$alpha_prior) =
-    colnames(x$clustering$pyro$params$init_params$variances) =
-    new_colnames
-
-  x$clustering$centroids = x$clustering$pyro$params$infered_params$alpha_prior %>%
-    wide_to_long(what="exposures") %>%
-    dplyr::rename(clusters=samples) %>%
-    dplyr::mutate(clusters=paste0("G",as.integer(clusters)-1))
 
   return(x)
 }

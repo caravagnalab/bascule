@@ -16,8 +16,9 @@ plot_exposures = function(x, types=get_types(x), samples=get_samples(x),
                          sigs_level=sigs_levels, sample_name=sample_name,
                          sort_by=sort_by)
 
-  # if (add_centroid)
-  #   p = patchwork::wrap_plots(p, p_centr, ncol=2, widths=c(9,1), guides="collect")
+  p_centr = plot_centroids(x, types=types, cls=cls, sigs_levels=sigs_levels, sort_by=sort_by)
+  if (add_centroid)
+    p = patchwork::wrap_plots(p, p_centr, ncol=2, widths=c(9,1), guides="collect")
 
   return(p)
 }

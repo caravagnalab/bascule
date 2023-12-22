@@ -13,6 +13,7 @@ fit = function(counts, k_list,
 
                enumer = "parallel",
                nonparametric = TRUE,
+               autoguide = FALSE,
 
                filter_dn = FALSE,
                min_exposure = 0.2,
@@ -69,6 +70,7 @@ fit = function(counts, k_list,
 
                        enumer = enumer,
                        nonparametric = nonparametric,
+                       autoguide = autoguide,
 
                        hyperparameters = hyperparameters,
 
@@ -120,6 +122,7 @@ fit_clustering = function(x,
 
                           enumer = "parallel",
                           nonparametric = TRUE,
+                          autoguide = FALSE,
 
                           CUDA = TRUE,
                           compile = FALSE,
@@ -134,6 +137,7 @@ fit_clustering = function(x,
 
                                  enumer = enumer,
                                  nonparametric = nonparametric,
+                                 autoguide = autoguide,
 
                                  hyperparameters = hyperparameters,
 

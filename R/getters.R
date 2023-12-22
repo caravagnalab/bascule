@@ -143,7 +143,8 @@ get_mixing_proportions = function(x) {
   if (!have_groups(x)) return(NULL)
   pis = get_params(x, what="clustering")[["pi"]]
   if (is.null(pis)) return(NULL)
-  data.frame(value=pis, clusters=paste0("G",1:length(pis)-1))
+  cnames = paste0("G",1:length(pis)-1)
+  data.frame(value=pis, clusters=factor(cnames, levels=cnames))
 }
 
 

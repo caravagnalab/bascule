@@ -56,14 +56,18 @@ get_alternative_run = function(x, K=get_n_denovo(x), G=get_n_groups(x),
                                seed=get_seed(x), types=get_types(x)) {
   grps = paste0("cluster:",G)
   sigs = paste0("k_denovo:",K) %>% setNames(names(K))
-  if (have_groups(x)) {
+  if (have_groups(x) && !is.null(G)) {
     x$clustering = get_alternatives(x, what="clustering")[[1]]$fits[[grps]][[paste0("seed:",seed$clustering)]][[1]]
-
   }
 
   alter_nmf = get_alternatives(x, what="nmf", types=types)
   x$nmf = lapply(types, function(tid) {
-    alter_t = alter_nmf[[tid]]$fits[[sigs[[tid]]]][[paste0("seed:",seed$nmf[[tid]])]][[1]]
+    k_t = sigs[[tid]]
+    s_t = paste0("seed:", seed$nmf[[tid]])
+    if (is.null(k_t)) k_t = paste0("k_denovo:", get_n_denovo(x)[[tid]])
+    if (is.null(s_t)) s_t = paste0("k_denovo:", get_seed(x)$nmf[[tid]])
+
+    alter_t = alter_nmf[[tid]]$fits[[k_t]][[s_t]][[1]]
     if (length(alter_t) == 0) return(x$nmf[[tid]])
     list("exposure"=alter_t$exposure,
          "beta_fixed"=alter_t$beta_fixed,
