@@ -37,11 +37,13 @@ plot_centroids = function(x, types=get_types(x), cls=NULL, sigs_levels=NULL, fli
   centr = get_centroids(x)
   if (!have_groups(x) || is.null(centr)) return(NULL)
   a_pr = centr %>%
-    dplyr::mutate(clusters=paste0("G",stringr::str_replace_all(clusters,"G",""))) %>%
-    tidyr::separate(col="sigs", into=c("else","sigs"), sep="_") %>% dplyr::mutate("else"=NULL) %>%
-    dplyr::rename(samples=clusters) %>%
     dplyr::mutate(type=match_type(types, sigs)) %>%
-    dplyr::filter(!is.na(type))
+    dplyr::filter(!is.na(type)) %>%
+    # dplyr::mutate(clusters=paste0("G",stringr::str_replace_all(clusters,"G",""))) %>%
+    # tidyr::separate(col="sigs", into=c("else","sigs"), sep="_") %>% dplyr::mutate("else"=NULL) %>%
+    # dplyr::mutate(type=match_type(types, sigs)) %>%
+    # dplyr::filter(!is.na(type)) %>%
+    dplyr::rename(samples=clusters)
 
   if (is.null(cls)) cls = gen_palette(x, types=types)
 

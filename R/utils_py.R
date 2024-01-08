@@ -49,16 +49,16 @@ rename_dn_expos = function(x) {
     colnames(x$nmf[[tid]]$pyro$params$init_params$alpha) = signames
   }
 
-  centroids = get_centroids(x, matrix=T)
-  alpha_prior_names = colnames(centroids)
+  alpha_prior_names = colnames(x$clustering$pyro$params$infered_params$alpha_prior)
   new_names = data.frame(alpha_prior_names) %>%
     tidyr::separate(alpha_prior_names, into=c("var_id", "old_sigs")) %>%
     dplyr::mutate(new_sig=ifelse(old_sigs %in% names(map_names), map_names[old_sigs], old_sigs)) %>%
     dplyr::mutate(new_signame=paste(var_id, new_sig, sep="_"), old_signame=paste(var_id, old_sigs, sep="_"))
   map_names2 = new_names$new_signame %>% setNames(new_names$old_signame)
+  map_names2 = new_names$new_sig %>% setNames(new_names$old_sigs)
 
   colnames(x$clustering$pyro$params$infered_params$alpha_prior) = map_names2
-  colnames(x$clustering$pyro$params$init_params$alpha_prior_param) = map_names2
+  colnames(x$clustering$pyro$params$init_params$alpha_prior) = map_names2
   x$clustering$centroids = x$clustering$centroids %>% dplyr::mutate(sigs=map_names2[sigs])
 
   return(x)

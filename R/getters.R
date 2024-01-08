@@ -217,11 +217,19 @@ long_to_wide = function(dataframe, what) {
 
 
 get_centroids = function(x, matrix=F) {
+  if (is.null(x$clustering$centroids)) return(NULL)
+
+  centr = x$clustering$centroids %>%
+    dplyr::mutate(clusters=paste0("G",stringr::str_replace_all(clusters,"G",""))) %>%
+    tidyr::separate(col="sigs", into=c("else","sigs"), sep="_") %>%
+    dplyr::mutate("else"=NULL)
+
   if (matrix)
-    return(x$clustering$centroids %>%
+    return(centr %>%
              tidyr::pivot_wider(names_from="sigs", values_from="value") %>%
              tibble::column_to_rownames(var="clusters"))
-  return(x$clustering$centroids)
+
+  return(centr)
 }
 
 
