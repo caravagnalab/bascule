@@ -219,10 +219,12 @@ long_to_wide = function(dataframe, what) {
 get_centroids = function(x, matrix=F) {
   if (is.null(x$clustering$centroids)) return(NULL)
 
+  unq_labels = get_cluster_labels(x)
+
   centr = x$clustering$centroids %>%
-    dplyr::mutate(clusters=paste0("G",stringr::str_replace_all(clusters,"G",""))) %>%
-    tidyr::separate(col="sigs", into=c("else","sigs"), sep="_") %>%
-    dplyr::mutate("else"=NULL)
+    dplyr::mutate(clusters=paste0("G",stringr::str_replace_all(clusters,"G","")),
+                  sigs=stringr::str_replace_all(sigs,"^[0-9]+_","")) %>%
+    dplyr::filter(clusters %in% unq_labels)
 
   if (matrix)
     return(centr %>%
