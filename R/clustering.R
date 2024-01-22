@@ -58,6 +58,7 @@ empirical_centroids = function(x) {
 
 
 merge_clusters = function(x, cutoff=0.8) {
+  if (!have_groups(x)) return(x)
 
   repeat {
     alpha_prior = empirical_centroids(x)
