@@ -53,17 +53,31 @@ get_seed = function(x) {
 
 # params = list("K"=NA,"G"=NA,"seed"=NA)
 get_alternative_run = function(x, K=get_n_denovo(x), G=get_n_groups(x),
-                               seed=get_seed(x), types=get_types(x)) {
+                               seed=c(), types=get_types(x)) {
+  best_K = get_n_denovo(x); best_G = get_n_groups(x)#; best_seed = get_seed(x)
+  K = c(K, best_K[setdiff(names(best_K), names(K))])
+  G = c(G, best_G[setdiff(names(best_G), names(G))])
+  # seed = c(seed, best_seed[setdiff(names(best_seed), names(seed))])
+
   grps = paste0("cluster:",G)
   sigs = paste0("k_denovo:",K) %>% setNames(names(K))
   if (have_groups(x) && !is.null(G)) {
+    if (is.null(seed[["clustering"]])) {
+      s_t = paste0("seed:", get_best_seed(x, value=G, parname="G", type_id=tid))
+    } else {
+      s_t = paste0("seed:", seed$nmf[[tid]])
+    }
     x$clustering = get_alternatives(x, what="clustering")[[1]]$fits[[grps]][[paste0("seed:",seed$clustering)]][[1]]
   }
 
   alter_nmf = get_alternatives(x, what="nmf", types=types)
   x$nmf = lapply(types, function(tid) {
     k_t = sigs[[tid]]
-    s_t = paste0("seed:", seed$nmf[[tid]])
+    if (is.null(seed[["nmf"]][[tid]])) {
+      s_t = paste0("seed:", get_best_seed(x, value=K[[tid]], parname="K", type_id=tid))
+    } else {
+      s_t = paste0("seed:", seed$nmf[[tid]])
+    }
     if (is.null(k_t)) k_t = paste0("k_denovo:", get_n_denovo(x)[[tid]])
     if (is.null(s_t)) s_t = paste0("k_denovo:", get_seed(x)$nmf[[tid]])
 
@@ -76,6 +90,14 @@ get_alternative_run = function(x, K=get_n_denovo(x), G=get_n_groups(x),
   }) %>% setNames(types)
 
   return(x)
+}
+
+
+get_best_seed = function(x, value, type_id, parname) {
+  get_scores(x, types=type_id) %>%
+    dplyr::filter(score_id=="bic", parname==!!parname, value==!!value) %>%
+    dplyr::filter(score==min(score)) %>%
+    dplyr::pull(seed)
 }
 
 

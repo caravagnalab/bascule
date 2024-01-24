@@ -131,3 +131,52 @@ convert_dn_names = function(x, x.simul) {
   rename_object(x, map_names)
 }
 
+
+compute_penalized_bic = function(x) {
+  N = get_input(x, matrix=T)[[1]] %>% nrow()
+  Ks = get_tested_Ks(x)
+  seeds = get_tested_seeds(x)
+  lapply(get_types(x), function(tid) {
+    lapply(Ks[[tid]], function(k_t) {
+      lapply(seeds[[tid]], function(sid) {
+        x_k = get_alternative_run(x, K=list(k_t) %>% setNames(tid),
+                                  seed=list("nmf"=list(sid) %>% setNames(tid)))
+        dn_s = get_denovo_signatures(x_k, matrix=T, types=tid)[[tid]]
+        data.frame(K=k_t, seed=sid, score=compute_penalty(dn_s), type=tid, score_id="new_penalty")
+      })
+    })
+  })
+}
+
+
+get_tested_Ks = function(x, types=get_types(x)) {
+  lapply(types, function(tid) {
+    get_scores(x) %>% dplyr::filter(type==tid, parname=="K") %>%
+      dplyr::pull(value) %>% unique()
+  }) %>% setNames(types)
+}
+
+
+get_tested_seeds = function(x, types=get_types(x)) {
+  lapply(types, function(tid) {
+    get_scores(x) %>%
+      dplyr::filter(type==tid) %>%
+      dplyr::pull(seed) %>% unique()
+  }) %>% setNames(types)
+}
+
+
+compute_penalty = function(denovo_signatures) {
+  if (is.null(denovo_signatures) || nrow(denovo_signatures)<=1) return(0)
+  cosine_s = lsa::cosine(t(denovo_signatures %>% as.matrix()))
+  penalty = sum(cosine_s[lower.tri(cosine_s, diag=F)]) * N
+  return(penalty)
+}
+
+
+compute_cross_entropy_aux = function(p, q) {
+  ce = 0
+  for (i in 1:length(p))
+    ce = ce + (p[i] * log(q[i]))
+  return(-ce)
+}
