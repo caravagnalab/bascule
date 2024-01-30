@@ -95,6 +95,11 @@ get_input_signames = function(x, types=get_types(x)) {
 }
 
 
+get_scores_CL = function(x) {
+  if (is.null(x$fit$runs_CL)) return(NULL)
+  return(x$fit$runs_CL %>% dplyr::select_if(dplyr::where(function(i) any(!is.na(i)))))
+}
+
 
 # Exposures ####
 # Get exposure, it can subset by types, samples and clusters. It can return

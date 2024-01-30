@@ -42,7 +42,7 @@
 
 fit = function(x,
                k,
-               enforce_sparsity=FALSE,
+               enforce_sparsity=TRUE,
                min_exposure=0.2,
                reference_catalogue=COSMIC_filt_merged,
                filtered_catalogue=TRUE,
@@ -85,7 +85,6 @@ fit = function(x,
       n_steps = n_steps,
       k_list = 0,
       hyperparameters = hyperparameters,
-      # groups = groups,
       clusters = NULL,
       dirichlet_prior = FALSE,
       input_catalogue = reference_catalogue,
@@ -93,17 +92,12 @@ fit = function(x,
       reg_weight = reg_weight,
       compile = compile,
       CUDA = CUDA,
-      # verbose = verbose,
       enforce_sparsity = TRUE,
       stage = "random_noise",
       seed_list = seed_list,
-      # initializ_seed = initializ_seed,
-      # save_runs_seed = save_runs_seed,
-      # initializ_pars_fit = initializ_pars_fit,
       store_parameters = FALSE,
       regul_denovo = regul_denovo,
       regul_fixed = regul_fixed,
-      # do_initial_fit = FALSE
       ) %>%
 
       create_basilica_obj(input_catalogue=reference_catalogue[keep_sigs, ],
@@ -140,9 +134,6 @@ fit = function(x,
     stage = stage,
     regul_compare = NULL,
     seed_list = seed_list,
-    # initializ_seed = initializ_seed,
-    # save_runs_seed = save_runs_seed,
-    # initializ_pars_fit = initializ_pars_fit,
     store_parameters = store_parameters,
     regul_denovo = regul_denovo,
     regul_fixed = regul_fixed,
@@ -273,8 +264,8 @@ create_basilica_obj = function(fit, input_catalogue, reference_catalogue,
   obj$fit = fit
   obj$groups = fit$groups
 
-  obj$color_palette = gen_palette(get_signatures(obj) %>% nrow()) %>%
-    setNames(sort(rownames(get_signatures(obj))))
+  obj$color_palette = gen_palette(ncol(get_exposure(obj))) %>%
+    setNames(sort(colnames(get_exposure(obj))))
 
   obj$time = fit$time
 
