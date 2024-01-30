@@ -1,66 +1,41 @@
-#' Plot signatures
-#'
-#' @description creates bar plot of inferred signature profiles,
-#' where x-axis are 96 substitution bases and y-axis are their relative contribution.
-#'
-#' @param what add
-#' @param cls add
-#' @param x basilica object
-#'
-#' @return plot
-#' @export plot_signatures
+plot_signatures = function(x, types=get_types(x), context=T, cls=NULL,
+                           signames=get_signames(x)) {
 
-plot_signatures = function(x, what="SBS", context=T, cls=NULL,
-                           signames=NULL, catalogue=NULL) {
+  signatures = lapply(types, function(tid)
+    get_signatures(x, types=tid)[[tid]] %>%
+      reformat_contexts(what=tid) %>%
+      dplyr::mutate(type=tid)) %>%
+    do.call(rbind, .) %>% dplyr::filter(sigs %in% unlist(signames))
 
-  if (is.null(signames))
-    signames = rownames(x %>% get_signatures)
-  if (!is.null(catalogue))
-    signames = unique(c(signames, rownames(catalogue)))
+  if (is.null(cls)) cls = gen_palette(x, types=types)
 
-  a = NULL
-
-  if("catalogue_signatures" %in% names(x$fit)) a = rbind(x$fit$catalogue_signatures, a)
-  if("denovo_signatures" %in% names(x$fit)) a = rbind(x$fit$denovo_signatures, a)
-
-  if (!is.null(catalogue))
-    a = rbind(a, catalogue[setdiff(rownames(catalogue), rownames(a)),])
-
-  if(is.null(cls) && !have_color_palette(x)) cls = gen_palette(nrow(a)) %>% setNames(rownames(a))
-  else if (is.null(cls) && have_color_palette(x)) cls = get_color_palette(x)
-
-  return(
-    plot_signatures_aux(catalogue=a, what=what, context=context, cls=cls, signames=signames)
-  )
+  lapply(types, function(t) plot_signatures_aux(signatures %>% dplyr::filter(type==t),
+                                                what=t, context=context, signames=signames,
+                                                cls=cls)) %>%
+    patchwork::wrap_plots(ncol=length(types))
 }
 
 
 
-
-plot_signatures_aux = function(catalogue, what="SBS",
+plot_signatures_aux = function(signatures, what="SBS",
                                context=T, cls=NULL,
                                signames=NULL) {
-  if (is.null(signames)) signames = rownames(catalogue)
-  if (is.null(cls)) cls = gen_palette(n=nrow(catalogue))
+  if (is.null(signames)) signames = signatures$sigs %>% unique()
+  if (is.null(cls)) cls = gen_palette(n=length(unlist(signames)))
 
-  catalogue = catalogue %>% dplyr::mutate(sbs=rownames(catalogue)) %>%
-    as_tibble() %>%
-    reshape2::melt() %>%
-    dplyr::filter(sbs %in% signames) %>%
-    reformat_contexts(what=what)
-
-  p = catalogue %>%
+  p = signatures %>%
     ggplot() +
-    geom_bar(aes(value, x=context, fill=Var1), stat="identity") +
-    facet_grid(Var1 ~ factor(substitution, levels=catalogue$substitution %>% unique()), scales="free") +
+    geom_bar(aes(value, x=context, fill=sigs), stat="identity") +
+    ggh4x::facet_nested(sigs ~ type + factor(variant, levels=signatures$variant %>% unique()), scales="free") +
     theme_bw() +
     scale_fill_manual(values=cls) +
-    theme(axis.text.x=element_text(angle=90)) +
+    theme(axis.text.x=element_text(angle=90), legend.position="bottom") +
     guides(fill="none") +
-    labs(y="", x="", title="Signatures")
+    labs(y="", x="")
 
   if(!context)
     p = p + theme(axis.ticks.x=element_blank(), axis.text.x=element_blank()) + labs(x="")
 
   return(p)
 }
+

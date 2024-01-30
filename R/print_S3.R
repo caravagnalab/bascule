@@ -19,74 +19,60 @@ print.basilica_obj = function(x, ...)
     )
   )
 
-  # cli::cli_alert_info(paste0(" CNA segments: ", x$n_cna_clonal, " clonal, ", x$n_cna_sbclonal, " subclonal."))
-
-  # cli::cli_alert_info(paste0("Mutation mapping (head): ", paste0(head(x$n_karyotype), ' (',
-  # names(head(x$n_karyotype)), ')', collapse = '; ')))
-
-  # cli::cli_alert_info(paste0("Mutation mapping (up to top 5): "))
-
-  cli::cli_h3("Catalogue signatures (5 columns shown max)" %>% crayon::blue())
-
   ncol = 5
-  writeLines(paste0("\t", capture.output(
-    x$fit$catalogue_signatures[, 1:ncol] %>% print()
-    )))
+
+  lapply(get_types(x), function(t) {
+    cli::cli_h3(paste0(t, " catalogue signatures (5 columns shown max)") %>% crayon::blue())
+
+    writeLines(paste0("\t", capture.output(get_fixed_signatures(x, matrix=T)[[t]][, 1:ncol] %>% print())))
 
 
-  if (!is.null(x$fit$denovo_signatures)) {
-    cli::cli_h3("De novo signatures (5 columns shown max)"%>% crayon::yellow())
+    if (!is.null(get_denovo_signatures(x))) {
+      cli::cli_h3("De novo signatures (5 columns shown max)"%>% crayon::yellow())
 
-    writeLines(paste0("\t", capture.output(
-      x$fit$denovo_signatures[, 1:ncol] %>% print()
-    )))
+      writeLines(paste0("\t", capture.output(
+        get_denovo_signatures(x, matrix=T)[[t]][, 1:ncol] %>% print()
+      )))
 
-    cat('\n')
-    cli::cli_h3("Most-frequent signatures")
-    bar_print_console(x)
-    cat('\n')
-  }
-
-}
-
-
-bar_print_console = function(x, top = 10) {
-
-  sorted = x$fit$exposure %>% colSums() %>% sort(decreasing = TRUE)
-  sorted_p = sorted/sorted[1]
-
-  max_cols = 30
-
-  boxes = (sorted_p * max_cols) %>% round
-
-  is_denovo = function(n){
-    n %in% (x$fit$denovo_signatures %>% rownames())
-  }
-
-  sapply(boxes %>% seq, function(i){
-
-    if(is_denovo(names(boxes)[i]))
-      cat(
-        "\t\t",
-        sprintf( "%8s", names(boxes)[i]) %>% crayon::yellow(),
-        paste(rep("\u25A0", boxes[i]), collapse = ''),
-        '\n'
-      )
-    else
-      cat(
-        "\t\t",
-        sprintf( "%8s", names(boxes)[i]) %>% crayon::blue(),
-        paste(rep("\u25A0", boxes[i]), collapse = ''),
-        '\n'
-      )
-
+      # cat('\n')
+      # cli::cli_h3("Most-frequent signatures")
+      # bar_print_console(x, t=t)
+      # cat('\n')
+    }
   })
-
-
-
 }
 
-
+# bar_print_console = function(x, t, top = 10) {
+#
+#   sorted = get_exposure(x, matrix=T)[[t]] %>% colSums() %>% sort(decreasing = TRUE)
+#   sorted_p = sorted/sorted[1]
+#
+#   max_cols = 30
+#
+#   boxes = (sorted_p * max_cols) %>% round
+#
+#   is_denovo = function(n) {
+#     n %in% (get_denovo_signatures(x, matrix=T)[[t]] %>% rownames())
+#   }
+#
+#   sapply(boxes %>% seq, function(i) {
+#
+#     if(is_denovo(names(boxes)[i]))
+#       cat(
+#         "\t\t",
+#         sprintf( "%8s", names(boxes)[i]) %>% crayon::yellow(),
+#         paste(rep("\u25A0", boxes[i]), collapse = ''),
+#         '\n'
+#       )
+#     else
+#       cat(
+#         "\t\t",
+#         sprintf( "%8s", names(boxes)[i]) %>% crayon::blue(),
+#         paste(rep("\u25A0", boxes[i]), collapse = ''),
+#         '\n'
+#       )
+#   })
+# }
 
 
 #' Plot for class \code{'basilica_obj'}.
@@ -108,6 +94,4 @@ bar_print_console = function(x, top = 10) {
 plot.basilica_obj = function(x, ...)
 {
   stopifnot(inherits(x, "cnaqc"))
-
-
 }

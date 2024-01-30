@@ -1,278 +1,97 @@
-#' get exposure matrix
-#'
-#' @param x basilica object
-#' @param long if TRUE return the long format exposure matrix (default=FALSE)
-#'
-#' @return a data.frame where rows are samples and columns are inferred signature profiles
-#' @export get_exposure
+# Signatures #####
+## names ####
+get_signames = function(x, types=get_types(x)) {
+  lapply(types, function(t)
+    get_signatures(x, types=t, matrix=TRUE)[[t]] %>% rownames()) %>%
+    setNames(types)
+}
 
-get_exposure = function(x, long = FALSE, add_groups = FALSE) {
+get_fixed_signames = function(x, types=get_types(x)) {
+  lapply(types, function(t)
+    get_fixed_signatures(x, types=t, matrix=TRUE)[[t]] %>% rownames()) %>%
+    setNames(types)
+}
 
-  stopifnot(inherits(x, "basilica_obj"))
+get_denovo_signames = function(x, types=get_types(x)) {
+  lapply(types, function(t)
+    get_denovo_signatures(x, types=t, matrix=TRUE)[[t]] %>% rownames()) %>%
+    setNames(types)
+}
 
-  alpha = x$fit$exposure
+## signature profiles #####
+get_signatures = function(x, types=get_types(x), matrix=FALSE) {
+  return(get_signatures_aux(x=x, types=types, matrix=matrix, what="all"))
+}
 
-  if (is.matrix(alpha)) {
-    alpha = alpha %>% as.data.frame()
-    colnames(alpha) = c(x$fit$catalogue_signatures %>% rownames(),
-                        x$fit$denovo_signatures %>% rownames())
-  }
+get_fixed_signatures = function(x, types=get_types(x), samples=get_samples(x),
+                                clusters=get_cluster_labels(x), matrix=FALSE) {
+  return(get_signatures_aux(x=x, types=types, matrix=matrix, what="fixed"))
+}
 
-  if (add_groups && have_groups(x))
-    alpha$groups = x$groups
 
-  if (long) {
-    is_denovo = function(n){
-      n %in% (x$fit$denovo_signatures %>% rownames())
+get_denovo_signatures = function(x, types=get_types(x), samples=get_samples(x),
+                                 clusters=get_cluster_labels(x), matrix=FALSE) {
+  return(get_signatures_aux(x=x, types=types, matrix=matrix, what="denovo"))
+}
+
+get_signatures_aux = function(x, what, types=get_types(x), matrix=FALSE) {
+  ## what %in% c("denovo","fixed","all")
+  out = lapply(types, function(t) {
+    if (what=="fixed") x$nmf[[t]]$beta_fixed else if (what=="denovo")
+      x$nmf[[t]]$beta_denovo else if (what=="all")
+        rbind(x$nmf[[t]]$beta_fixed, x$nmf[[t]]$beta_denovo) else NULL
+  }) %>% setNames(types)
+
+  if(matrix)
+    out = lapply(out, function(df_t) long_to_wide(df_t, what="beta")) %>%
+      setNames(types)
+  return(out)
+}
+
+
+
+# Input #####
+get_input = function(x, types=get_types(x), samples=get_samples(x),
+                     clusters=get_cluster_labels(x), matrix=FALSE,
+                     reconstructed=FALSE, add_groups=FALSE) {
+  out = lapply(types, function(tid) {
+    if (reconstructed) {
+      expos = get_exposure(x, types=tid, samples=samples, clusters=clusters, matrix=T)[[tid]]
+      betas = get_signatures(x, types=tid, matrix=T)[[tid]]
+      theta = rowSums(x$input[[tid]]$counts %>% long_to_wide(what="counts"))
+      counts_r = as.matrix(expos*theta) %*% as.matrix(betas)
+      w = counts_r %>% wide_to_long(what="counts")
+    } else {
+      w = x$input[[tid]]$counts %>%
+        dplyr::filter(samples %in% !!samples)
     }
 
-    alpha$Sample = rownames(alpha)
-    if ("groups" %in% colnames(alpha))
-      alpha = tidyr::gather(alpha, key="Signature", value="Exposure", c(-Sample, -groups)) else
-        alpha = tidyr::gather(alpha, key="Signature", value="Exposure", c(-Sample))
+    if(!is.null(clusters)) {
+      clusters_df = x %>%
+        get_cluster_assignments(samples=samples, clusters=clusters)
+      w = w %>% dplyr::right_join(clusters_df, by="samples")
+    }
 
-    alpha = alpha %>%
-      dplyr::mutate(Type = ifelse(
-        is_denovo(Signature),
-        "De novo",
-        "Catalogue"
-      )) %>%
-      tidyr::as_tibble()
+    return(w)
+    }) %>% setNames(types)
 
-  }
-
-  return(alpha)
+  if(matrix)
+    out = lapply(out, function(df_t)
+      long_to_wide(df_t %>% dplyr::select(-dplyr::contains("clusters")), what="counts")) %>%
+      setNames(types)
+  return(out)
 }
 
-#' get catalogue signatures
-#'
-#' @param x basilica object
-#'
-#' @return a data.frame where rows are inferred signatures (included in reference catalogue) and columns are 96 substitution bases.
-#' @export get_catalogue_signatures
-
-get_catalogue_signatures = function(x, long = FALSE) {
-  stopifnot(inherits(x, "basilica_obj"))
-
-  sigs = x$fit$catalogue_signatures
-
-  if(long)
-    sigs = reshape2::melt(sigs %>% as.matrix()) %>%
-      dplyr::rename(
-        Signature = Var1,
-        Feature = Var2,
-        Value = value
-      ) %>%
-    dplyr::as_tibble()%>%
-    dplyr::mutate(Type = 'Catalogue')
-
-  return(sigs)
+get_input_signatures = function(x, types=get_types(x), matrix=F) {
+  lapply(types, function(tid) {
+    sigs = x$input[[tid]]$reference
+    if (matrix) sigs = long_to_wide(sigs, what="beta")
+  }) %>% setNames(types)
 }
 
-#' get de novo signatures
-#'
-#' @param x basilica object
-#'
-#' @return a data.frame where rows are inferred signatures (not included in reference catalogue) and columns are 96 substitution bases.
-#' @export get_denovo_signatures
-
-get_denovo_signatures = function(x,  long = FALSE) {
-  stopifnot(inherits(x, "basilica_obj"))
-
-  sigs = x$fit$denovo_signatures
-
-  if(is.null(sigs)) return(NULL)
-
-  if(long)
-    sigs = reshape2::melt(sigs %>% as.matrix()) %>%
-    dplyr::rename(
-      Signature = Var1,
-      Feature = Var2,
-      Value = value
-    ) %>%
-    dplyr::as_tibble() %>%
-    dplyr::mutate(Type = 'De novo')
-
-  return(sigs)
-}
-
-
-get_fixed_signatures = function(x,  long = FALSE) {
-  stopifnot(inherits(x, "basilica_obj"))
-
-  sigs = x$fit$input_catalogue
-
-  if(is.null(sigs)) return(NULL)
-
-  if(long)
-    sigs = reshape2::melt(sigs %>% as.matrix()) %>%
-    dplyr::rename(
-      Signature = Var1,
-      Feature = Var2,
-      Value = value
-    ) %>%
-    dplyr::as_tibble() %>%
-    dplyr::mutate(Type = 'De novo')
-
-  return(sigs)
-}
-
-
-#' get de novo and catalouge signatures
-#'
-#' @param x basilica object
-#'
-#' @return a data.frame where rows are inferred signatures (not included in reference catalogue) and columns are 96 substitution bases.
-#' @export get_denovo_signatures
-
-get_signatures = function(x,  long = FALSE) {
-  stopifnot(inherits(x, "basilica_obj"))
-
-  sigs_dn = x %>% get_denovo_signatures(long = !!long)
-  sigs_ct = x %>% get_catalogue_signatures(long = !!long)
-
-  sigs = sigs_ct %>%
-    dplyr::bind_rows(sigs_dn)
-
-  return(sigs)
-}
-
-
-get_reference_signatures = function(x, long = FALSE) {
-  stopifnot(inherits(x, "basilica_obj"))
-
-  sigs = x$input$reference_catalogue
-
-  if(long)
-    sigs = reshape2::melt(sigs %>% as.matrix()) %>%
-    dplyr::rename(
-      Signature = Var1,
-      Feature = Var2,
-      Value = value
-    ) %>%
-    dplyr::as_tibble() %>%
-    dplyr::mutate(Type = 'Reference')
-
-  return(sigs)
-}
-
-
-have_groups = function(x) {
-  if ("groups" %in% names(x) && !is.null(x[["groups"]])) return(TRUE)
-  return(FALSE)
-}
-
-
-have_epsilon = function(x) {
-  if ("eps_var" %in% names(x$fit)) return(TRUE)
-  return(FALSE)
-}
-
-
-have_color_palette = function(x) {
-  if ("color_palette" %in% names(x)) return(TRUE)
-  return(FALSE)
-}
-
-
-get_color_palette = function(x) {
-  if ("color_palette" %in% names(x)) return(x[["color_palette"]])
-  return(NULL)
-}
-
-
-subset_catalogue = function(catalogue, rm_sigs=NULL, keep_sigs=NULL) {
-  if (is.null(rm_sigs) && is.null(keep_sigs))
-    return(catalogue)
-
-  if (is.null(rm_sigs))
-    return(catalogue[keep_sigs,])
-
-  if (is.null(keep_sigs))
-    return(catalogue[!rownames(catalogue) %in% rm_sigs, ])
-
-  keep_fin = intersect(which(!rownames(catalogue) %in% rm_sigs), which(rownames(catalogue) %in% keep_sigs)) %>% unique()
-  return(catalogue[keep_fin])
-}
-
-
-get_groups_with_sigs = function(x, sigs, thr=0) {
-  if (!have_groups(x))
-    return()
-
-  return(
-    get_exposure(x, add_groups=T, long=T) %>%
-      dplyr::filter(Signature %in% sigs) %>%
-      dplyr::group_by(groups, Signature) %>%
-      dplyr::reframe(is_present=any(Exposure > 0)) %>%
-      dplyr::ungroup() %>% dplyr::filter(is_present) %>%
-      dplyr::select(groups, Signature) %>%
-      tidyr::nest(data=groups)
-  )
-}
-
-
-get_samples_with_sigs = function(x, sigs, thr=0, return_idx=FALSE) {
-  if (!return_idx)
-    return( rownames(get_exposure(x))[which(get_exposure(x)[,sigs] > thr)] )
-
-  return( which(get_exposure(x)[,sigs] > thr) )
-}
-
-
-get_sigs_group = function(x, groupID, thr=0) {
-  samples_g = rownames(get_group(x, groupID))
-  expos = get_exposure(x)[samples_g,]
-  expos[expos < thr] = 0
-  return(
-    colnames(expos)[colSums(expos) > 0]
-  )
-}
-
-
-get_group = function(x, groupIDs, return_idx=FALSE) {
-  if (!have_groups(x))
-    return()
-  if (!return_idx)
-    return(
-      x %>% get_data() %>% dplyr::mutate(groups=x$groups) %>%
-        dplyr::filter(groups %in% groupIDs) %>%
-        dplyr::select(-groups)
-    )
-
-  return(
-    x %>% get_data() %>% dplyr::mutate(groups=x$groups) %>%
-      dplyr::filter(groups %in% groupIDs) %>%
-      dplyr::select(-groups) %>% rownames()
-  )
-}
-
-
-add_groups = function(x, groups) {
-  x$groups = groups
-  return(x)
-}
-
-get_dn_signames = function(x) {
-  return(rownames(get_denovo_signatures(x)))
-}
-
-get_fixed_signames = function(x) {
-  return(rownames(get_fixed_signatures(x)))
-}
-
-get_catalogue_signames = function(x) {
-  return(rownames(get_catalogue_signatures(x)))
-}
-
-get_signames = function(x) {
-  return(rownames(get_signatures(x)))
-}
-
-
-get_scores_K = function(x) {
-  if (is.null(x$fit$runs_K)) return(NULL)
-  return(x$fit$runs_K %>% dplyr::select_if(dplyr::where(function(i) any(!is.na(i)))))
+get_input_signames = function(x, types=get_types(x)) {
+  sigs = get_input_signatures(x, types=types, matrix=T)
+  lapply(sigs, rownames) %>% setNames(names(sigs))
 }
 
 
@@ -282,98 +101,154 @@ get_scores_CL = function(x) {
 }
 
 
-get_secondBest_run = function(x) {
-  return(
-    x$fit$secondBest %>%
-      create_basilica_obj(input_catalogue=get_fixed_signatures(x),
-                          reference_catalogue=get_reference_signatures(x),
-                          cohort=x$cohort,
-                          filtered_catalogue=TRUE)
-  )
+# Exposures ####
+# Get exposure, it can subset by types, samples and clusters. It can return
+# a list of matrices.
+get_exposure = function(x, types=get_types(x), samples=get_samples(x),
+                        clusters=get_cluster_labels(x), add_groups=FALSE,
+                        matrix=FALSE) {
+  out = lapply(types, function(t) {
+      w = x$nmf[[t]]$exposure %>%
+        dplyr::filter(samples %in% !!samples)
+
+      if(!is.null(clusters)) {
+        which_selection = x %>%
+          get_cluster_assignments(samples=samples, clusters=clusters)
+
+        w = w %>% dplyr::inner_join(which_selection, by="samples")
+        if (!add_groups) w = w %>% dplyr::select(-clusters)
+      }
+      return(w)
+    }) %>% setNames(types)
+
+  if(matrix)
+    out = lapply(out, function(df_t) long_to_wide(df_t, what="exposures")) %>%
+      setNames(types)
+  return(out)
 }
 
 
-get_fit_by_id = function(x, idd) {
-  new_fit = x$fit$all_fits[[idd]]
 
-  return(
-    new_fit %>%
-      create_basilica_obj(input_catalogue=get_fixed_signatures(x),
-                          reference_catalogue=get_reference_signatures(x),
-                          cohort=x$cohort,
-                          filtered_catalogue=TRUE)
-  )
-}
+# Clustering #####
+get_centroids = function(x, matrix=F) {
+  if (is.null(x$clustering$centroids)) return(NULL)
 
+  unq_labels = get_cluster_labels(x)
 
-get_groups = function(x) {
-  if (have_groups(x)) return(x$groups)
-  return(rep(0, time=x$n_samples))
-}
+  centr = x$clustering$centroids %>%
+    dplyr::mutate(clusters=paste0("G",stringr::str_replace_all(clusters,"G","")),
+                  sigs=stringr::str_replace_all(sigs,"^[0-9]+_","")) %>%
+    dplyr::filter(clusters %in% unq_labels)
 
+  if (matrix)
+    return(centr %>%
+             tidyr::pivot_wider(names_from="sigs", values_from="value") %>%
+             tibble::column_to_rownames(var="clusters"))
 
-get_centroids = function(x, normalize=FALSE) {
-  if (!have_groups(x)) return(NULL)
-
-  centr = x$fit$params$alpha_prior
-
-  if (any(grepl("G", get_groups(x)))) to_paste = "G" else to_paste = ""
-  if (!any(grepl("G", rownames(centr)))) rownames(centr) = 1:nrow(centr) -1
-  rownames(centr) = paste0(to_paste, rownames(centr) %>% stringr::str_replace_all("G",""))
-
-  if (normalize) return(centr / rowSums(centr))
   return(centr)
 }
 
-
-get_mixture_weights = function(x) {
+get_mixing_proportions = function(x) {
   if (!have_groups(x)) return(NULL)
+  pis = get_params(x, what="clustering")[["pi"]]
+  if (is.null(pis)) return(NULL)
+  cnames = paste0("G",1:length(pis)-1)
+  data.frame(value=pis, clusters=factor(cnames, levels=cnames))
+}
 
-  cl_names = rownames(get_centroids(x))
-  return(x$fit$params$pi %>% setNames(cl_names))
+# Get cluster labels ("C1", "C2")
+get_cluster_labels = function(x) {
+  if(is.null(x$clustering)) return(NULL)
+
+  x$clustering$cluster$clusters %>% unique()
+}
+
+# Get clustering assignments (tibble)
+get_cluster_assignments = function(x, samples=get_samples(x), clusters=get_cluster_labels(x)) {
+  if(is.null(x$clustering)) return(NULL)
+
+  x$clustering$clusters %>%
+    dplyr::filter(samples %in% !!samples, clusters %in% !!clusters)
 }
 
 
-COSMIC_color_palette = function(catalogue=COSMIC_filt, seed=14) {
-  N = nrow(catalogue)
-  set.seed(seed)
-  colss = Polychrome::createPalette(N, c("#856de3","#9e461c"), target="normal", range=c(15,80), M=1000)[1:N]
-  names(colss) = rownames(catalogue)
-  return(colss)
+
+# Fit infos #####
+
+# Get type of data used for signatures: e.g., "SBS", "DBS"
+get_types = function(x) {
+  if (is.null(x)) return(NULL)
+  return(x$input %>% names())
+}
+
+get_fittypes = function(x) {
+  if (is.null(x)) return(NULL)
+  return(names(x)[names(x)!="input"])
+}
+
+# Get samples names
+get_samples = function(x) {x$input[[1]]$counts$samples %>% unique()}
+
+get_K = function(x, types=get_types(x)) {
+  return(lapply(get_signames(x, types=types), length))
+}
+
+get_G = function(x, input=FALSE) {
+  if (!input) return(length(get_cluster_labels(x)))
+  return(
+    get_pyro_stat(x, what="clustering",
+                  statname="params")[["infered_params"]]$post_probs %>% ncol()
+  )
+}
+
+get_seed = function(x, what, types=get_types(x)) {
+  return(get_pyro_stat(x, what=what, statname="seed"))
 }
 
 
-get_contexts = function(x) {
-  tryCatch(expr = {
-    context_names = x %>% get_signatures(long=T) %>% dplyr::select(Feature) %>% unique()
-  }, error = function(e)
-    context_names = data.frame(Feature = x$denovo_signatures %>% colnames()) )
 
-  return(context_names %>%
-           dplyr::mutate(Feature=gsub(pattern = '\\[', replacement = '_', x=Feature)) %>%
-           dplyr::mutate(Feature=gsub(pattern = '\\]', replacement = '_', x=Feature)) %>%
-           tidyr::separate(Feature, into=c("left","subs","right"), sep="_"))
+# Auxiliary fns #####
+
+# what %in% c("beta","exposures","counts")
+wide_to_long = function(dataframe, what) {
+  if (is.null(dataframe) || nrow(dataframe)==0) return(NULL)
+
+  cols = dplyr::case_when(
+    what == "beta" ~ list(variables="features", ids="sigs"),
+    what == "exposures" ~ list(variables="sigs", ids="samples"),
+    what == "counts" ~ list(variables="features", ids="samples")
+  )
+  dataframe %>% as.data.frame() %>%
+    tibble::rownames_to_column(var=cols$ids) %>%
+    reshape2::melt(id=cols$ids, variable.name=cols$variables) %>%
+    dplyr::mutate(dplyr::across(is.factor, as.character)) %>%
+    tibble::as_tibble()
 }
 
 
-get_obj_initial_params = function(x) {
-  params = x$fit$init_params
-
-  if (!have_groups(x)) {
-    x$fit$exposure = x$fit$params$alpha = params$alpha / rowSums(params$alpha)
-    x$fit$denovo_signatures = params$beta_dn_param / rowSums(params$beta_dn_param)
-  }
-  x$fit$groups = x$groups = params$init_clusters
-  x$fit$pi = x$fit$params$pi = params$pi_param
-
-  x$fit$params$alpha_prior = params$alpha_prior_param
-
-  return(x)
+long_to_wide = function(dataframe, what) {
+  if (is.null(dataframe) || nrow(dataframe)==0) return(NULL)
+  cols = dplyr::case_when(
+    what == "beta" ~ list(variables="features", ids="sigs"),
+    what == "exposures" ~ list(variables="sigs", ids="samples"),
+    what == "counts" ~ list(variables="features", ids="samples")
+  )
+  dataframe %>%
+    dplyr::select(-dplyr::contains("type")) %>%
+    tidyr::pivot_wider(names_from=cols$variables, values_from="value") %>%
+    tibble::column_to_rownames(var=cols$ids)
 }
 
 
-get_adjusted_fit_lc = function(x) {
-  if ("lc_check" %in% names(x)) return(x$lc_check)
-  return(x)
-}
 
+# Deprecated ####
+get_beta_weights = function(x, types=get_types(x)) {
+  if (is.null(get_params(x, what="nmf", types=types[1])[[1]]$beta_w))
+    return(NULL)
+  lapply(types, function(tid) {
+    get_params(x, what="nmf", types=tid)[[1]]$beta_w %>%
+      tibble::rownames_to_column(var="sigid") %>%
+      reshape2::melt(variable.name="sigs") %>%
+      dplyr::mutate(type=tid)
+  }) %>% do.call(rbind, .)
+}
