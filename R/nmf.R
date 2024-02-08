@@ -7,8 +7,18 @@ pyro_nmf = function(..., k_list, reference_cat, cohort,
                              min_exposure=min_exposure, keep_sigs=keep_sigs,
                              type=type)
 
-  nmf_t = list(pyro=pyro_fit, exposure=pyro_fit$exposure,
-               beta_fixed=pyro_fit$beta_fixed, beta_denovo=pyro_fit$beta_denovo)
+  pyro_step1 = pyro_fit$step1
+  pyro_step2 = pyro_fit$step2
+  step1 = list(pyro=pyro_step1, exposure=pyro_step1$exposure,
+               beta_fixed=pyro_step1$beta_fixed,
+               beta_denovo=pyro_step1$beta_denovo)
+
+  nmf_t = list(pyro=pyro_step2,
+               exposure=pyro_step2$exposure,
+               beta_fixed=pyro_step2$beta_fixed,
+               beta_denovo=pyro_step2$beta_denovo,
+               nmf_step1=step1)
+
   return(nmf_t)
 }
 
@@ -38,7 +48,7 @@ nmf_single_type = function(..., k_list, reference_cat, cohort,
   x_dn$k_list = k_list
   x_dn$call = call_info
 
-  return(x_dn)
+  return(list("step1"=x_ref, "step2"=x_dn))
 }
 
 
