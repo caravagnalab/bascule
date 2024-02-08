@@ -1,9 +1,15 @@
 # add args for pyro fit; returns nmf for type t
-pyro_nmf = function(..., k_list, reference_cat, cohort,
+pyro_nmf = function(..., k_list, hyperparameters, reference_cat, cohort,
                     filter_dn, min_exposure, keep_sigs, type="") {
+
+  alpha_conc = hyperparameters[["alpha_conc"]]
+  hyperparameters[["alpha_conc"]] = lapply(rownames(reference_cat),
+         function(sid) if (sid %in% names(alpha_conc)) alpha_conc[[sid]] else 1) %>%
+    unlist()
 
   pyro_fit = nmf_single_type(..., k_list=k_list, reference_cat=reference_cat,
                              cohort=cohort, filter_dn=filter_dn,
+                             hyperparameters=hyperparameters,
                              min_exposure=min_exposure, keep_sigs=keep_sigs,
                              type=type)
 
@@ -23,23 +29,32 @@ pyro_nmf = function(..., k_list, reference_cat, cohort,
 }
 
 
-nmf_single_type = function(..., k_list, reference_cat, cohort,
+nmf_single_type = function(..., k_list, hyperparameters, reference_cat, cohort,
                            filter_dn, min_exposure, keep_sigs, type="") {
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
   call_info = match.call()
 
   if (!is.null(reference_cat)) {
-    x_ref = pyfit(..., k_list=0, clusters=NULL, reference_cat=reference_cat,
+    x_ref = pyfit(..., k_list=0, clusters=NULL,
+                  hyperparameters = hyperparameters,
+                  reference_cat=reference_cat,
                   stage="random_noise", filter_dn=FALSE, type=type)
 
     x_ref_filt = x_ref %>% filter_sigs_low_expos(min_exp=min_exposure, keep_sigs=keep_sigs)
     catalogue2 = long_to_wide(dataframe=x_ref_filt$beta_fixed, what="beta")
+
+    # keep only the concentration for the retained fixed signatures
+    a = rownames(reference_cat)
+    b = rownames(catalogue2)
+    alpha_conc = hyperparameters[["alpha_conc"]] %>% unlist()
+    if (!is.null(alpha_conc)) hyperparameters[["alpha_conc"]] = alpha_conc[a %in% b]
   } else {
     x_ref = x_ref_filt = catalogue2 = NULL
     residues = FALSE
   }
 
-  x_dn = pyfit(..., k_list=k_list, clusters=NULL, stage="",
+  x_dn = pyfit(..., k_list=k_list, clusters=NULL,
+               stage="", hyperparameters=hyperparameters,
                filter_dn=filter_dn, reference_cat=catalogue2, type=type)
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
