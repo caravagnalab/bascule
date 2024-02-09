@@ -1,3 +1,33 @@
+# Fit infos #####
+get_n_denovo = function(x) {
+  lapply(get_types(x), function(tid) {
+    get_denovo_signames(x)[[tid]] %>% length()
+  }) %>% setNames(get_types(x))
+}
+
+
+get_n_groups = function(x) {
+  if (!have_groups(x)) return(1)
+  return(get_cluster_labels(x) %>% length())
+}
+
+
+get_seed = function(x) {
+  list("clustering"=get_pyro_stat(x, what="clustering", statname="seed")[[1]],
+       "nmf"=get_pyro_stat(x, what="nmf", statname="seed"))
+}
+
+
+get_best_seed = function(x, value, type_id, parname) {
+  get_scores(x, types=type_id) %>%
+    dplyr::filter(score_id=="bic", parname==!!parname, value==!!value) %>%
+    dplyr::filter(score==min(score)) %>%
+    dplyr::pull(seed)
+}
+
+
+# Scores #####
+
 get_gradient_norms = function(x, types=get_types(x)) {
   vname = "gradient_norms"
   qcs_nmf = get_QC(x, what="nmf", types=types)
@@ -34,22 +64,31 @@ get_scores = function(x, types=get_types(x)) {
 }
 
 
-get_n_denovo = function(x) {
-  lapply(get_types(x), function(tid) {
-    get_denovo_signames(x)[[tid]] %>% length()
-  }) %>% setNames(get_types(x))
+get_losses = function(x, what=get_fittypes(x), types=get_types(x)) {
+  get_stats(x, what, types, statname="losses") %>%
+    dplyr::group_by(type, what) %>%
+    dplyr::mutate(iteration=1:dplyr::n())
 }
 
-get_n_groups = function(x) {
-  if (!have_groups(x)) return(1)
-  return(get_cluster_labels(x) %>% length())
+
+get_likelihoods = function(x, what=get_fittypes(x), types=get_types(x)) {
+  get_stats(x, what, types, statname="likelihood") %>%
+    dplyr::group_by(type, what) %>%
+    dplyr::mutate(iteration=1:dplyr::n())
 }
 
-get_seed = function(x) {
-  list("clustering"=get_pyro_stat(x, what="clustering", statname="seed")[[1]],
-       "nmf"=get_pyro_stat(x, what="nmf", statname="seed"))
+
+get_penalty = function(x, what=get_fittypes(x), types=get_types(x)) {
+  penalty = get_stats(x, what, types, statname="penalty")
+  if (nrow(penalty) == 0) return(NULL)
+
+  penalty %>%
+    dplyr::group_by(type, what) %>%
+    dplyr::mutate(iteration=1:dplyr::n())
 }
 
+
+# Alternative runs #####
 
 # params = list("K"=NA,"G"=NA,"seed"=NA)
 get_alternative_run = function(x, K=get_n_denovo(x), G=get_n_groups(x),
@@ -93,13 +132,53 @@ get_alternative_run = function(x, K=get_n_denovo(x), G=get_n_groups(x),
 }
 
 
-get_best_seed = function(x, value, type_id, parname) {
-  get_scores(x, types=type_id) %>%
-    dplyr::filter(score_id=="bic", parname==!!parname, value==!!value) %>%
-    dplyr::filter(score==min(score)) %>%
-    dplyr::pull(seed)
+get_params = function(x, what, types=get_types(x)) {
+  params = get_pyro_stat(x, what=what, types=types, statname="params")
+  if (what == "nmf")
+    return(
+      lapply(types, function(tid) params[[tid]]$infered_params) %>% setNames(types)
+    )
+  return(params[[1]]$infered_params)
 }
 
+
+get_train_params = function(x, what, types=get_types(x)) {
+  qc = get_QC(x, what=what, types=types)
+  if (what=="nmf")
+    lapply(types, function(tid) qc[[tid]][["train_params"]]) %>%
+    setNames(types)
+  else
+    qc[[1]][["train_params"]]
+}
+
+
+get_initial_object = function(x, what="clustering") {
+  if (what!="clustering" || !have_groups(x)) {
+    cli::cli_alert_warning("what != 'clustering' or no groups are in the input object, the input object will be returned.")
+    return(x)
+  }
+
+  init_params = get_pyro_stat(x, what=what, statname="params")[[1]]$init_params
+  x[[what]]$pyro$params$infered_params = init_params
+  x[[what]]$clusters = tibble::tibble(samples=get_samples(x),
+                                      clusters=paste0("G",init_params$init_clusters))
+  x[[what]]$centroids = init_params$alpha_prior %>%
+    wide_to_long(what="exposures") %>%
+    dplyr::rename(clusters=samples)
+  return(x)
+}
+
+
+get_nmf_step1 = function(x) {
+  for (tid in get_types(x))
+    x[["nmf"]][[tid]] = x[["nmf"]][[tid]][["nmf_step1"]]
+
+}
+
+
+
+
+# Aux functions #####
 
 ## what %in% c("nmf", "clustering")
 get_alternatives = function(x, what, types=get_types(x)) {
@@ -127,44 +206,6 @@ get_pyro_stat = function(x, what, statname, types=get_types(x)) {
 }
 
 
-get_params = function(x, what, types=get_types(x)) {
-  params = get_pyro_stat(x, what=what, types=types, statname="params")
-  if (what == "nmf")
-    return(
-      lapply(types, function(tid) params[[tid]]$infered_params) %>% setNames(types)
-    )
-  return(params[[1]]$infered_params)
-}
-
-
-get_train_params = function(x, what, types=get_types(x)) {
-  qc = get_QC(x, what=what, types=types)
-  if (what=="nmf")
-    lapply(types, function(tid) qc[[tid]][["train_params"]]) %>%
-      setNames(types)
-  else
-    qc[[1]][["train_params"]]
-}
-
-
-
-get_initial_object = function(x, what="clustering") {
-  if (what!="clustering" || !have_groups(x)) {
-    cli::cli_alert_warning("what != 'clustering' or no groups are in the input object, the input object will be returned.")
-    return(x)
-  }
-
-  init_params = get_pyro_stat(x, what=what, statname="params")[[1]]$init_params
-  x[[what]]$pyro$params$infered_params = init_params
-  x[[what]]$clusters = tibble::tibble(samples=get_samples(x),
-                                      clusters=paste0("G",init_params$init_clusters))
-  x[[what]]$centroids = init_params$alpha_prior %>%
-    wide_to_long(what="exposures") %>%
-    dplyr::rename(clusters=samples)
-  return(x)
-}
-
-
 get_stats = function(x, what, types, statname) {
   lapply(what, function(whatid) {
     lapply(types, function(tid) {
@@ -178,26 +219,4 @@ get_stats = function(x, what, types, statname) {
 }
 
 
-get_losses = function(x, what=get_fittypes(x), types=get_types(x)) {
-  get_stats(x, what, types, statname="losses") %>%
-    dplyr::group_by(type, what) %>%
-    dplyr::mutate(iteration=1:dplyr::n())
-}
-
-
-get_likelihoods = function(x, what=get_fittypes(x), types=get_types(x)) {
-  get_stats(x, what, types, statname="likelihood") %>%
-    dplyr::group_by(type, what) %>%
-    dplyr::mutate(iteration=1:dplyr::n())
-}
-
-
-get_penalty = function(x, what=get_fittypes(x), types=get_types(x)) {
-  penalty = get_stats(x, what, types, statname="penalty")
-  if (nrow(penalty) == 0) return(NULL)
-
-  penalty %>%
-    dplyr::group_by(type, what) %>%
-    dplyr::mutate(iteration=1:dplyr::n())
-}
 
