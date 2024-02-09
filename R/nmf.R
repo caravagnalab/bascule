@@ -2,6 +2,17 @@
 pyro_nmf = function(..., k_list, reference_cat, cohort,
                     filter_dn, min_exposure, keep_sigs, type="") {
 
+  alpha_conc = hyperparameters[["alpha_conc"]]
+  if (!is.null(alpha_conc)) {
+    if (is.numeric(alpha_conc) | is.integer(alpha_conc) | is.null(names(alpha_conc))) {
+      hyperparameters[["alpha_conc"]] = rep(min(unlist(alpha_conc)), times=nrow(reference_cat))
+    } else {
+      hyperparameters[["alpha_conc"]] = lapply(rownames(reference_cat),
+                                               function(sid) if (sid %in% names(alpha_conc)) alpha_conc[[sid]] else 1) %>%
+        unlist()
+    }
+  }
+
   pyro_fit = nmf_single_type(..., k_list=k_list, reference_cat=reference_cat,
                              cohort=cohort, filter_dn=filter_dn,
                              min_exposure=min_exposure, keep_sigs=keep_sigs,

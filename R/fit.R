@@ -86,26 +86,8 @@ fit = function(counts, k_list,
                        seed_list = seed_list,
                        py = py)
 
-  # exposures = get_exposure(bas, matrix=TRUE)
-  # bas$clustering = pyro_clustering(exposures = exposures,
-  #                                  cluster = cluster,
-  #
-  #                                  enumer = enumer,
-  #                                  nonparametric = nonparametric,
-  #
-  #                                  hyperparameters = hyperparameters,
-  #
-  #                                  lr = lr,
-  #                                  optim_gamma = optim_gamma,
-  #                                  n_steps = n_steps,
-  #
-  #                                  CUDA = CUDA,
-  #
-  #                                  store_parameters = store_parameters,
-  #                                  store_fits = store_fits,
-  #
-  #                                  seed_list = seed_list,
-  #                                  py = py)
+
+  # bas2 = refine_signatures(bas, threshold=0.8)
   return(bas)
 }
 
