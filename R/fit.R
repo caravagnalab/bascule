@@ -106,9 +106,9 @@ fit = function(counts, k_list,
   #
   #                                  seed_list = seed_list,
   #                                  py = py)
-  
-  bas <- refine_signatures_SBS(bas, threshold=0.8)
-  bas <- refine_signatures_DBS(bas, threshold=0.8)
+
+  # bas <- refine_signatures_SBS(bas, threshold=0.8)
+  # bas <- refine_signatures_DBS(bas, threshold=0.8)
   return(bas)
 }
 
