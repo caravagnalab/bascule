@@ -54,7 +54,7 @@ refine_signatures_aux <- function(x, type, threshold) {
 refine_signatures <- function(x, threshold=0.8) {
   xxx <- lapply(basilica:::get_types(x), refine_signatures_aux, x=x, threshold=threshold)
   names(xxx) <- paste(basilica:::get_types(x), "refined", sep = "_")
-  x$nmf$refined <- xx
+  x$nmf$refined <- xxx
   return(x)
 }
 
