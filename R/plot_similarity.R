@@ -16,12 +16,19 @@
 plot_similarity_reference = function(x, reference=NULL, type="SBS", similarity_cutoff=0.8,
                                      context=T, add_pheatmap=T) {
 
-  if (is.null(reference)) reference = get_fixed_signatures(x, types=type, matrix=T)[[type]]
-  reference = reference[!rownames(reference) %in% get_signames(x, types=type)[[type]], ]
+  if (is.null(reference)) {
+    reference = get_fixed_signatures(x, types=type, matrix=T)[[type]]
+  } else {
+    reference = reference[!rownames(reference) %in% get_denovo_signames(x, types=type)[[type]], ]
+  }
   if (nrow(reference) == 0) return(NULL)
   signatures = get_signatures(x, types=type, matrix=T)[[type]]
+  # discard sigs already in the reference
+  signatures = signatures[!rownames(signatures) %in% rownames(reference), ]
+
   denovo_sigs = get_denovo_signatures(x, types=type, matrix=F)[[type]]
   reference_sigs = get_fixed_signatures(x, types=type, matrix=F)[[type]] %>%
+    dplyr::filter(!sigs %in% rownames(reference)) %>%
     dplyr::add_row(reference %>% wide_to_long(what="beta"))
 
   # Similarity to the reference
@@ -65,7 +72,8 @@ plot_similarity_reference = function(x, reference=NULL, type="SBS", similarity_c
 
     extra_plots = NULL
 
-    colpalette = gen_palette_aux(signames=unique(c(rownames(cosine_matrix), colnames(cosine_matrix))))
+    colpalette = gen_palette_aux(signames=list(unique(c(rownames(cosine_matrix), colnames(cosine_matrix)))) %>%
+                                   setNames(type))
     for(i in 1:length(cosine_matrix_dn)) {
       ref = reference_sigs %>%
         dplyr::filter(sigs == rownames(cosine_matrix)[cosine_matrix_dn[i]])
