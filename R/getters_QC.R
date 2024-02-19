@@ -19,8 +19,8 @@ get_seed = function(x) {
 
 
 get_best_seed = function(x, value, type_id, parname) {
-  get_scores(x, types=type_id) %>%
-    dplyr::filter(score_id=="bic", parname==!!parname, value==!!value) %>%
+  get_scores(x) %>%
+    dplyr::filter(type==type_id, score_id=="bic", parname==!!parname, value==!!value) %>%
     dplyr::filter(score==min(score)) %>%
     dplyr::pull(seed)
 }
@@ -102,9 +102,9 @@ get_alternative_run = function(x, K=get_n_denovo(x), G=get_n_groups(x),
   sigs = paste0("k_denovo:",K) %>% setNames(names(K))
   if (have_groups(x) && !is.null(G)) {
     if (is.null(seed[["clustering"]])) {
-      s_t = paste0("seed:", get_best_seed(x, value=G, parname="G", type_id=tid))
+      s_t = paste0("seed:", get_best_seed(x, value=G, parname="G", type_id="Clustering"))
     } else {
-      s_t = paste0("seed:", seed$nmf[[tid]])
+      s_t = paste0("seed:", seed$Clustering)
     }
     x$clustering = get_alternatives(x, what="clustering")[[1]]$fits[[grps]][[paste0("seed:",seed$clustering)]][[1]]
   }

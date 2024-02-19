@@ -18,12 +18,23 @@ plot_gradient_norms = function(x, types=get_types(x)) {
 
 
 plot_scores = function(x, types=get_types(x)) {
-  scores = get_scores(x, types=types)
+  scores = get_scores(x, types=types) %>%
+    dplyr::group_by(score_id, parname, type) %>%
+    dplyr::mutate(is.min=score==min(score),
+                  label=replace(is.min, is.min==T, "Best fit"),
+                  label=replace(label, label==F | score_id=="llik", NA)) %>%
+
+    dplyr::group_by(score_id, parname, type) %>%
+    dplyr::mutate(is.outlier=(score < boxplot.stats(score)$stats[1] |
+                                score > boxplot.stats(score)$stats[5])) %>%
+    dplyr::filter(!is.outlier)
 
   scores %>%
-    ggplot() +
-    geom_point(aes(x=as.integer(value), y=score, color=factor(seed))) +
-    geom_line(aes(x=as.integer(value), y=score, color=factor(seed))) +
+    ggplot(aes(x=as.integer(value), y=score)) +
+    geom_point(aes(color=factor(seed), shape=label)) +
+    geom_line(aes(color=factor(seed))) +
+    ggrepel::geom_text_repel(aes(label=label),
+                             box.padding=0.05, size=3) +
     ggh4x::facet_nested_wrap(type + parname ~score_id, scales="free",
                              nrow=length(unique(scores$type))) +
     theme_bw() + labs(title="Scores") + xlab("") + ylab("Score")
