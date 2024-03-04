@@ -19,12 +19,13 @@ plot_similarity_reference = function(x, reference=NULL, type="SBS", similarity_c
   if (is.null(reference)) {
     reference = get_fixed_signatures(x, types=type, matrix=T)[[type]]
   } else {
-    reference = reference[!rownames(reference) %in% get_denovo_signames(x, types=type)[[type]], ]
+    # reference = reference[!rownames(reference) %in% get_denovo_signames(x, types=type)[[type]], ]
+    reference = reference
   }
   if (nrow(reference) == 0) return(NULL)
   signatures = get_signatures(x, types=type, matrix=T)[[type]]
   # discard sigs already in the reference
-  signatures = signatures[!rownames(signatures) %in% rownames(reference), ]
+  # signatures = signatures[!rownames(signatures) %in% rownames(reference), ]
 
   denovo_sigs = get_denovo_signatures(x, types=type, matrix=F)[[type]]
   reference_sigs = get_fixed_signatures(x, types=type, matrix=F)[[type]] %>%

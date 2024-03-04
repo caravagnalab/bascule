@@ -109,7 +109,7 @@ fit = function(counts, k_list,
 
   # bas <- refine_signatures_SBS(bas, threshold=0.8)
   # bas <- refine_signatures_DBS(bas, threshold=0.8)
-  bas <- refine_signatures(bas, threshold=0.8)
+  # bas <- refine_signatures(bas, threshold=0.8)
   return(bas)
 }
 

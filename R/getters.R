@@ -86,6 +86,7 @@ get_input_signatures = function(x, types=get_types(x), matrix=F) {
   lapply(types, function(tid) {
     sigs = x$input[[tid]]$reference
     if (matrix) sigs = long_to_wide(sigs, what="beta")
+    sigs
   }) %>% setNames(types)
 }
 
