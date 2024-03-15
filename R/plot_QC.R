@@ -8,11 +8,29 @@ plot_posterior_probs = function(x, samples=get_samples(x)) {
 
 
 plot_gradient_norms = function(x, types=get_types(x)) {
-  get_gradient_norms(x, types=types) %>%
+  norms = get_gradient_norms(x, types=types)
+
+  norms_nmf = norms %>%
+    dplyr::filter(type != "Clustering") %>%
     ggplot() +
     geom_line(aes(x=as.integer(step), y=value)) +
-    facet_wrap(type~parameter, scales="free_y") +
-    theme_bw() + labs(title="Gradient norms") + xlab("Iteration") + ylab("Norm")
+    facet_wrap(type~parameter, scales="free_y", nrow=length(types)) +
+    theme_bw() + labs(title="Gradient norms NMF") +
+    xlab("Iteration") + ylab("Norm") +
+    scale_y_continuous(labels=function(x) scales::scientific(x))
+
+  if (!have_groups(x)) return(norms_nmf)
+
+  norms_clst = norms %>%
+    dplyr::filter(type == "Clustering") %>%
+    ggplot() +
+    geom_line(aes(x=as.integer(step), y=value)) +
+    facet_wrap(~parameter, scales="free_y", nrow=length(types)) +
+    theme_bw() + labs(title="Gradient norms clustering") +
+    xlab("Iteration") + ylab("Norm") +
+    scale_y_continuous(labels=function(x) scales::scientific(x))
+
+  patchwork::wrap_plots(norms_nmf / norms_clst)
 }
 
 
@@ -25,19 +43,38 @@ plot_scores = function(x, types=get_types(x)) {
                   label=replace(label, label==F | score_id=="llik", NA)) %>%
 
     dplyr::group_by(score_id, parname, type) %>%
-    dplyr::mutate(is.outlier=(score < boxplot.stats(score)$stats[1] |
-                                score > boxplot.stats(score)$stats[5])) %>%
+    dplyr::mutate(is.outlier=score %in% boxplot.stats(score)$out) %>%
     dplyr::filter(!is.outlier)
 
-  scores %>%
+  scores_nmf = scores %>%
+    dplyr::filter(parname == "K") %>%
+    dplyr::filter(type %in% types) %>%
     ggplot(aes(x=as.integer(value), y=score)) +
-    geom_point(aes(color=factor(seed), shape=label)) +
     geom_line(aes(color=factor(seed))) +
-    ggrepel::geom_text_repel(aes(label=label),
-                             box.padding=0.05, size=3) +
-    ggh4x::facet_nested_wrap(type + parname ~score_id, scales="free",
-                             nrow=length(unique(scores$type))) +
-    theme_bw() + labs(title="Scores") + xlab("") + ylab("Score")
+    geom_point(aes(color=factor(seed)), size=3) +
+    ggrepel::geom_label_repel(aes(label=label), box.padding=0.05, size=3,
+                             na.rm=T, show.legend=F) +
+    ggh4x::facet_nested_wrap(type ~ score_id, scales="free", nrow=length(types)) +
+    theme_bw() + labs(title="Scores") + xlab("K") + ylab("Scores NMF") +
+    guides(color=guide_legend(title="Seed")) +
+    scale_y_continuous(labels=function(x) scales::scientific(x, digits=1))
+
+  if (!have_groups(x)) return(scores_nmf)
+
+  scores_clst = scores %>%
+    dplyr::filter(parname == "G") %>%
+    ggplot(aes(x=as.integer(value), y=score)) +
+    geom_point(aes(color=factor(seed)), size=3) +
+    geom_line(aes(color=factor(seed))) +
+    ggrepel::geom_label_repel(aes(label=label), box.padding=0.05, size=3, na.rm=T) +
+    ggh4x::facet_nested_wrap(~ score_id, scales="free", nrow=1) +
+    theme_bw() + labs(title="Scores") + xlab("G") + ylab("Scores clustering") +
+    guides(color=guide_legend(title="Seed")) +
+    scale_y_continuous(labels=function(x) scales::scientific(x, digits=1)) +
+    scale_x_continuous(breaks=scores %>% dplyr::filter(parname == "G") %>% dplyr::pull(value) %>% unique())
+
+  design = paste0(rep("A",length(types)), collapse="\n") %>% paste0("\nB")
+  patchwork::wrap_plots(scores_nmf, scores_clst, design=design)
 
 }
 
@@ -50,6 +87,7 @@ plot_losses = function(x) {
     geom_line(aes(x=iteration, y=losses)) +
     facet_grid(what ~ type, scales="free") +
     theme_bw() + xlab("Iterations") + ylab("Loss") +
+    scale_y_continuous(labels=function(x) scales::scientific(x))
     labs(title="Loss")
 }
 
@@ -82,10 +120,10 @@ plot_penalty = function(x) {
 plot_QC = function(x) {
   loss = plot_losses(x)
   lik = plot_likelihoods(x)
-  penalty = plot_penalty(x)
+  # penalty = plot_penalty(x)
   gradient_norms = plot_gradient_norms(x)
   scores = plot_scores(x)
-  return(patchwork::wrap_plots(scores / gradient_norms / (loss + lik + penalty)))
+  patchwork::wrap_plots(scores / gradient_norms / (loss + lik))
 }
 
 

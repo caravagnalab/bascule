@@ -79,6 +79,8 @@ rename_object = function(x, map_names, types=get_types(x)) {
   ## MISSING CONVERSION OF STORED OBJECTS
   mapp = names(map_names) %>% setNames(map_names)
   for (tid in types) {
+    if (is.null(get_denovo_signames(x)[[tid]])) next
+
     alpha_long = get_exposure(x)[[tid]] %>%
       dplyr::mutate(sigs=mapp[sigs])
     dn_long = get_denovo_signatures(x)[[tid]] %>%
