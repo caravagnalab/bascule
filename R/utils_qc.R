@@ -12,46 +12,46 @@
 qc.linearCombination <- function(fixed, denovo, matrix=TRUE) {
   df <- data.frame(
     matrix(
-      0, 
-      nrow = nrow(denovo), 
+      0,
+      nrow = nrow(denovo),
       ncol = nrow(denovo) + nrow(fixed)
     )
   )
   rownames(df) <- rownames(denovo)
   colnames(df) <- c(rownames(fixed), rownames(denovo))
-  
+
   for (i in 1:nrow(denovo)) {
     a <- solve.quadratic.optimization(
-      a = denovo[c(i), ], 
-      b = rbind(fixed, denovo[-c(i), ]), 
-      filt_pi = 0.05, 
-      delta = 0.9, 
-      thr_exposure = 0.05, 
-      exposures = NULL, 
+      a = denovo[c(i), ],
+      b = rbind(fixed, denovo[-c(i), ]),
+      filt_pi = 0.05,
+      delta = 0.9,
+      thr_exposure = 0.05,
+      exposures = NULL,
       return_weights = TRUE
     )
     df[rownames(denovo[c(i), ]), names(a[[1]])] <- a[[1]]
   }
-  
+
   # adding reconstruction score column to dataframe
   ss <- unlist(lapply(
-    rownames(df), 
+    rownames(df),
     function(x) computeScore_aux(fixed=fixed, denovo=denovo, coefs=as.numeric(df[x, ]), sigName=x)
   ))
   ss[is.nan(ss)] <- 0
   df$scores <- ss
-  
+
   if (matrix==TRUE) {
     return(df)
   } else {
     df <- tibble::rownames_to_column(df, "denovos")
-    df <- df %>% gather(key = signature, value = "coef", -c(1, ncol(df)))
-    df <- df %>% 
-      mutate(df %>% 
+    df <- df %>% tidyr::gather(key = signature, value = "coef", -c(1, ncol(df)))
+    df <- df %>%
+      dplyr::mutate(df %>%
                apply(
-                 1, 
+                 1,
                  function(x) basilica:::cosine.vector(
-                   denovo[x[1], ], 
+                   denovo[x[1], ],
                    rbind(fixed, denovo)[x[3], ]
                  )
                )
