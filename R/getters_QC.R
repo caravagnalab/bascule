@@ -132,26 +132,6 @@ get_alternative_run = function(x, K=get_n_denovo(x), G=get_n_groups(x),
 }
 
 
-get_params = function(x, what, types=get_types(x)) {
-  params = get_pyro_stat(x, what=what, types=types, statname="params")
-  if (what == "nmf")
-    return(
-      lapply(types, function(tid) params[[tid]]$infered_params) %>% setNames(types)
-    )
-  return(params[[1]]$infered_params)
-}
-
-
-get_train_params = function(x, what, types=get_types(x)) {
-  qc = get_QC(x, what=what, types=types)
-  if (what=="nmf")
-    lapply(types, function(tid) qc[[tid]][["train_params"]]) %>%
-    setNames(types)
-  else
-    qc[[1]][["train_params"]]
-}
-
-
 get_initial_object = function(x, what="clustering") {
   if (what!="clustering" || !have_groups(x)) {
     cli::cli_alert_warning("what != 'clustering' or no groups are in the input object, the input object will be returned.")
@@ -176,6 +156,35 @@ get_nmf_step1 = function(x) {
 }
 
 
+
+# Parameters #####
+
+get_params = function(x, what, types=get_types(x)) {
+  params = get_pyro_stat(x, what=what, types=types, statname="params")
+  if (what == "nmf")
+    return(
+      lapply(types, function(tid) params[[tid]]$infered_params) %>% setNames(types)
+    )
+  return(params[[1]]$infered_params)
+}
+
+
+get_nmf_initial_parameters = function(x, what, types=get_types(x)) {
+  params = get_pyro_stat(x, what=what, types=types, statname="params")
+  lapply(types, function(tid) {
+    params[[tid]]$init_params
+  }) %>% setNames(types)
+}
+
+
+get_train_params = function(x, what, types=get_types(x)) {
+  qc = get_QC(x, what=what, types=types)
+  if (what=="nmf")
+    lapply(types, function(tid) qc[[tid]][["train_params"]]) %>%
+    setNames(types)
+  else
+    qc[[1]][["train_params"]]
+}
 
 
 # Aux functions #####

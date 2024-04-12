@@ -86,16 +86,29 @@ rename_object = function(x, map_names, types=get_types(x)) {
     dn_long = get_denovo_signatures(x)[[tid]] %>%
       dplyr::mutate(sigs=mapp[sigs])
 
-    x$nmf[[tid]]$exposure = x$nmf[[tid]]$pyro$exposure = alpha_long
-    x$nmf[[tid]]$beta_denovo = x$nmf[[tid]]$pyro$beta_denovo = dn_long
+    x = set_exposures(x, expos=alpha_long, type=tid)
+    x = set_denovo_signatures(x, expos=alpha_long, type=tid)
 
-    x$nmf[[tid]]$pyro$params$infered_params$alpha = alpha_long %>% long_to_wide(what="exposures")
-    x$nmf[[tid]]$pyro$params$infered_params$beta_d = dn_long %>% long_to_wide(what="beta")
+    init_params = get_nmf_initial_parameters(x, what="nmf")$tid
+    x = set_nmf_init_params(x, type=tid,
+                            denovo=init_params$beta_dn_param %>%
+                              wide_to_long(what="beta") %>%
+                              dplyr::mutate(sigs=mapp[sigs]) %>%
+                              long_to_wide(what="beta"),
+                            expos=init_params$alpha %>%
+                              wide_to_long(what="exposures") %>%
+                              dplyr::mutate(sigs=mapp[sigs]) %>%
+                              long_to_wide(what="exposures"))
 
-    x$nmf[[tid]]$pyro$params$init_params$alpha = x$nmf[[tid]]$pyro$params$init_params$alpha %>%
-      wide_to_long(what="exposures") %>% dplyr::mutate(sigs=mapp[sigs]) %>% long_to_wide(what="exposures")
-    x$nmf[[tid]]$pyro$params$init_params$beta_dn_param = x$nmf[[tid]]$pyro$params$init_params$beta_dn_param %>%
-      wide_to_long(what="beta") %>% dplyr::mutate(sigs=mapp[sigs]) %>% long_to_wide(what="beta")
+    # x$nmf[[tid]]$exposure = x$nmf[[tid]]$pyro$exposure = alpha_long
+    # x$nmf[[tid]]$beta_denovo = x$nmf[[tid]]$pyro$beta_denovo = dn_long
+    # x$nmf[[tid]]$pyro$params$infered_params$alpha = alpha_long %>% long_to_wide(what="exposures")
+    # x$nmf[[tid]]$pyro$params$infered_params$beta_d = dn_long %>% long_to_wide(what="beta")
+
+    # x$nmf[[tid]]$pyro$params$init_params$alpha = x$nmf[[tid]]$pyro$params$init_params$alpha %>%
+    #   wide_to_long(what="exposures") %>% dplyr::mutate(sigs=mapp[sigs]) %>% long_to_wide(what="exposures")
+    # x$nmf[[tid]]$pyro$params$init_params$beta_dn_param = x$nmf[[tid]]$pyro$params$init_params$beta_dn_param %>%
+    #   wide_to_long(what="beta") %>% dplyr::mutate(sigs=mapp[sigs]) %>% long_to_wide(what="beta")
   }
 
   if (!have_groups(x)) {
