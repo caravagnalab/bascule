@@ -121,8 +121,8 @@ rename_object = function(x, map_names, types=get_types(x)) {
 }
 
 
-convert_dn_names = function(x, x.simul) {
-  assigned_missing = get_assigned_missing(x, x.simul)
+convert_dn_names = function(x, x.simul=NULL, reference_cat=NULL, cutoff=0.8) {
+  assigned_missing = get_assigned_missing(x, x.simul=x.simul, reference_cat=reference_cat, cutoff=cutoff)
 
   map_names = lapply(names(assigned_missing), function(tid) {
     am_t = assigned_missing[[tid]]
