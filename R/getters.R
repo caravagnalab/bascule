@@ -53,14 +53,25 @@ get_signatures_aux = function(x, what, types=get_types(x), matrix=FALSE) {
 # Input #####
 get_input = function(x, types=get_types(x), samples=get_samples(x),
                      clusters=get_cluster_labels(x), matrix=FALSE,
-                     reconstructed=FALSE, add_groups=FALSE) {
+                     reconstructed=FALSE, add_groups=FALSE, by_sigs=FALSE) {
   out = lapply(types, function(tid) {
-    if (reconstructed) {
+    if (reconstructed | by_sigs) {
       expos = get_exposure(x, types=tid, samples=samples, clusters=clusters, matrix=T)[[tid]]
       betas = get_signatures(x, types=tid, matrix=T)[[tid]]
       theta = rowSums(x$input[[tid]]$counts %>% long_to_wide(what="counts"))
-      counts_r = as.matrix(expos*theta) %*% as.matrix(betas)
-      w = counts_r %>% wide_to_long(what="counts")
+
+      if (by_sigs)
+        w = lapply(colnames(expos), function(signame) {
+          expos_s = expos[, signame]
+          betas_s = betas[signame, ]
+          (as.matrix(expos_s*theta) %*% as.matrix(betas_s)) %>%
+            wide_to_long(what="counts") %>%
+            dplyr::mutate(sigs=signame)
+        }) %>% setNames(colnames(expos))
+      else
+        w = (as.matrix(expos*theta) %*% as.matrix(betas)) %>%
+          wide_to_long(what="counts")
+
     } else {
       w = x$input[[tid]]$counts %>%
         dplyr::filter(samples %in% !!samples)
@@ -69,16 +80,29 @@ get_input = function(x, types=get_types(x), samples=get_samples(x),
     if(!is.null(clusters)) {
       clusters_df = x %>%
         get_cluster_assignments(samples=samples, clusters=clusters)
-      w = w %>% dplyr::right_join(clusters_df, by="samples")
+      if (by_sigs)
+        w = lapply(w, function(w_i)
+          w_i %>% dplyr::right_join(clusters_df, by="samples")) %>%
+          setNames(names(w))
+      else w = w %>% dplyr::right_join(clusters_df, by="samples")
     }
 
     return(w)
     }) %>% setNames(types)
 
-  if(matrix)
-    out = lapply(out, function(df_t)
-      long_to_wide(df_t %>% dplyr::select(-dplyr::contains("clusters")), what="counts")) %>%
-      setNames(types)
+  if (matrix) {
+    if (by_sigs)
+      out = lapply(out, function(df_t) {
+        lapply(df_t, function(df_t_s) {
+          long_to_wide(df_t_s %>% dplyr::select(-dplyr::contains("clusters")), what="counts")
+        }) %>% setNames(names(df_t))
+      }) %>% setNames(types)
+    else
+      out = lapply(out, function(df_t)
+        long_to_wide(df_t %>% dplyr::select(-dplyr::contains("clusters")), what="counts")) %>%
+        setNames(types)
+    }
+
   return(out)
 }
 

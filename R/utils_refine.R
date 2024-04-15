@@ -6,12 +6,12 @@ refinement = function(x, types=get_types(x)) {
 
 refinement_aux = function(x, type) {
   repeat {
-    fixed = get_fixed_signatures(x, types=type, matrix=TRUE)[[type]]
     denovo = get_denovo_signatures(x, types=type, matrix=TRUE)[[type]]
 
     if (is.null(denovo)) break
     if (nrow(denovo) == 0) break
 
+    fixed = get_fixed_signatures(x, types=type, matrix=TRUE)[[type]]
     exposure = get_exposure(x, types=type, matrix=TRUE)[[type]]
 
     df = qc.linearCombination(fixed=fixed, denovo=denovo, matrix=FALSE)
@@ -50,57 +50,6 @@ refinement_aux = function(x, type) {
     cli::cli_process_done(paste0("Signature ", candidate, " discarded"))
   }
   return(x)
-
-  # while (TRUE) {
-  #   fixed = get_fixed_signatures(x, types=type, matrix=TRUE)[[type]]
-  #   denovo = get_denovo_signatures(x, types=type, matrix=TRUE)[[type]]
-  #
-  #   if (is.null(denovo)) return(x)
-  #   if (nrow(denovo) == 0) return(x)
-  #
-  #   exposure = get_exposure(x, types=type, matrix=TRUE)[[type]]
-  #
-  #   df = qc.linearCombination(fixed=fixed, denovo=denovo, matrix=FALSE)
-  #   a = df[!duplicated(df$denovos), ] %>% dplyr::select(c(denovos, scores))
-  #
-  #   if ((length(a$scores) > 0) & (max(a$scores) > 0)) {
-  #     candidate = a[which.max(a$scores), ]$denovos
-  #     cli::cli_process_start(paste0("Deleting signature ", candidate))
-  #
-  #     coefs = subset(df[df$denovos == candidate, ])$coef
-  #     updated_dfs = delete.signature_aux(
-  #       denovo=denovo,
-  #       exposure=exposure,
-  #       coefs=coefs,
-  #       sigName=candidate
-  #     )
-  #
-  #     updated_init_dfs = delete.signature_aux(
-  #       denovo=get_nmf_initial_parameters(x, what="nmf")[[type]]$beta_dn_param,
-  #       exposure=get_nmf_initial_parameters(x, what="nmf")[[type]]$alpha,
-  #       coefs=coefs,
-  #       sigName=candidate
-  #     )
-  #
-  #     old_n_denovo = nrow(denovo)
-  #     scores = get_scores(x, types=type) %>%
-  #       dplyr::filter(parname=="K" & value!=old_n_denovo) %>%
-  #       dplyr::select(-type)
-  #     x = set_scores(x, scores, type=type, what="nmf")
-  #     x = set_denovo_signatures(x, type=type,
-  #                               sigs=wide_to_long(updated_dfs$denovo, what="beta"))
-  #     x = set_exposures(x, type=type,
-  #                       expos=wide_to_long(updated_dfs$exposure, what="exposures"))
-  #     x = set_nmf_init_params(x, type=type,
-  #                             denovo=updated_init_dfs$denovo,
-  #                             expos=updated_init_dfs$exposure)
-  #     x = recompute_scores(x, types=type)
-  #
-  #     cli::cli_process_done(paste0("Signature ", candidate, " discarded"))
-  #   } else {
-  #     return(x)
-  #   }
-  # }
 }
 
 
@@ -114,7 +63,6 @@ solve.quadratic.optimization = function(a,
                                         thr_exposure = 0.05,
                                         exposures = NULL,
                                         return_weights = FALSE) {
-
   df = data.frame(matrix(0, nrow(a), nrow(b)))
   rownames(df) = rownames(a)
   colnames(df) = rownames(b)
@@ -133,8 +81,6 @@ solve.quadratic.optimization = function(a,
           Rinv = Rinv,
           filt_pi = filt_pi,
           delta = delta,
-          exposures = exposures,
-          thr_exposure = thr_exposure,
           return_weights = return_weights)
       return(optim_res)
     }
@@ -149,11 +95,9 @@ solve.quadratic.optimization.aux = function(v,
                                             Rinv,
                                             filt_pi = 0.05,
                                             delta = 0.9,
-                                            exposures = NULL,
-                                            thr_exposure = 0.05,
                                             return_weights = FALSE) {
   d = v %*% Z
-  b = c(1, rep(0, length(d)))
+  bvec = c(1, rep(0, length(d)))
   C = cbind(rep(1, length(d)), diag(length(d)))
   pis =
     quadprog::solve.QP(
@@ -161,10 +105,10 @@ solve.quadratic.optimization.aux = function(v,
       factorized = TRUE,
       dvec = d,
       Amat = C,
-      bvec = b,
+      bvec = bvec,
       meq = 1
     )$solution
-  pis[pis < filt_pi] = 0
+  # pis[pis < filt_pi] = 0
   reconstructed_vector = Z %*% pis
 
   vec1 = matrix(v)
@@ -173,12 +117,9 @@ solve.quadratic.optimization.aux = function(v,
   cos_sim = lsa::cosine(as.numeric(v), as.numeric(reconstructed_vector)) %>%
     as.numeric()
 
-  if (is.null(exposures)) {
-    if (!is.na(cos_sim) && cos_sim > delta) {
-      if (return_weights) return(pis[pis > 0] %>% setNames(colnames(Z)[pis > 0]))
-      return(colnames(Z)[pis > 0])
-    }
-
+  if (!is.na(cos_sim) & cos_sim > delta) {
+    if (return_weights) return(pis[pis > filt_pi] %>% setNames(colnames(Z)[pis > filt_pi]))
+    return(colnames(Z)[pis > filt_pi])
   }
   return(NULL)
 }
@@ -198,16 +139,14 @@ qc.linearCombination = function(fixed, denovo, matrix=TRUE) {
   colnames(df) = c(rownames(fixed), rownames(denovo))
 
   for (i in 1:nrow(denovo)) {
-    a = solve.quadratic.optimization(
-      a=denovo[c(i), ],
-      b=rbind(fixed, denovo[-c(i), ]),
-      filt_pi=0.05,
+    qp = solve.quadratic.optimization(
+      a=denovo[c(i),],
+      b=rbind(fixed, denovo[-c(i),]),
+      filt_pi=0,
       delta=0.9,
-      thr_exposure=0.05,
-      exposures=NULL,
       return_weights=TRUE
     )
-    df[rownames(denovo[c(i), ]), names(a[[1]])] = a[[1]]
+    df[rownames(denovo[c(i), ]), names(qp[[1]])] = qp[[1]]
   }
 
   # adding reconstruction score column to dataframe
