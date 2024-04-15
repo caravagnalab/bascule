@@ -6,20 +6,20 @@ refinement = function(x, types=get_types(x)) {
 
 refinement_aux = function(x, type) {
   while (TRUE) {
-    fixed = basilica:::get_fixed_signatures(x, types=type, matrix=TRUE)[[type]]
-    denovo = basilica:::get_denovo_signatures(x, types=type, matrix=TRUE)[[type]]
+    fixed = get_fixed_signatures(x, types=type, matrix=TRUE)[[type]]
+    denovo = get_denovo_signatures(x, types=type, matrix=TRUE)[[type]]
 
     if (is.null(denovo)) return(x)
     if (nrow(denovo) == 0) return(x)
 
-    exposure = basilica:::get_exposure(x, types=type, matrix=TRUE)[[type]]
+    exposure = get_exposure(x, types=type, matrix=TRUE)[[type]]
 
     df = qc.linearCombination(fixed=fixed, denovo=denovo, matrix=FALSE)
     a = df[!duplicated(df$denovos), ] %>% dplyr::select(c(denovos, scores))
 
     if ((length(a$scores) > 0) & (max(a$scores) > 0)) {
       candidate = a[which.max(a$scores), ]$denovos
-      print(paste0("Signature ", candidate, " discarded!"))
+      cli::cli_process_start(paste0("Deleting signature ", candidate))
 
       coefs = subset(df[df$denovos == candidate, ])$coef
       updated_dfs = delete.signature_aux(
@@ -37,12 +37,14 @@ refinement_aux = function(x, type) {
       )
 
       x = set_denovo_signatures(x, type=type,
-                                sigs=basilica:::wide_to_long(updated_dfs$denovo, what="beta"))
+                                sigs=wide_to_long(updated_dfs$denovo, what="beta"))
       x = set_exposures(x, type=type,
-                        expos=basilica:::wide_to_long(updated_dfs$exposure, what="exposures"))
+                        expos=wide_to_long(updated_dfs$exposure, what="exposures"))
       x = set_nmf_init_params(x, type=type,
                               denovo=updated_init_dfs$denovo,
                               expos=updated_init_dfs$exposure)
+
+      cli::cli_process_done(paste0("Signature ", candidate, " discarded"))
     } else {
       return(x)
     }
