@@ -5,56 +5,102 @@ refinement = function(x, types=get_types(x)) {
 
 
 refinement_aux = function(x, type) {
-  while (TRUE) {
+  repeat {
     fixed = get_fixed_signatures(x, types=type, matrix=TRUE)[[type]]
     denovo = get_denovo_signatures(x, types=type, matrix=TRUE)[[type]]
 
-    if (is.null(denovo)) return(x)
-    if (nrow(denovo) == 0) return(x)
+    if (is.null(denovo)) break
+    if (nrow(denovo) == 0) break
 
     exposure = get_exposure(x, types=type, matrix=TRUE)[[type]]
 
     df = qc.linearCombination(fixed=fixed, denovo=denovo, matrix=FALSE)
-    a = df[!duplicated(df$denovos), ] %>% dplyr::select(c(denovos, scores))
+    a = df %>% dplyr::select(denovos, scores) %>% unique()
 
-    if ((length(a$scores) > 0) & (max(a$scores) > 0)) {
-      candidate = a[which.max(a$scores), ]$denovos
-      cli::cli_process_start(paste0("Deleting signature ", candidate))
+    if (length(a$scores) < 1) break
 
-      coefs = subset(df[df$denovos == candidate, ])$coef
-      updated_dfs = delete.signature_aux(
-        denovo=denovo,
-        exposure=exposure,
-        coefs=coefs,
-        sigName=candidate
-      )
+    candidate = a[which.max(a$scores), ]$denovos
 
-      updated_init_dfs = delete.signature_aux(
-        denovo=get_nmf_initial_parameters(x, what="nmf")[[type]]$beta_dn_param,
-        exposure=get_nmf_initial_parameters(x, what="nmf")[[type]]$alpha,
-        coefs=coefs,
-        sigName=candidate
-      )
+    cli::cli_process_start(paste0("Deleting signature ", candidate))
 
-      old_n_denovo = nrow(denovo)
-      scores = get_scores(x, types=type) %>%
-        dplyr::filter(parname=="K" & value!=old_n_denovo) %>%
-        dplyr::select(-type)
-      x = set_scores(x, scores, type=type, what="nmf")
-      x = set_denovo_signatures(x, type=type,
-                                sigs=wide_to_long(updated_dfs$denovo, what="beta"))
-      x = set_exposures(x, type=type,
-                        expos=wide_to_long(updated_dfs$exposure, what="exposures"))
-      x = set_nmf_init_params(x, type=type,
-                              denovo=updated_init_dfs$denovo,
-                              expos=updated_init_dfs$exposure)
-      x = recompute_scores(x, types=type)
+    coefs = df %>% dplyr::filter(denovos==candidate) %>% dplyr::pull(coefs) %>%
+      setNames(df %>% dplyr::filter(denovos==candidate) %>% dplyr::pull(signature))
+    updated_dfs = delete.signature_aux(denovo=denovo, exposure=exposure,
+                                       coefs=coefs, sigName=candidate)
 
-      cli::cli_process_done(paste0("Signature ", candidate, " discarded"))
-    } else {
-      return(x)
-    }
+    updated_init_dfs = delete.signature_aux(
+      denovo=get_nmf_initial_parameters(x, what="nmf")[[type]]$beta_dn_param,
+      exposure=get_nmf_initial_parameters(x, what="nmf")[[type]]$alpha,
+      coefs=coefs, sigName=candidate)
+
+    old_n_denovo = nrow(denovo)
+    scores = get_scores(x, types=type) %>%
+      dplyr::filter(parname=="K" & value!=old_n_denovo) %>%
+      dplyr::select(-type)
+    x = set_scores(x, scores, type=type, what="nmf")
+    x = set_denovo_signatures(x, type=type,
+                              sigs=wide_to_long(updated_dfs$denovo, what="beta"))
+    x = set_exposures(x, type=type,
+                      expos=wide_to_long(updated_dfs$exposure, what="exposures"))
+    x = set_nmf_init_params(x, type=type,
+                            denovo=updated_init_dfs$denovo,
+                            expos=updated_init_dfs$exposure)
+    x = recompute_scores(x, types=type)
+
+    cli::cli_process_done(paste0("Signature ", candidate, " discarded"))
   }
+  return(x)
+
+  # while (TRUE) {
+  #   fixed = get_fixed_signatures(x, types=type, matrix=TRUE)[[type]]
+  #   denovo = get_denovo_signatures(x, types=type, matrix=TRUE)[[type]]
+  #
+  #   if (is.null(denovo)) return(x)
+  #   if (nrow(denovo) == 0) return(x)
+  #
+  #   exposure = get_exposure(x, types=type, matrix=TRUE)[[type]]
+  #
+  #   df = qc.linearCombination(fixed=fixed, denovo=denovo, matrix=FALSE)
+  #   a = df[!duplicated(df$denovos), ] %>% dplyr::select(c(denovos, scores))
+  #
+  #   if ((length(a$scores) > 0) & (max(a$scores) > 0)) {
+  #     candidate = a[which.max(a$scores), ]$denovos
+  #     cli::cli_process_start(paste0("Deleting signature ", candidate))
+  #
+  #     coefs = subset(df[df$denovos == candidate, ])$coef
+  #     updated_dfs = delete.signature_aux(
+  #       denovo=denovo,
+  #       exposure=exposure,
+  #       coefs=coefs,
+  #       sigName=candidate
+  #     )
+  #
+  #     updated_init_dfs = delete.signature_aux(
+  #       denovo=get_nmf_initial_parameters(x, what="nmf")[[type]]$beta_dn_param,
+  #       exposure=get_nmf_initial_parameters(x, what="nmf")[[type]]$alpha,
+  #       coefs=coefs,
+  #       sigName=candidate
+  #     )
+  #
+  #     old_n_denovo = nrow(denovo)
+  #     scores = get_scores(x, types=type) %>%
+  #       dplyr::filter(parname=="K" & value!=old_n_denovo) %>%
+  #       dplyr::select(-type)
+  #     x = set_scores(x, scores, type=type, what="nmf")
+  #     x = set_denovo_signatures(x, type=type,
+  #                               sigs=wide_to_long(updated_dfs$denovo, what="beta"))
+  #     x = set_exposures(x, type=type,
+  #                       expos=wide_to_long(updated_dfs$exposure, what="exposures"))
+  #     x = set_nmf_init_params(x, type=type,
+  #                             denovo=updated_init_dfs$denovo,
+  #                             expos=updated_init_dfs$exposure)
+  #     x = recompute_scores(x, types=type)
+  #
+  #     cli::cli_process_done(paste0("Signature ", candidate, " discarded"))
+  #   } else {
+  #     return(x)
+  #   }
+  # }
 }
 
 
@@ -175,21 +221,14 @@ qc.linearCombination = function(fixed, denovo, matrix=TRUE) {
   if (matrix == TRUE) {
     return(df)
   } else {
-    df = tibble::rownames_to_column(df, "denovos")
-    df = df %>% tidyr::gather(key=signature, value="coef", -c(1, ncol(df)))
-    df = df %>%
-      dplyr::mutate(df %>%
-                      apply(
-                        1,
-                        function(x) basilica:::cosine.vector(
-                          denovo[x[1], ],
-                          rbind(fixed, denovo)[x[3], ]
-                        )
-                      )
-      )
-    colnames(df) = c("denovos", "scores", "signature", "coef", "cosine")
-    df = df[, c("denovos", "signature", "coef", "cosine", "scores")]
-    return(df)
+    return(
+      df %>% tibble::rownames_to_column(var="denovos") %>%
+        reshape2::melt(id=c("denovos","scores"), variable.name="signature", value.name="coefs") %>%
+        dplyr::filter(denovos!=signature) %>%
+        dplyr::rowwise() %>%
+        dplyr::mutate(cosine=lsa::cosine(as.numeric(denovo[denovos,]),
+                                         as.numeric(rbind(fixed, denovo)[signature,]))[[1]])
+    )
   }
 }
 
