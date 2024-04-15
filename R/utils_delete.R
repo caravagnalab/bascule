@@ -5,7 +5,8 @@
 #   sigName ---> denovo dignature name to delete
 # output
 #   list (fixed, denovo, exposure)
-delete.signature_aux <- function(denovo, exposure, coefs, sigName) {
+
+delete.signature_aux = function(denovo, exposure, coefs, sigName) {
   if (!(sigName %in% rownames(denovo))) {
     cli::cli_alert_warning("Wrong signature selected!")
     return(NULL)
@@ -16,17 +17,22 @@ delete.signature_aux <- function(denovo, exposure, coefs, sigName) {
     return(x)
   }
 
-  exp <- exposure + sweep(exposure, MARGIN = 2, coefs, `*`)
-  exp <- exp[, ! names(exp) %in% c(sigName)]
+  exp = exposure %>% dplyr::select(-dplyr::all_of(sigName))
+  for (refname in names(coefs)) {
+    exp[,refname] = exposure[,refname] + exposure[,sigName]*coefs[refname]
+  }
+
+  # exp = exposure + sweep(exposure, MARGIN=2, coefs, `*`)
+  # exp = exp[, ! names(exp) %in% c(sigName)]
 
   # normalizing exposure
-  norm_exp <- sweep(exp, 1, rowSums(exp), "/")
+  # norm_exp = sweep(exp, 1, rowSums(exp), "/")
 
-  denovo <- denovo[!rownames(denovo) %in% c(sigName), ]
+  denovo = denovo[!rownames(denovo) %in% c(sigName), ]
 
   return(
-    list(denovo = denovo,
-         exposure = norm_exp)
+    list(denovo=denovo,
+         exposure=exp)
     )
 }
 
