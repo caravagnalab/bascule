@@ -56,8 +56,9 @@ plot_scores = function(x, types=get_types(x)) {
                              na.rm=T, show.legend=F) +
     ggh4x::facet_nested_wrap(type ~ score_id, scales="free", nrow=length(types)) +
     theme_bw() + labs(title="Scores") + xlab("K") + ylab("Scores NMF") +
-    guides(color=guide_legend(title="Seed"))
-    # scale_y_continuous(labels=function(x) scales::scientific(x, digits=1))
+    guides(color=guide_legend(title="Seed")) +
+    # scale_y_continuous(labels=function(x) scales::scientific(x, digits=1)) +
+    scale_x_continuous(breaks=scores %>% dplyr::filter(parname == "K") %>% dplyr::pull(value) %>% unique())
 
   if (!have_groups(x)) return(scores_nmf)
 
@@ -70,7 +71,7 @@ plot_scores = function(x, types=get_types(x)) {
     ggh4x::facet_nested_wrap(~ score_id, scales="free", nrow=1) +
     theme_bw() + labs(title="Scores") + xlab("G") + ylab("Scores clustering") +
     guides(color=guide_legend(title="Seed")) +
-    scale_y_continuous(labels=function(x) scales::scientific(x, digits=1)) +
+    # scale_y_continuous(labels=function(x) scales::scientific(x, digits=1)) +
     scale_x_continuous(breaks=scores %>% dplyr::filter(parname == "G") %>% dplyr::pull(value) %>% unique())
 
   design = paste0(rep("A",length(types)), collapse="\n") %>% paste0("\nB")
