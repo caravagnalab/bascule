@@ -36,6 +36,11 @@ refinement_aux = function(x, type) {
         sigName=candidate
       )
 
+      old_n_denovo = nrow(denovo)
+      scores = get_scores(x, types=type) %>%
+        dplyr::filter(parname=="K" & value!=old_n_denovo) %>%
+        dplyr::select(-type)
+      x = set_scores(x, scores, type=type, what="nmf")
       x = set_denovo_signatures(x, type=type,
                                 sigs=wide_to_long(updated_dfs$denovo, what="beta"))
       x = set_exposures(x, type=type,
@@ -43,6 +48,7 @@ refinement_aux = function(x, type) {
       x = set_nmf_init_params(x, type=type,
                               denovo=updated_init_dfs$denovo,
                               expos=updated_init_dfs$exposure)
+      x = recompute_scores(x, types=type)
 
       cli::cli_process_done(paste0("Signature ", candidate, " discarded"))
     } else {
@@ -161,7 +167,7 @@ qc.linearCombination = function(fixed, denovo, matrix=TRUE) {
   # adding reconstruction score column to dataframe
   ss = unlist(lapply(
     rownames(df),
-    function(x) computeScore_aux(fixed=fixed, denovo=denovo, coefs=as.numeric(df[x, ]), sigName=x)
+    function(x) compute_refinement_score_aux(fixed=fixed, denovo=denovo, coefs=as.numeric(df[x, ]), sigName=x)
   ))
   ss[is.nan(ss)] = 0
   df$scores = ss
@@ -196,11 +202,75 @@ qc.linearCombination = function(fixed, denovo, matrix=TRUE) {
 # output:
 #   numeric ----> cosine similarity (true signature vs. reconstructed signature)
 
-computeScore_aux = function(fixed, denovo, coefs, sigName) {
+compute_refinement_score_aux = function(fixed, denovo, coefs, sigName) {
   reconstructed_vector = t(rbind(fixed, denovo)) %*% coefs
   score = basilica:::cosine.vector(reconstructed_vector, denovo[sigName,])
   return(round(score, digits=3))
 }
+
+
+recompute_scores = function(x, types=get_types(x)) {
+  for (type in types) {
+    scores = lapply(c("bic","aic","llik"), function(score_id) {
+        tibble::tibble(seed=get_seed(x)$nmf[[type]],
+                       score_id=score_id,
+                       score=compute_score(x, type=type, score_id=score_id),
+                       parname="K",
+                       value=get_n_denovo(x)[[type]])
+    }) %>% dplyr::bind_rows() %>%
+      dplyr::add_row(get_scores(x, types=type) %>% dplyr::select(-type))
+
+    x = set_scores(x, scores=scores, type=type, what="nmf")
+  }
+  return(x)
+}
+
+
+compute_score = function(x, type, score_id) {
+  if (score_id == "bic") compute_bic(x, type=type)
+  else if (score_id == "aic") compute_aic(x, type=type)
+  else if (score_id == "llik") compute_likelihood(x, type=type)
+  else NULL
+}
+
+
+compute_likelihood = function(x, type) {
+  betas = get_signatures(x, types=type, matrix=T)[[type]]
+  alphas = get_exposure(x, types=type, matrix=T)[[type]]
+  counts = get_input(x, types=type, matrix=T)[[type]]
+  theta = rowSums(counts)
+  alphas_hat = lapply(rownames(alphas), function(sample_id) alphas[sample_id, ] * theta[sample_id]) %>%
+    do.call(rbind, .)
+
+  rate = as.matrix(alphas_hat) %*% as.matrix(betas)
+
+  dpois(as.matrix(counts), lambda=rate, log=T) %>% sum()
+}
+
+
+compute_bic = function(x, type) {
+  llik = compute_likelihood(x, type=type)
+  n_pars = compute_n_parameters(x, type=type)
+  n_pars * log(length(get_samples(x))) - (2 * llik)
+}
+
+compute_aic = function(x, type) {
+  llik = compute_likelihood(x, type=type)
+  n_pars = compute_n_parameters(x, type=type)
+  2 * n_pars - (2 * llik)
+}
+
+
+compute_n_parameters = function(x, type) {
+  n_denovo = get_n_denovo(x)[[type]]
+  expos = get_exposure(x, types=type, matrix=T)[[type]]
+  n_pars = n_denovo
+  if (!is.null(expos)) n_pars = n_pars + dim(expos)[1] * dim(expos)[2]
+  return(n_pars)
+}
+
+
+
 
 
 

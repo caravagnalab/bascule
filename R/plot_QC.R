@@ -56,8 +56,8 @@ plot_scores = function(x, types=get_types(x)) {
                              na.rm=T, show.legend=F) +
     ggh4x::facet_nested_wrap(type ~ score_id, scales="free", nrow=length(types)) +
     theme_bw() + labs(title="Scores") + xlab("K") + ylab("Scores NMF") +
-    guides(color=guide_legend(title="Seed")) +
-    scale_y_continuous(labels=function(x) scales::scientific(x, digits=1))
+    guides(color=guide_legend(title="Seed"))
+    # scale_y_continuous(labels=function(x) scales::scientific(x, digits=1))
 
   if (!have_groups(x)) return(scores_nmf)
 

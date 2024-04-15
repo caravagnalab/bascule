@@ -93,15 +93,20 @@ get_penalty = function(x, what=get_fittypes(x), types=get_types(x)) {
 # params = list("K"=NA,"G"=NA,"seed"=NA)
 get_alternative_run = function(x, K=get_n_denovo(x), G=get_n_groups(x),
                                seed=c(), types=get_types(x)) {
+
+  if (!have_alternatives(x)) {
+    cli::cli_alert_warning("No alternatives. Returning the original object.")
+    return(x)
+  }
+
   best_K = get_n_denovo(x); best_G = get_n_groups(x)#; best_seed = get_seed(x)
   K = c(K, best_K[setdiff(names(best_K), names(K))])
   G = c(G, best_G[setdiff(names(best_G), names(G))])
-  # seed = c(seed, best_seed[setdiff(names(best_seed), names(seed))])
 
   grps = paste0("cluster:",G)
   sigs = paste0("k_denovo:",K) %>% setNames(names(K))
   if (have_groups(x) && !is.null(G)) {
-    if (is.null(seed[["clustering"]])) {
+    if (is.null(seed[["clustering"]]) & have_groups(x)) {
       s_t = paste0("seed:", get_best_seed(x, value=G, parname="G", type_id="Clustering"))
     } else {
       s_t = paste0("seed:", seed$Clustering)
