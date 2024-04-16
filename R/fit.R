@@ -29,7 +29,7 @@
 #'
 #' counts = get_input(example_dataset, matrix=T)
 #' reference_cat = list("SBS"=COSMIC_sbs_filt, "DBS"=COSMIC_dbs)
-#' x = fit(counts=counts, reference_cat=reference_cat, K_list=0:2, clusters=5)
+#' x = fit(counts=counts, reference_cat=reference_cat, k_list=0:2, cluster=5)
 #' plot_exposures(x)
 fit = function(counts, k_list,
                cluster=NULL,

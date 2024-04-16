@@ -3,10 +3,15 @@ template:
   bootstrap: 5
 
 reference:
-- title: Fit
+- title: Perform inference
   desc:  Functions to fit NMF and clustering.
   contents:
   - fit
+
+- title: Getters
+  desc: Utility functions to extract attributes
+  contents:
+  - get_input
 
 - title: Set conda environment
   desc:  Functions to set up the conda environment to perform inference.
@@ -15,3 +20,29 @@ reference:
   - have_loaded_env
   - have_python_deps
   - load_conda_env
+  - which_conda_env
+
+- title: Datasets
+  desc: Description of datasets available in the package.
+  contents:
+  - COSMIC_sbs
+  - COSMIC_sbs_filt
+  - COSMIC_dbs
+  - COSMIC_filt_merged
+  - Degasperi_SBS_GEL_PCAWG_HW
+  - Degasperi_catalogue
+
+- title: Plotting functions
+  desc: Plotting functions available in the package
+  contents:
+  - plot_data
+  - plot_exposures
+  - plot_signatures
+  - plot_similarity_reference
+  - plot_fit
+
+- title: S3 objects
+  desc: Print and plot S3 functions
+  contents:
+  - print.basilica_obj
+  - plot.basilica_obj

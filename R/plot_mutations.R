@@ -1,3 +1,17 @@
+#' Function to visualize the input and reconstructed mutation counts.
+#'
+#' @param x basilica object.
+#' @param types List of variant types to visualize.
+#' @param samples List of samples to visualize.
+#' @param clusters List of clusters to visualize.
+#' @param reconstructed Logical. If `TRUE`, the reconstructed counts, i.e., computed as alpha x beta, will be visualized.
+#' @param color_by_sigs Logical. If `TRUE`, each context will report the number of mutations split by signature.
+#'
+#' @return ggplot object.
+#' @export
+#'
+#' @examples
+#' plot_data(example_fit)
 plot_data = function(x, types=get_types(x), samples=get_samples(x),
                      clusters=get_cluster_labels(x), reconstructed=TRUE,
                      color_by_sigs=FALSE) {

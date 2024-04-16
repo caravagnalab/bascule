@@ -1,3 +1,21 @@
+#' Function to visualize the estimated exposures
+#'
+#' @param x basilica object.
+#' @param types List of variant types to visualize.
+#' @param samples List of samples to visualize.
+#' @param clusters List of clusters to visualize.
+#' @param sample_name Logical. If `TRUE`, sample names will be reported on the x axis.
+#' @param sigs_levels Deprecated.
+#' @param cls Custom color palette for signatures.
+#' @param add_centroid Logical. If `TRUE`, also clustering's centroids will be plotted.
+#' @param muts Deprecated.
+#' @param sort_by Signature to sort patients' exposures by.
+#'
+#' @return ggplot object.
+#' @export
+#'
+#' @examples
+#' plot_exposures(example_fit)
 plot_exposures = function(x, types=get_types(x), samples=get_samples(x),
                           clusters=get_cluster_labels(x),
                           sample_name=F, sigs_levels=NULL, cls=NULL,

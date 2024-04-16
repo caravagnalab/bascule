@@ -1,3 +1,16 @@
+#' Function to visualize the estimated and reference signatures.
+#'
+#' @param x basilica object.
+#' @param types List of variant types to visualize.
+#' @param context Logical. If `TRUE`, context names will be reported on the x axis.
+#' @param cls Custom color palette for signatures.
+#' @param signames List of signatures to visualize.
+#'
+#' @return ggplot object.
+#' @export
+#'
+#' @examples
+#' plot_signatures(example_fit)
 plot_signatures = function(x, types=get_types(x), context=T, cls=NULL,
                            signames=get_signames(x)) {
 
