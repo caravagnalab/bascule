@@ -3,15 +3,15 @@ template:
   bootstrap: 5
 
 reference:
-  - title: Fit
-    desc:  Functions to fit NMF and clustering.
-    contents:
-    -fit
+- title: Fit
+  desc:  Functions to fit NMF and clustering.
+  contents:
+  - fit
 
-  - title: Set conda environment
-    desc:  Functions to set up the conda environment to perform inference.
-    contents:
-    - configure_environment
-    - have_loaded_env
-    - have_python_deps
-    - load_conda_env
+- title: Set conda environment
+  desc:  Functions to set up the conda environment to perform inference.
+  contents:
+  - configure_environment
+  - have_loaded_env
+  - have_python_deps
+  - load_conda_env
