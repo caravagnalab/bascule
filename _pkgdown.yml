@@ -2,3 +2,11 @@ url: https://caravagnalab.github.io/basilica/
 template:
   bootstrap: 5
 
+title: Fit
+  -fit
+
+title: Set conda environment
+  - configure_environment
+  - have_loaded_env
+  - have_python_deps
+  - load_conda_env

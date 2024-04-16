@@ -1,4 +1,36 @@
 # counts is a list with input matrices, names are typenames
+#' Fit a basilica object
+#'
+#' @param counts List of mutation counts matrices from multiple variant types.
+#' @param k_list List of number of denovo signatures to test.
+#' @param cluster Maximum number of clusters. If `NULL`, no clustering will be performed.
+#' @param reference_cat List of reference catalogues to use for NMF. Names must be the same as input counts.
+#' @param keep_sigs List of reference signatures to keep even if found with low exposures.
+#' @param hyperparameters List of hyperparameters passed to the NMF and clustering models.
+#' @param lr Learning rate used for SVI.
+#' @param optim_gamma Deprecated
+#' @param n_steps Number of iterations for inference.
+#' @param py User-installed version of \code{pybasilica} package
+#' @param enumer Enumeration used for clustering (either `parallel` or `sequential`).
+#' @param nonparametric Deprecated. The model only works in nonparametric way.
+#' @param autoguide Logical. If `TRUE`, the clustering model will use the Pyro autoguide.
+#' @param filter_dn Logical. If `TRUE`, all contexts below 0.01 in denovo signatures will be set to 0, provided the filtered signatures remain consistent with the inferred ones.
+#' @param min_exposure Reference signatures with an exposures lower than `min_exposure` will be dropped.
+#' @param CUDA Logical. If `TRUE` and a GPU is available, the models will run on GPU.
+#' @param compile Deprecated.
+#' @param store_parameters Logical. If `TRUE`, parameters at every step of inference will be stored in the object.
+#' @param store_fits Logical. If `TRUE`, all tested fits, i.e., for every value of `K`, will be stored in the object.
+#' @param seed_list List of seeds used for every input configuration.
+#'
+#' @return Basilica object.
+#' @export
+#'
+#' @examples
+#'
+#' counts = get_input(example_dataset, matrix=T)
+#' reference_cat = list("SBS"=COSMIC_sbs_filt, "DBS"=COSMIC_dbs)
+#' x = fit(counts=counts, reference_cat=reference_cat, K_list=0:2, clusters=5)
+#' plot_exposures(x)
 fit = function(counts, k_list,
                cluster=NULL,
                reference_cat=list("SBS"=COSMIC_filt, "DBS"=COSMIC_dbs),
