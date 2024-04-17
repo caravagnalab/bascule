@@ -5,6 +5,10 @@ refinement = function(x, types=get_types(x)) {
 
 
 refinement_aux = function(x, type) {
+  if (!type %in% get_types(x)) {
+    cli::cli_alert_warning("Type {type} not present. Returning the initial object.")
+    return(x)
+  }
   repeat {
     denovo = get_denovo_signatures(x, types=type, matrix=TRUE)[[type]]
 
@@ -17,14 +21,18 @@ refinement_aux = function(x, type) {
     df = qc.linearCombination(fixed=fixed, denovo=denovo, matrix=FALSE)
     a = df %>% dplyr::select(denovos, scores) %>% unique()
 
-    if (length(a$scores) < 1) break
+    if (nrow(a) == 0 | all(df$coefs==0)) {
+      cli::cli_process_done(msg_done="No remaining signature is explained by others.")
+      break
+    }
 
     candidate = a[which.max(a$scores), ]$denovos
 
-    cli::cli_process_start(paste0("Deleting signature ", candidate))
+    cli::cli_process_start("Deleting signature {candidate}")
 
     coefs = df %>% dplyr::filter(denovos==candidate) %>% dplyr::pull(coefs) %>%
       setNames(df %>% dplyr::filter(denovos==candidate) %>% dplyr::pull(signature))
+
     updated_dfs = delete.signature_aux(denovo=denovo, exposure=exposure,
                                        coefs=coefs, sigName=candidate)
 
@@ -47,7 +55,7 @@ refinement_aux = function(x, type) {
                             expos=updated_init_dfs$exposure)
     x = recompute_scores(x, types=type)
 
-    cli::cli_process_done(paste0("Signature ", candidate, " discarded"))
+    cli::cli_process_done("Signature {candidate} discarded")
   }
   return(x)
 }
