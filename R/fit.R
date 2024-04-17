@@ -29,8 +29,8 @@
 #'
 #' counts = get_input(example_dataset, matrix=T)
 #' reference_cat = list("SBS"=COSMIC_sbs_filt, "DBS"=COSMIC_dbs)
-#' x = fit(counts=counts, reference_cat=reference_cat, k_list=0:2, cluster=5)
-#' plot_exposures(x)
+#' # x = fit(counts=counts, reference_cat=reference_cat, k_list=0:2, cluster=5)
+#' # plot_exposures(x)
 fit = function(counts, k_list,
                cluster=NULL,
                reference_cat=list("SBS"=COSMIC_filt, "DBS"=COSMIC_dbs),
@@ -53,7 +53,7 @@ fit = function(counts, k_list,
                compile = FALSE,
 
                store_parameters = FALSE,
-               store_fits = FALSE,
+               store_fits = TRUE,
 
                seed_list = c(10)) {
   if (!is.list(counts)) counts = list("T1"=counts)
