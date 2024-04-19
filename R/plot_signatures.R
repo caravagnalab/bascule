@@ -23,16 +23,18 @@ plot_signatures = function(x, types=get_types(x), context=T, cls=NULL,
   if (is.null(cls)) cls = gen_palette(x, types=types)
 
   lapply(types, function(t) plot_signatures_aux(signatures %>% dplyr::filter(type==t),
-                                                what=t, context=context, signames=signames,
-                                                cls=cls)) %>%
-    patchwork::wrap_plots(ncol=length(types))
+                                                what=t, context=context)) %>%
+    purrr::discard(is.null) %>%
+    patchwork::wrap_plots(ncol=length(.))
 }
 
 
 
 plot_signatures_aux = function(signatures, what="SBS",
-                               context=T, cls=NULL,
-                               signames=NULL) {
+                               context=T, cls=NULL, signames=NULL) {
+
+  if (nrow(signatures) == 0) return(NULL)
+
   if (is.null(signames)) signames = signatures$sigs %>% unique()
   if (is.null(cls)) cls = gen_palette(n=length(unlist(signames)))
 
