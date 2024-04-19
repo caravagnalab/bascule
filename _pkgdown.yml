@@ -41,6 +41,10 @@ reference:
   - plot_similarity_reference
   - plot_fit
 
+- title: Utilities and post-processing functions
+  contents:
+  - merge_clusters
+
 - title: S3 objects
   desc: Print and plot S3 functions
   contents:
