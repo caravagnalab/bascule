@@ -1,20 +1,33 @@
 devtools::load_all("~/GitHub/simbasilica/")
 load_deps()
+devtools::load_all("~/GitHub/basilica/")
 
-ex_d = example_dataset
-ex_d$clustering = NULL
+# ex_d = example_dataset
+# ex_d$clustering = NULL
 
-counts = get_input(example_dataset, matrix=T)
-reference_cat = list("SBS"=COSMIC_sbs_filt, "DBS"=COSMIC_dbs)
-max_K = sapply(get_signames(example_dataset), length) %>% max()
-# K_list = 0:(max_K-2+1)
-K_list = 0:2
+# counts = get_input(example_dataset, matrix=T)
+# reference_cat = list("SBS"=COSMIC_sbs_filt, "DBS"=COSMIC_dbs)
+# max_K = sapply(get_signames(example_dataset), length) %>% max()
+# # K_list = 0:(max_K-2+1)
+# K_list = 0:2
+#
+# x = fit(counts=counts, k_list=K_list, reference_cat=reference_cat, keep_sigs=c("SBS1","SBS5"), store_fits=TRUE)
+# x_init = x
 
-x = fit(counts=counts, k_list=K_list, reference_cat=reference_cat, keep_sigs=c("SBS1","SBS5"), store_fits=TRUE)
-x_init = x
+x = example_fit
+x %>% plot_exposures()
+x %>% refinement() %>% plot_exposures()
 
-# x %>% plot_scores()
-# x %>% recompute_scores() %>% plot_scores()
+alternatives = get_alternatives(x, what="nmf")
+alternatives$SBS$fits %>% lapply(function(fit_k) {
+  fit_k %>% tidyr::pivot_longer(cols=dplyr::everything(), names_to="seed") %>%
+    dplyr::mutate(seed=as.integer(stringr::str_remove_all(seed, "seed:")))
+})
+
+config_names = lapply(get_types(x), function(tid) alternatives[[tid]][["fits"]] %>% names()) %>%
+  unlist() %>% unique()
+
+
 scores = plot_scores(x) + labs(title="Scores")
 scores_refined = plot_scores(refinement(x)) + labs(title="Scores post refinement")
 data_diff = plot_data_differences(x) + labs(title="Data differences")

@@ -196,7 +196,40 @@ get_train_params = function(x, what, types=get_types(x)) {
 
 ## what %in% c("nmf", "clustering")
 get_alternatives = function(x, what, types=get_types(x)) {
-  return(get_pyro_stat(x=x, what=what, statname="alternatives", types=types))
+  alternatives = tibble::tibble()
+  if ("nmf" %in% names(x)) {
+    alternatives = alternatives %>%
+      dplyr::bind_rows(
+        lapply(types, function(tid) {
+          get_pyro_stat(x=x, what="nmf", statname="alternatives", types=tid)[[tid]]$fits %>%
+          sapply(tibble::as_tibble) %>%
+          tibble::as_tibble(rownames=NA) %>%
+          tibble::rownames_to_column(var="seed") %>%
+          tidyr::pivot_longer(cols=!seed, names_to="value", values_to="basilica_fit") %>%
+          dplyr::mutate(parname="K",
+                        type=tid)
+        })
+      )
+  }
+
+  if ("clustering" %in% names(x)) {
+    alternatives = alternatives %>%
+      dplyr::bind_rows(
+        get_pyro_stat(x=x, what="clustering", statname="alternatives")[[1]]$fits %>%
+          sapply(tibble::as_tibble) %>%
+          tibble::as_tibble(rownames=NA) %>%
+          tibble::rownames_to_column(var="seed") %>%
+          tidyr::pivot_longer(cols=!seed, names_to="value", values_to="basilica_fit") %>%
+          dplyr::mutate(parname="K",
+                        type="")
+      )
+  }
+
+  return(
+    alternatives %>%
+      dplyr::mutate(seed=as.integer(stringr::str_remove_all(seed, "seed:")),
+                    value=as.integer(stringr::str_remove_all(value, "cluster:|k_denovo:")))
+  )
 }
 
 
@@ -215,7 +248,9 @@ get_pyro_stat = function(x, what, statname, types=get_types(x)) {
       return(val)
     }) %>% setNames(types)
   )
-  if (what=="clustering") return(list(x[[what]][["pyro"]][[statname]]))
+  if (what=="clustering") {
+    return(list(x[[what]][["pyro"]][[statname]]))
+  }
   cli::cli_alert_warning("`what` must be either 'nmf' or 'clustering'")
 }
 
