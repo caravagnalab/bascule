@@ -179,41 +179,57 @@ replace_null = function(i, value=NA) {
 
 get_QC_from_py = function(py_obj) {
   QC = list(lr = py_obj$lr,
-            n_steps = py_obj$n_steps,
             bic = py_obj$bic,
+            likelihood = py_obj$likelihood,
+            n_steps = py_obj$n_steps,
             losses = py_obj$losses,
+            likelihoods = py_obj$likelihoods,
             penalty = py_obj$regs,
-            likelihood = py_obj$likelihoods,
             gradient_norms = py_obj$gradient_norms,
             train_params = get_train_params_py(py_obj))
 
-  if ("scores" %in% names(py_obj))
-    QC$scores = get_scores_from_py(py_obj$scores)
-
-  return(QC)
+  tibble::as_tibble_col(QC) %>%
+    dplyr::mutate(stat=names(QC)) %>%
+    dplyr::select(stat, value)
 }
 
 
 get_alternatives_from_py = function(py_obj, fn, type="") {
-  alt = list()
-  alt$runs_seed = alt$runs_scores = alt$all_fits = NULL
-
   if ("x" %in% names(py_obj)) {inp = py_obj$x} else {inp = py_obj$alpha}
-  if ("fits" %in% names(py_obj)) {
-    # print(py_obj$fits)
-    # fits_tibble = py_obj$fits %>% tibble::as_tibble()
-    alt$fits = lapply(names(py_obj$fits), function(i) {
-      fits_i = py_obj$fits[[i]]
-      lapply(names(fits_i), function(j) {
-        fits_i[[j]] # $convert_to_dataframe(inp)
-        tmp = tibble::tibble(V1 = list( fn(fits_i[[j]], type=type) ))
-        colnames(tmp) = j
-        return(tmp)
-      }) %>% dplyr::bind_cols()
-    }) %>% setNames(names(py_obj$fits))
-  }
+  if (!"fits" %in% names(py_obj)) return(list())
+  if (length(py_obj$fits) == 0) return(list())
 
-  return(alt)
+  lapply(names(py_obj$fits), function(i) {
+    fits_i = py_obj$fits[[i]]
+    lapply(names(fits_i), function(j) {
+      fits_i[[j]] # $convert_to_dataframe(inp)
+      tmp = tibble::tibble(V1 = list( fn(fits_i[[j]], type=type) ))
+      colnames(tmp) = j
+      return(tmp)
+    }) %>% dplyr::bind_cols()
+  }) %>% setNames(names(py_obj$fits)) %>%
+
+    ## transform it into a tibble
+    sapply(tibble::as_tibble) %>%
+    tibble::as_tibble(rownames=NA) %>%
+    tibble::rownames_to_column(var="rowname") %>%
+    tidyr::pivot_longer(cols=!rowname, names_to="colname",
+                        values_to="pyro_fit") %>%
+    tidyr::separate(colname, into=c("parname","seed"), sep="[.]") %>%
+    tidyr::separate(parname, into=c("parname","value"), sep=":") %>%
+
+    ## if clustering
+    tidyr::separate(value, into=c("value","value_fit"), extra="drop", fill="right", sep="_") %>%
+    dplyr::mutate(parname=stringr::str_replace_all(parname, "k_denovo", "K"),
+                  parname=stringr::str_replace_all(parname, "cluster", "G"),
+                  seed=stringr::str_remove_all(seed, "seed:"),
+                  seed=as.integer(seed),
+                  value=as.integer(value),
+                  value_fit=ifelse(is.na(value_fit), as.integer(value),
+                                   as.integer(value_fit)),
+                  type=!!type) %>%
+    dplyr::select(-rowname)
+
 }
 
 

@@ -41,15 +41,15 @@ pyfit = function(counts,
 
   if (is.list(obj)) {
     bestRun = obj[[1]]
-    secondBest = obj[[2]]
+    # secondBest = obj[[2]]
   } else {
     bestRun = obj
-    secondBest = NULL
+    # secondBest = NULL
   }
 
   # save python object data in a list
   py_obj = get_list_from_py(bestRun, filter_dn=filter_dn, type=type)
-  py_obj$alternatives$secondBest = get_list_from_py(secondBest, filter_dn=filter_dn, type=type)
+  # py_obj$alternatives$secondBest = get_list_from_py(secondBest, filter_dn=filter_dn, type=type)
   py_obj$time = TIME
 
   return(py_obj)

@@ -4,5 +4,9 @@ have_groups = function(x) {
 
 
 have_alternatives = function(x) {
-  any(sapply(get_alternatives(x, what="nmf"), function(x) !purrr::is_empty(x$fits)))
+  list(
+    "nmf"=sapply(get_types(x), function(tid)
+      !purrr::is_empty(x$nmf[[tid]]$pyro$alternatives)),
+    "clustering"=!purrr::is_empty(x$clustering$pyro$alternatives)
+    )
 }

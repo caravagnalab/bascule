@@ -15,15 +15,19 @@ pyro_nmf = function(..., k_list, hyperparameters, reference_cat, cohort,
 
   pyro_step1 = pyro_fit$step1
   pyro_step2 = pyro_fit$step2
-  step1 = list(pyro=pyro_step1, exposure=pyro_step1$exposure,
+  step1 = list(exposure=pyro_step1$exposure,
                beta_fixed=pyro_step1$beta_fixed,
                beta_denovo=pyro_step1$beta_denovo)
+  pyro_step1$exposure = pyro_step1$beta_fixed = pyro_step1$beta_denovo = NULL
+  step1$pyro = pyro_step1
 
-  nmf_t = list(pyro=pyro_step2,
-               exposure=pyro_step2$exposure,
+  nmf_t = list(exposure=pyro_step2$exposure,
                beta_fixed=pyro_step2$beta_fixed,
                beta_denovo=pyro_step2$beta_denovo,
                nmf_step1=step1)
+
+  pyro_step2$exposure = pyro_step2$beta_fixed = pyro_step2$beta_denovo = NULL
+  nmf_t$pyro = pyro_step2
 
   return(nmf_t)
 }
