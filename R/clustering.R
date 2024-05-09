@@ -40,6 +40,5 @@ pyro_clustering = function(exposures, cluster, lr=0.005, n_steps=3000,
   #                   centroids=pyro_fit$centroids)
 
   return(pyro_fit)
-
 }
 

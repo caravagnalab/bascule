@@ -96,8 +96,6 @@ fit = function(counts, k_list,
   }
   ) %>% setNames(types)
 
-  # bas <- refinement(bas)
-
   # clustering contains the clustering
   bas = fit_clustering(bas,
                        cluster = cluster,

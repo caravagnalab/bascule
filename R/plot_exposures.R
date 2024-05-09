@@ -30,12 +30,12 @@ plot_exposures = function(x, types=get_types(x), samples=get_samples(x),
 
   if (is.null(cls)) cls = gen_palette(x, types=types)
   if (is.null(sigs_levels)) sigs_levels = sort(get_signames(x, types=types) %>% unlist(use.names=F))
-  
+
   # merging signatures where their exposure in all the samples are below the threshold (elim_thr)
   if (elim_thr > 0) {
-    a <- tapply(exposures$value, exposures$sigs, max)
-    exposures$sigs[exposures$sigs %in% (a[a < elim_thr] %>% names)] <- "lowexp"
-    cls["lowexp"] <- "#000000" # assign black color to new signature
+    a = tapply(exposures$value, exposures$sigs, max)
+    exposures$sigs[exposures$sigs %in% (a[a < elim_thr] %>% names)] = "Low exposure"
+    cls["Low exposure"] = "#000000" # assign black color to new signature
   }
 
   p = plot_exposures_aux(exposures=exposures, cls=cls, titlee="Exposure",
