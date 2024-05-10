@@ -1,14 +1,65 @@
-refinement = function(x, types=get_types(x)) {
-  lapply(types, function(tid) x <<- refinement_aux(x, type=tid))
+refine_denovo_signatures = function(x) {
+
+  alternatives = get_alternatives(x)
+  alternatives_refined = alternatives %>%
+
+    dplyr::rename(tid=type) %>%
+    dplyr::filter(parname=="K") %>%
+
+    dplyr::rowwise() %>%
+    dplyr::mutate(basilica_fit_refined=list(
+      refinement_single_fit(x, pyro_fit=pyro_fit, type=tid)
+      )) %>%
+
+    ## update the value for K and for the score
+    dplyr::mutate(value_refined=get_n_denovo(basilica_fit_refined)[[tid]],
+                  score_refined=get_scores(basilica_fit_refined) %>%
+                    dplyr::filter(type==tid, score_id=="bic") %>%
+                    dplyr::pull(score) %>% unlist(),
+                  pyro_fit_refined=list(basilica_fit_refined[["nmf"]][[tid]][["pyro"]])) %>%
+    dplyr::ungroup() %>%
+
+    dplyr::rename(type=tid)
+
+  best_fit = alternatives_refined %>%
+    dplyr::group_by(type) %>%
+    dplyr::filter(score_refined==min(score_refined))
+
+  ## substitute the best fits as main objects and add the new alternatives
+  for (i in 1:nrow(best_fit)) {
+    tid = alternatives_refined[[i,"type"]]
+    seed = alternatives_refined[[i,"seed"]]
+    pyro_fit_refined = alternatives_refined[[i,"pyro_fit_refined"]][[1]]
+
+    x = set_attribute(x, what="nmf", type=tid, name="pyro", value=pyro_fit_refined)
+    x = set_exposures(x, expos=pyro_fit_refined$exposure, type=tid)
+    x = set_denovo_signatures(x, sigs=pyro_fit_refined$beta_denovo, type=tid)
+  }
+
+  new_alternatives = alternatives_refined %>%
+    dplyr::select(parname, type, seed, value, value_refined, pyro_fit_refined, seed) %>%
+    dplyr::rename(value_fit=value_refined, pyro_fit=pyro_fit_refined) %>%
+
+    dplyr::bind_rows(alternatives %>% dplyr::filter(parname=="G"))
+
+  x = set_alternatives(x, new_alternatives)
+
   return(x)
 }
 
 
-refinement_aux = function(x, type) {
+refinement_single_fit = function(x, type, pyro_fit=NULL) {
   if (!type %in% get_types(x)) {
     cli::cli_alert_warning("Type {type} not present. Returning the initial object.")
     return(x)
   }
+
+  if (!is.null(pyro_fit)) {
+    x = set_attribute(x, what="nmf", type=type, name="pyro", value=pyro_fit)
+    x = set_exposures(x, expos=pyro_fit$exposure, type=type)
+    x = set_denovo_signatures(x, sigs=pyro_fit$beta_denovo, type=type)
+  }
+
   repeat {
     denovo = get_denovo_signatures(x, types=type, matrix=TRUE)[[type]]
 
@@ -18,7 +69,7 @@ refinement_aux = function(x, type) {
     fixed = get_fixed_signatures(x, types=type, matrix=TRUE)[[type]]
     exposure = get_exposure(x, types=type, matrix=TRUE)[[type]]
 
-    df = qc.linearCombination(fixed=fixed, denovo=denovo, matrix=FALSE)
+    df = qc_linearCombination(fixed=fixed, denovo=denovo, matrix=FALSE)
     a = df %>% dplyr::select(denovos, scores) %>% unique()
 
     if (nrow(a) == 0 | all(df$coefs==0)) {
@@ -41,11 +92,6 @@ refinement_aux = function(x, type) {
       exposure=get_nmf_initial_parameters(x, what="nmf")[[type]]$alpha,
       coefs=coefs, sigName=candidate)
 
-    old_n_denovo = nrow(denovo)
-    scores = get_scores(x, types=type) %>%
-      dplyr::filter(parname=="K" & value!=old_n_denovo) %>%
-      dplyr::select(-type)
-    x = set_scores(x, scores, type=type, what="nmf")
     x = set_denovo_signatures(x, type=type,
                               sigs=wide_to_long(updated_dfs$denovo, what="beta"))
     x = set_exposures(x, type=type,
@@ -53,7 +99,7 @@ refinement_aux = function(x, type) {
     x = set_nmf_init_params(x, type=type,
                             denovo=updated_init_dfs$denovo,
                             expos=updated_init_dfs$exposure)
-    x = recompute_scores(x, types=type)
+    x = recompute_scores(x, type=type)
 
     cli::cli_process_done("Signature {candidate} discarded")
   }
@@ -64,7 +110,7 @@ refinement_aux = function(x, type) {
 
 # Linear combination #####
 
-solve.quadratic.optimization = function(a,
+solve_quadratic_optimization = function(a,
                                         b,
                                         filt_pi = 0.05,
                                         delta = 0.9,
@@ -83,7 +129,7 @@ solve.quadratic.optimization = function(a,
     1:nrow(a),
     FUN = function(i) {
       optim_res =
-        solve.quadratic.optimization.aux(
+        solve_quadratic_optimization_aux(
           v = as.matrix(a)[i, ] %>% t(),
           Z = b_m,
           Rinv = Rinv,
@@ -98,7 +144,7 @@ solve.quadratic.optimization = function(a,
 }
 
 
-solve.quadratic.optimization.aux = function(v,
+solve_quadratic_optimization_aux = function(v,
                                             Z,
                                             Rinv,
                                             filt_pi = 0.05,
@@ -141,13 +187,13 @@ solve.quadratic.optimization.aux = function(v,
 #   if matrix==TRUE ---> dataframe - [k_denovo X (k_denovo + k_fixed) + 1] (wide format)
 #   if matrix==FALSE --> dataframe (long format)
 
-qc.linearCombination = function(fixed, denovo, matrix=TRUE) {
+qc_linearCombination = function(fixed, denovo, matrix=TRUE) {
   df = data.frame(matrix(0, nrow=nrow(denovo), ncol=nrow(denovo) + nrow(fixed)))
   rownames(df) = rownames(denovo)
   colnames(df) = c(rownames(fixed), rownames(denovo))
 
   for (i in 1:nrow(denovo)) {
-    qp = solve.quadratic.optimization(
+    qp = solve_quadratic_optimization(
       a=denovo[c(i),],
       b=rbind(fixed, denovo[-c(i),]),
       filt_pi=0,
@@ -195,28 +241,24 @@ compute_refinement_score_aux = function(fixed, denovo, coefs, sigName) {
 }
 
 
-recompute_scores = function(x, types=get_types(x)) {
-  for (type in types) {
-    scores = lapply(c("bic","aic","llik"), function(score_id) {
-        tibble::tibble(seed=get_seed(x)$nmf[[type]],
-                       score_id=score_id,
-                       score=compute_score(x, type=type, score_id=score_id),
-                       parname="K",
-                       value=get_n_denovo(x)[[type]])
-    }) %>% dplyr::bind_rows() %>%
-      dplyr::add_row(get_scores(x, types=type) %>% dplyr::select(-type))
+# Recompute fit scores + aux ####
 
-    x = set_scores(x, scores=scores, type=type, what="nmf")
+set_alternatives = function(x, alternatives) {
+  for (tid in unique(alternatives$type)) {
+    if (tid %in% get_types(x)) x$nmf[[tid]]$pyro$alternatives = alternatives %>% dplyr::filter(type==tid)
+    else x$clustering$pyro$alternatives = alternatives %>% dplyr::filter(type==tid)
   }
+
   return(x)
 }
 
 
-compute_score = function(x, type, score_id) {
-  if (score_id == "bic") compute_bic(x, type=type)
-  else if (score_id == "aic") compute_aic(x, type=type)
-  else if (score_id == "llik") compute_likelihood(x, type=type)
-  else NULL
+recompute_scores = function(x, type) {
+  x$nmf[[type]]$pyro$QC = x$nmf[[type]]$pyro$QC %>%
+    dplyr::mutate(value=replace(value, stat == "bic", compute_bic(x, type=type)),
+                  value=replace(value, stat == "likelihood", compute_likelihood(x, type=type)))
+
+  return(x)
 }
 
 
@@ -239,6 +281,7 @@ compute_bic = function(x, type) {
   n_pars = compute_n_parameters(x, type=type)
   n_pars * log(length(get_samples(x))) - (2 * llik)
 }
+
 
 compute_aic = function(x, type) {
   llik = compute_likelihood(x, type=type)
