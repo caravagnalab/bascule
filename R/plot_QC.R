@@ -36,11 +36,11 @@ plot_gradient_norms = function(x, types=get_types(x)) {
 
 
 plot_scores = function(x, types=get_types(x)) {
-  scores = get_scores(x, types=types) %>%
+  scores = get_scores(x) %>%
     dplyr::group_by(score_id, parname, type) %>%
     dplyr::mutate(is.min=score==min(score),
                   label=replace(is.min, is.min==T, "Best fit"),
-                  label=replace(label, label==F | score_id=="llik", NA)) %>%
+                  label=replace(label, label==F | score_id=="likelihood", NA)) %>%
 
     dplyr::group_by(score_id, parname, type) %>%
     dplyr::mutate(is.outlier=score %in% boxplot.stats(score)$out) %>%
@@ -49,22 +49,22 @@ plot_scores = function(x, types=get_types(x)) {
   scores_nmf = scores %>%
     dplyr::filter(parname == "K") %>%
     dplyr::filter(type %in% types) %>%
-    ggplot(aes(x=as.integer(value), y=score)) +
-    geom_line(aes(color=factor(seed))) +
-    geom_point(aes(color=factor(seed)), size=3) +
+    ggplot(aes(x=as.integer(value_fit), y=score)) +
+    geom_point(aes(color=factor(seed)), shape=16, size=3) +
+    geom_line(aes(color=factor(seed)), linetype="solid") +
+
     ggrepel::geom_label_repel(aes(label=label), box.padding=0.05, size=3,
                              na.rm=T, show.legend=F) +
     ggh4x::facet_nested_wrap(type ~ score_id, scales="free", nrow=length(types)) +
     theme_bw() + labs(title="Scores") + xlab("K") + ylab("Scores NMF") +
     guides(color=guide_legend(title="Seed")) +
-    # scale_y_continuous(labels=function(x) scales::scientific(x, digits=1)) +
     scale_x_continuous(breaks=scores %>% dplyr::filter(parname == "K") %>% dplyr::pull(value) %>% unique())
 
   if (!have_groups(x)) return(scores_nmf)
 
   scores_clst = scores %>%
     dplyr::filter(parname == "G") %>%
-    ggplot(aes(x=as.integer(value), y=score)) +
+    ggplot(aes(x=as.integer(value_fit), y=score)) +
     geom_point(aes(color=factor(seed)), size=3) +
     geom_line(aes(color=factor(seed))) +
     ggrepel::geom_label_repel(aes(label=label), box.padding=0.05, size=3, na.rm=T) +
@@ -85,37 +85,37 @@ plot_losses = function(x) {
 
   losses %>%
     ggplot() +
-    geom_line(aes(x=iteration, y=losses)) +
-    facet_grid(what ~ type, scales="free") +
+    geom_line(aes(x=iteration, y=value)) +
+    ggh4x::facet_nested(what + type ~ ., scales="free") +
     theme_bw() + xlab("Iterations") + ylab("Loss") +
-    scale_y_continuous(labels=function(x) scales::scientific(x))
+    scale_y_continuous(labels=function(x) scales::scientific(x)) +
     labs(title="Loss")
 }
 
 
 plot_likelihoods = function(x) {
-  likelihoods = get_likelihoods(x, what="nmf")
+  likelihoods = get_likelihoods(x)
 
   likelihoods %>%
     ggplot() +
-    geom_line(aes(x=iteration, y=likelihood)) +
+    geom_line(aes(x=iteration, y=value)) +
     facet_grid(what ~ type, scales="free") +
     theme_bw() + xlab("Iterations") + ylab("Log-likelihood") +
     labs(title="Log-likelihood")
 }
 
 
-plot_penalty = function(x) {
-  penalty = get_penalty(x)
-  if (is.null(penalty)) return(NULL)
-
-  penalty %>%
-    ggplot() +
-    geom_line(aes(x=iteration, y=penalty)) +
-    facet_grid(what ~ type, scales="free") +
-    theme_bw() + xlab("Iterations") + ylab("Penalty") +
-    labs(title="Penalty")
-}
+# plot_penalty = function(x) {
+#   penalty = get_penalty(x)
+#   if (is.null(penalty)) return(NULL)
+#
+#   penalty %>%
+#     ggplot() +
+#     geom_line(aes(x=iteration, y=penalty)) +
+#     facet_grid(what ~ type, scales="free") +
+#     theme_bw() + xlab("Iterations") + ylab("Penalty") +
+#     labs(title="Penalty")
+# }
 
 
 plot_QC = function(x) {

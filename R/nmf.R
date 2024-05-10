@@ -71,7 +71,7 @@ nmf_single_type = function(..., k_list, hyperparameters, reference_cat, cohort,
 }
 
 
-set_attribute = function(x, what, type, name, value) {
+set_attribute = function(x, what, name, value, type=NULL) {
   if (what == "nmf") x[[what]][[type]][[name]] = value
   if (what == "clustering") x[[what]][[name]] = value
   return(x)

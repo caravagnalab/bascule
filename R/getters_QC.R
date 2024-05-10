@@ -53,26 +53,57 @@ get_gradient_norms = function(x, types=get_types(x)) {
 
 
 get_scores = function(x, types=get_types(x)) {
+  scores_cls = NULL
+  scores_nmf = lapply(types, function(tid)
+    tibble::tibble(
+      parname="K",
+      value=get_n_denovo(x)[[tid]],
+      value_fit=get_n_denovo(x)[[tid]],
+      seed=get_seed(x)$nmf[[tid]],
+      bic=get_QC(x, what="nmf")[[tid]] %>%
+        dplyr::filter(stat=="bic") %>% dplyr::pull(value) %>% unlist(),
+      likelihood=get_QC(x, what="nmf")[[tid]] %>%
+        dplyr::filter(stat=="likelihood") %>% dplyr::pull(value) %>% unlist(),
+      type=tid
+    )) %>% do.call(rbind, .)
 
-  get_alternatives(x) %>%
-    dplyr::rowwise() %>%
-    dplyr::mutate(bic=ifelse(
-      parname == "K",
-      pyro_fit$QC %>% dplyr::filter(stat=="bic") %>% dplyr::pull(value) %>% unlist(),
-      pyro_fit$pyro$QC %>% dplyr::filter(stat=="bic") %>% dplyr::pull(value) %>% unlist()
-      ),
+  if (have_groups(x))
+    scores_cls = tibble::tibble(
+      parname="G",
+      value=get_n_groups(x),
+      value_fit=get_n_groups(x),
+      seed=get_seed(x)$clustering,
+      bic=get_QC(x, what="clustering")[[1]] %>%
+        dplyr::filter(stat=="bic") %>% dplyr::pull(value) %>% unlist(),
+      likelihood=get_QC(x, what="clustering")[[1]] %>%
+        dplyr::filter(stat=="likelihood") %>% dplyr::pull(value) %>% unlist(),
+      type="")
 
-      likelihood=ifelse(
-        parname == "K",
-        pyro_fit$QC %>% dplyr::filter(stat=="likelihood") %>% dplyr::pull(value) %>% unlist(),
-        pyro_fit$pyro$QC %>% dplyr::filter(stat=="likelihood") %>% dplyr::pull(value) %>% unlist()
-      )) %>%
+  dplyr::bind_rows(scores_nmf, scores_cls) %>%
 
-    dplyr::ungroup() %>%
+    dplyr::bind_rows(
+      get_alternatives(x) %>%
+        dplyr::rowwise() %>%
+        dplyr::mutate(bic=ifelse(
+          parname == "K",
+          pyro_fit$QC %>% dplyr::filter(stat=="bic") %>% dplyr::pull(value) %>% unlist(),
+          pyro_fit$pyro$QC %>% dplyr::filter(stat=="bic") %>% dplyr::pull(value) %>% unlist()
+        ),
+
+        likelihood=ifelse(
+          parname == "K",
+          pyro_fit$QC %>% dplyr::filter(stat=="likelihood") %>% dplyr::pull(value) %>% unlist(),
+          pyro_fit$pyro$QC %>% dplyr::filter(stat=="likelihood") %>% dplyr::pull(value) %>% unlist()
+        )) %>%
+
+        dplyr::ungroup()
+    ) %>%
 
     tidyr::pivot_longer(cols=c("bic","likelihood"), values_to="score", names_to="score_id") %>%
 
-    dplyr::select(-pyro_fit)
+    dplyr::select(-pyro_fit) %>%
+
+    unique()
 
 }
 
@@ -93,13 +124,25 @@ get_losses = function(x, what=get_fittypes(x), types=get_types(x)) {
 }
 
 
-# get_likelihoods = function(x, types=get_types(x)) {
-#   # get_stats(x, what, types, statname="likelihood") %>%
-#   get_QC_stat(x, statname=)[["nmf"]] %>%
-#
-#     dplyr::group_by(type, what) %>%
-#     dplyr::mutate(iteration=1:dplyr::n())
-# }
+get_likelihoods = function(x, what="nmf", types=get_types(x)) {
+  if (what == "clustering") {
+    cli::cli_alert_warning("Likelihoods not present in clustering yet. Returning the input object.")
+    return(x)
+  }
+
+  likelihoods = get_QC_stat(x, statname="likelihoods")
+  lapply(what, function(whatid) {
+    likelihoods[[whatid]] %>%
+      data.frame() %>%
+      reshape2::melt(variable.name="type") %>%
+      dplyr::mutate(what=whatid)
+  }) %>% do.call(rbind, .) %>%
+
+    dplyr::group_by(type, what) %>%
+    dplyr::mutate(iteration=1:dplyr::n()) %>%
+
+    dplyr::ungroup()
+}
 
 
 get_QC_stat = function(x, statname) {
@@ -132,66 +175,52 @@ get_QC_stat = function(x, statname) {
 
 # params = list("K"=NA,"G"=NA,"seed"=NA)
 get_alternative_run = function(x, K=get_n_denovo(x), G=get_n_groups(x),
-                               seed=c()
-                               # types=get_types(x)
-                               ) {
+                               seed=get_seed(x)) {
 
-  alternatives_df = get_alternatives(x)
+  alternatives = get_alternatives(x)
 
-  if (is.null(alternatives_df)) {
+  if (is.null(alternatives)) {
     cli::cli_alert_warning("No alternatives. Returning the original object.")
     return(x)
   }
 
-  best_K = get_n_denovo(x); best_G = get_n_groups(x)#; best_seed = get_seed(x)
+  best_K = get_n_denovo(x); best_G = get_n_groups(x); best_seed = get_seed(x)
   K = c(K, best_K[setdiff(names(best_K), names(K))])
   G = c(G, best_G[setdiff(names(best_G), names(G))])
 
-  grps = G
-  sigs = K %>% setNames(names(K))
-  if (have_groups(x) & !is.null(G)) {
-    if (is.null(seed[["clustering"]]) & have_groups(x)) {
-      s_t = get_best_seed(x, value=G, parname="G", type_id="Clustering")
-    } else {
-      s_t = seed$Clustering
-    }
-    x$clustering = (alternatives_df %>%
-      dplyr::filter(what_fit == "clustering",
-                    seed == s_t,
-                    value == grps) %>%
-      dplyr::pull(basilica_fit))[[1]][[1]]
+  for (tid in get_types(x)) {
+    K_t = K[[tid]]
+    seed_t = seed$nmf[[tid]]
 
-    # x$clustering = get_alternatives(x, what="clustering")[[1]]$fits[[grps]][[paste0("seed:",seed$clustering)]][[1]]
+    if (K_t == best_K[[tid]] & seed_t == best_seed$nmf[[tid]]) next
+
+    pyro_fit_t = alternatives %>%
+      dplyr::filter(type==tid, parname=="K", value_fit==K_t, seed==seed_t) %>%
+      dplyr::pull(pyro_fit)
+
+    if (is.null(pyro_fit_t) | purrr::is_empty(pyro_fit_t)) {
+      cli::cli_alert_warning("The value of K={K_t} and seed={seed_t} for {tid} is not in the object.")
+      next
+    }
+
+    x = set_attribute(x, what="nmf", type=tid, name="pyro", value=pyro_fit_t[[1]])
+    x = set_exposures(x, expos=pyro_fit_t[[1]]$exposure, type=tid)
+    x = set_denovo_signatures(x, sigs=pyro_fit_t[[1]]$beta_denovo, type=tid)
   }
 
-  # alter_nmf = get_alternatives(x, types=types)
-  x$nmf = lapply(types, function(tid) {
-    k_t = sigs[[tid]]
-    if (is.null(seed[["nmf"]][[tid]])) {
-      s_t = get_best_seed(x, value=K[[tid]], parname="K", type_id=tid)
-    } else {
-      s_t = seed$nmf[[tid]]
+  if (have_groups(x)) {
+    alt_g =
+    if (G != best_G | seed$clustering != best_seed$clustering) {
+      pyro_fit_g = alternatives %>%
+        dplyr::filter(parname=="G", value_fit==G, seed==!!seed$clustering) %>%
+        dplyr::pull(pyro_fit)
+
+      if (is.null(pyro_fit_g) | purrr::is_empty(pyro_fit_g))
+        cli::cli_alert_warning("The value of G={G} and seed={seed$clustering} are not in the object.")
+
+      else x$clustering = pyro_fit_g[[1]]
     }
-    if (is.null(k_t)) k_t = get_n_denovo(x)[[tid]]
-    if (is.null(s_t)) s_t = get_seed(x)$nmf[[tid]]
-
-    alter_t = alter_nmf[[tid]]$fits[[k_t]][[s_t]][[1]]
-
-    alter_t = alternatives_df %>%
-      dplyr::filter(what_fit == "nmf",
-                    type == tid,
-                    seed == s_t,
-                    value == grps)
-
-    if (nrow(alter_t) == 0) return(x$nmf[[tid]])
-
-    dplyr::pull(alter_t, basilica_fit)[[1]][[1]]
-
-    # list("exposure"=alter_t$exposure,
-    #      "beta_fixed"=alter_t$beta_fixed,
-    #      "beta_denovo"=alter_t$beta_denovo,
-    #      "pyro"=alter_t)
-  }) %>% setNames(types)
+  }
 
   return(x)
 }

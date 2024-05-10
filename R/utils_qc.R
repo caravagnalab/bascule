@@ -157,9 +157,16 @@ set_nmf_init_params = function(x, type, denovo=NULL, expos=NULL) {
 }
 
 
-set_scores = function(x, scores, type, what="nmf") {
-  x[[what]][[type]]$pyro$QC$scores = scores
-  return(x)
+# set_scores = function(x, scores, type, what="nmf") {
+#   x[[what]][[type]]$pyro$QC$scores = scores
+#   return(x)
+# }
+
+
+remove_alternatives = function(x, types=get_types(x)) {
+  for (tid in types)
+    x$nmf[[tid]]$pyro$alternatives = NULL
+  x
 }
 
 
