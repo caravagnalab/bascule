@@ -148,3 +148,19 @@ significant.signatures <- function(x, types=get_types(x), threshold=0.05) {
 
 
 
+# ==============================================================================
+# VISUALIZAION
+# ==============================================================================
+
+# input : basilica object
+# output: ggplot (samples frequency in clusters)
+plot.cluster.freq <- function(x) {
+  df <- basilica:::get_cluster_assignments(x) # dataframe
+  p <- ggplot(df, aes(x = clusters)) + 
+    geom_bar(stat = "count", fill = "purple") +
+    labs(x = "Clusters", y = "Number of samples", title = "Distribution of samples in clusters") + 
+    theme_minimal()
+  return(p)
+}
+
+
