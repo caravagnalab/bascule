@@ -1,5 +1,5 @@
 pyro_clustering = function(exposures, cluster, lr=0.005, n_steps=3000,
-                           optim_gamma=0.1, enumer="parallel", autoguide=FALSE,
+                           optim_gamma=0.1, enumer="parallel", autoguide=TRUE,
                            hyperparameters=NULL, nonparametric=TRUE,
                            store_parameters=FALSE, store_fits=FALSE,
                            seed_list=c(10), CUDA=TRUE, py=NULL) {
@@ -34,10 +34,6 @@ pyro_clustering = function(exposures, cluster, lr=0.005, n_steps=3000,
   pyro_fit = get_list_from_py_clustering(bestRun)
   pyro_fit$pyro$alternatives$secondBest = get_list_from_py_clustering(secondBest)
   pyro_fit$pyro$time = TIME
-
-  # clustering = list(pyro=pyro_fit,
-  #                   clusters=pyro_fit$clusters,
-  #                   centroids=pyro_fit$centroids)
 
   return(pyro_fit)
 }

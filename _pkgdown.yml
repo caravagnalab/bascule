@@ -1,15 +1,19 @@
-url: https://caravagnalab.github.io/basilica/
+destination: docs
+
 template:
   bootstrap: 5
 
+url: caravagnalab.github.io/basilica
+
 reference:
 - title: Perform inference
-  desc:  Functions to fit NMF and clustering.
+  desc: Functions to fit NMF and clustering.
   contents:
   - fit
+  - fit_clustering
 
 - title: Getters
-  desc: Utility functions to extract attributes
+  desc: Utility functions to extract attributes.
   contents:
   - get_input
 
