@@ -3,7 +3,28 @@ template:
   bootstrap: 5
 
 reference:
-- title: "Fit"
+- title: Functions
   contents:
   - fit
   - fit_clustering
+  - COSMIC_dbs
+  - COSMIC_filt_merged
+  - COSMIC_sbs
+  - COSMIC_sbs_filt
+  - Degasperi_SBS_GEL_PCAWG_HW
+  - Degasperi_catalogue
+  - configure_environment
+  - get_input
+  - have_loaded_env
+  - have_python_deps
+  - load_conda_env
+  - merge_clusters
+  - plot.basilica_obj
+  - plot_data
+  - plot_exposures
+  - plot_fit
+  - plot_signatures
+  - plot_similarity_reference
+  - print.basilica_obj
+  - which_conda_env
+
