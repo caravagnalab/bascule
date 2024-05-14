@@ -19,7 +19,6 @@ reference:
 - title: Perform inference
   desc:  Functions to fit NMF and clustering.
   contents:
-  - fit
   - fit_clustering
 
 - title: Getters
