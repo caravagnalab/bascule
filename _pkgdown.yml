@@ -4,8 +4,3 @@ template:
   bootstrap: 5
 
 url: caravagnalab.github.io/basilica
-
-reference:
-- title: Fit
-  contents:
-  - fit
