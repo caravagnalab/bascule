@@ -1,10 +1,10 @@
 pandoc: 3.1.11
-pkgdown: 2.0.8
+pkgdown: 2.0.9
 pkgdown_sha: ~
 articles:
   Tutorial: Tutorial.html
-last_built: 2024-04-16T09:49Z
+last_built: 2024-05-14T14:56Z
 urls:
-  reference: https://caravagnalab.github.io/basilica/reference
-  article: https://caravagnalab.github.io/basilica/articles
+  reference: caravagnalab.github.io/basilica/reference
+  article: caravagnalab.github.io/basilica/articles
 
