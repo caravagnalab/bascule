@@ -22,14 +22,7 @@
 #' @param seed_list List of seeds used for every input configuration.
 #'
 #' @return Basilica object.
-#' @export
-#'
-#' @examples
-#'
-#' counts = get_input(example_dataset, matrix=T)
-#' reference_cat = list("SBS"=COSMIC_sbs_filt, "DBS"=COSMIC_dbs)
-#' # x = fit(counts=counts, reference_cat=reference_cat, k_list=0:2, cluster=5)
-#' # plot_exposures(x)
+#' @export fit
 fit = function(counts, k_list,
                cluster=NULL,
                reference_cat=list("SBS"=COSMIC_filt, "DBS"=COSMIC_dbs),

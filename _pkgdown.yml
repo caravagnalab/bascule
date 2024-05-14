@@ -6,14 +6,24 @@ template:
 url: caravagnalab.github.io/basilica
 
 reference:
+- title: Data
+  desc:  Description of datasets available in the package.
+  contents:
+  - COSMIC_sbs
+  - COSMIC_sbs_filt
+  - COSMIC_dbs
+  - COSMIC_filt_merged
+  - Degasperi_SBS_GEL_PCAWG_HW
+  - Degasperi_catalogue
+
 - title: Perform inference
-  desc: Functions to fit NMF and clustering.
+  desc:  Functions to fit NMF and clustering.
   contents:
   - fit
   - fit_clustering
 
 - title: Getters
-  desc: Utility functions to extract attributes.
+  desc:  Utility functions to extract attributes.
   contents:
   - get_input
 
@@ -26,18 +36,8 @@ reference:
   - load_conda_env
   - which_conda_env
 
-- title: Datasets
-  desc: Description of datasets available in the package.
-  contents:
-  - COSMIC_sbs
-  - COSMIC_sbs_filt
-  - COSMIC_dbs
-  - COSMIC_filt_merged
-  - Degasperi_SBS_GEL_PCAWG_HW
-  - Degasperi_catalogue
-
 - title: Plotting functions
-  desc: Plotting functions available in the package
+  desc:  Plotting functions available in the package
   contents:
   - plot_data
   - plot_exposures
@@ -50,7 +50,7 @@ reference:
   - merge_clusters
 
 - title: S3 objects
-  desc: Print and plot S3 functions
+  desc:  Print and plot S3 functions
   contents:
   - print.basilica_obj
   - plot.basilica_obj
