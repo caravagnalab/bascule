@@ -3,7 +3,6 @@
 .RData
 .Ruserdata
 docs
-man
 inst/doc
 **.DS_Store
 pkgdown/
