@@ -59,7 +59,7 @@ match_type = function(types, sigs) {
 }
 
 
-plot_centroids = function(x, types=get_types(x), cls=NULL, sigs_levels=NULL, flip_coord=FALSE, sort_by=NULL) {
+plot_centroids = function(x, types=get_types(x), cls=NULL, sigs_levels=NULL, flip_coord=FALSE, sort_by=NULL, concise=F, exposure_thr=0.05, quantile_thr=0.9) {
   centr = get_centroids(x)
   if (!have_groups(x) || is.null(centr)) return(NULL)
   a_pr = centr %>%
@@ -72,6 +72,28 @@ plot_centroids = function(x, types=get_types(x), cls=NULL, sigs_levels=NULL, fli
     dplyr::rename(samples=clusters)
 
   if (is.null(cls)) cls = gen_palette(x, types=types)
+  
+  
+  #-----------------------------------------------------------------------------
+  # Just plot significant signatures in each cluster [concise=TRUE]
+  if (concise) {
+    scores <- basilica:::get_clusters_score(
+      x, types, exposure_thr, quantile_thr
+    ) %>% subset(significance == T) %>% dplyr::rename("sigs"="signature", "samples"="cluster")
+    #colnames(scores)[colnames(scores) == 'signature'] <- 'sigs'
+    #colnames(scores)[colnames(scores) == 'cluster'] <- 'clusters'
+    
+    df_list <- list(a_pr, scores)
+    df <- Reduce(function(x, y) merge(x, y, all=TRUE), df_list)
+    
+    df$sigs[is.na(df$score)] <- rep("others", length(df$sigs[is.na(df$score)]))
+    
+    a_pr <- df[, c(1,2,3,4)]
+    
+    cls["others"] = "#000000" # assign black color to new signature
+  }
+  #-----------------------------------------------------------------------------
+  
 
   return(
     plot_exposures_aux(exposures=a_pr, cls=cls, titlee="Centroids",
