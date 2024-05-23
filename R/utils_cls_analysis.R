@@ -1,34 +1,8 @@
-significant_signatures = function(x, types=get_types(x), exposure_thr=0.05) {
-  if (!have_groups(x)) {
-    cli::cli_alert_warning("The input data has not been clustered. Returning the input object.")
-    return(x)
-  }
-
-  # TODO : check it -> for some high value of threshold may output error
-
-  scores = get_clusters_score(x=x, types=types, threshold=exposure_thr)
-
-  q0 = lapply(
-    types,
-    function(tid) tapply( subset(scores, type==tid)$score, subset(scores, type==tid)$cluster, function(x) quantile(x, probs=c(0.9)))
-  ) %>% setNames(types)
-
-  q1 = data.frame((sapply(q0, c)))
-  q1["cluster"] = q1 %>% rownames
-  q2 = q1 %>% tidyr::pivot_longer(cols=dplyr::all_of(types), names_to="type", values_to="quantile")
-
-  df = scores %>% dplyr::right_join(q2, by=c("cluster","type"))
-  # merge(df, q, by.x=c('cluster', 'type'), by.y=c('cluster', 'type'))
-
-  return(
-    df %>% dplyr::filter(score >= quantile) %>%
-      dplyr::select(signature, cluster, score, type)
-  )
-}
 
 
-get_clusters_score_aux = function(x, type, threshold) {
-  exposures = get_exposure(x, types=type, matrix=FALSE, add_groups=TRUE)[[type]] %>% subset(value > threshold)
+
+get_clusters_score_aux = function(x, type, exposure_thr, quantile_thr) {
+  exposures = get_exposure(x, types=type, matrix=FALSE, add_groups=TRUE)[[type]] %>% subset(value > exposure_thr)
   df = data.frame(signature=c(), cluster=c(), varRatio=c(), activeRatio=c(), mutRatio=c(), score=c())
 
   for (cls in get_cluster_labels(x)) {
@@ -86,18 +60,52 @@ get_clusters_score_aux = function(x, type, threshold) {
       )
     }
   }
+  
+  df1 <- lapply(
+    get_cluster_labels(x), # list of cluster labels
+    function(cid) {
+      df %>% 
+        subset(cluster == cid) %>% 
+        mutate(
+          score_quantile = df %>% 
+            subset(cluster == cid) %>% 
+            dplyr::pull(score) %>% 
+            quantile(probs = c(quantile_thr))
+        )
+    }
+  ) %>% do.call(rbind, .)
 
-  return(df)
+  return(df1)
 }
 
 
-get_clusters_score = function(x, types=get_types(x), threshold=0.05) {
+get_clusters_score = function(x, types=get_types(x), exposure_thr=0.05, quantile_thr=0.9) {
   return(
     lapply(
       types,
-      function(tid) get_clusters_score_aux(x=x, type=tid, threshold=threshold) %>%
+      function(tid) get_clusters_score_aux(x, tid, exposure_thr, quantile_thr) %>%
         dplyr::mutate(type=tid)) %>% do.call(rbind, .) %>% dplyr::filter(!is.na(type))
   )
+  
+  #df <- lapply(
+  #  cluster_labels, # list of cluster labels
+  #  function(cid) {
+  #    lapply(
+  #      types, # list of context types
+  #      function(tid) {
+  #        scores %>% 
+  #          subset(cluster == cid & type == tid) %>% 
+  #          mutate(
+  #            quantileValue = scores %>% 
+  #              subset(cluster == cid & type == tid) %>% 
+  #              dplyr::pull(score) %>% 
+  #              quantile(probs = c(0.9))
+  #          )
+  #      }
+  #    ) %>% do.call(rbind, .)
+  #  }
+  #) %>% do.call(rbind, .)
+  
 }
 
 
