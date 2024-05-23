@@ -66,7 +66,7 @@ get_clusters_score_aux = function(x, type, exposure_thr, quantile_thr) {
     function(cid) {
       df %>% 
         subset(cluster == cid) %>% 
-        mutate(
+        dplyr::mutate(
           score_quantile = df %>% 
             subset(cluster == cid) %>% 
             dplyr::pull(score) %>% 
