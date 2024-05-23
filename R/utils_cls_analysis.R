@@ -74,6 +74,8 @@ get_clusters_score_aux = function(x, type, exposure_thr, quantile_thr) {
         )
     }
   ) %>% do.call(rbind, .)
+  
+  df1 <- df1 %>% dplyr::mutate(significance = score >= score_quantile)
 
   return(df1)
 }
