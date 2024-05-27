@@ -18,7 +18,7 @@ fit_clustering(
   CUDA = TRUE,
   compile = FALSE,
   store_parameters = FALSE,
-  store_fits = FALSE,
+  store_fits = TRUE,
   seed_list = c(10)
 )
 }

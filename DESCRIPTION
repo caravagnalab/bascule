@@ -39,8 +39,9 @@ Imports:
     ggtext,
     pheatmap,
     ggplotify,
+    patchwork,
     scales,
-    quadprog, 
+    quadprog,
     progress
 RoxygenNote: 7.3.1
 URL: https://github.com/caravagnalab/basilica,

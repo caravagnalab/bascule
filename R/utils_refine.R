@@ -236,7 +236,7 @@ qc_linearCombination = function(fixed, denovo, matrix=TRUE) {
 
 compute_refinement_score_aux = function(fixed, denovo, coefs, sigName) {
   reconstructed_vector = t(rbind(fixed, denovo)) %*% coefs
-  score = basilica:::cosine.vector(reconstructed_vector, denovo[sigName,])
+  score = cosine.vector(reconstructed_vector, denovo[sigName,])
   return(round(score, digits=3))
 }
 
