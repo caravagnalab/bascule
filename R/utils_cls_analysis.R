@@ -1,3 +1,4 @@
+
 get_clusters_score_aux = function(x, type, exposure_thr, quantile_thr) {
   exposures = get_exposure(x, types=type, matrix=FALSE, add_groups=TRUE)[[type]] %>% subset(value > exposure_thr)
   df = data.frame(signature=c(), cluster=c(), varRatio=c(), activeRatio=c(), mutRatio=c(), score=c())
@@ -251,5 +252,52 @@ plot_cluster_scores = function(x, types=get_types(x), clusterName, exposure_thr 
 
   return( (p1 | p2) / p3 )
 }
+
+#-------------------------------------------------------------------------------
+
+# plots heatmap of scores
+plot_cls_score_heatmap <- function(x, type, exposure_thr = 0.05) {
+  
+  df <- get_clusters_score(x, type, exposure_thr) %>% subset(significance == T)
+  
+  #df2 <- significant_signatures(x, types, threshold)
+  
+  #df <- compute.scores(x = x, threshold = threshold)
+  #aa <- tapply(df$score, df$cluster, function(x) quantile(x, probs = c(0.9)))
+  #df2 <- data.frame(matrix(ncol = 3, nrow = 0))
+  #colnames(df2) <- c("signature", "cluster", "score")
+  
+  #for (i in 1:length(aa)) {
+  #print(paste0( names(aa[i]), " - ", aa[[i]]) )
+  #  df2 <- rbind(
+  #    df2, 
+  #    df %>% subset( cluster == names(aa[i]) & score > aa[[i]], select = c("signature", "cluster", "score") )
+  #    )
+  #}
+  
+  p <- ggplot(data = df, aes(x = cluster, y = signature, fill = round(score, 3), label = round(score, 3))) +
+    geom_tile(color = "white") + 
+    scale_fill_gradient(low = "grey", high = "red") + 
+    geom_text(color = "black", size = 3) +  # Add text annotations
+    #scale_fill_gradient(low = "white", high = "steelblue") +  # Choose your desired color gradient
+    labs(fill='clustering score') + 
+    theme_minimal() + 
+    theme(
+      # remove the vertical grid lines
+      panel.grid.major.x = element_blank(), 
+      # explicitly set the horizontal lines (or they will disappear too)
+      panel.grid.major.y = element_line( linewidth=.1, color="black" ), 
+      #legend.position="none"
+    ) + 
+    labs(title = "significant signatures in each cluster",
+         x = "Clusters",
+         y = "Signatures")
+  
+  return(p)
+  
+}
+
+
+
 
 
