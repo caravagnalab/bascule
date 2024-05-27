@@ -201,24 +201,22 @@ get_alternatives_from_py = function(py_obj, fn, type="") {
 
   lapply(names(py_obj$fits), function(i) {
     fits_i = py_obj$fits[[i]]
+
     lapply(names(fits_i), function(j) {
-      fits_i[[j]] # $convert_to_dataframe(inp)
+      fits_i[[j]]
       tmp = tibble::tibble(V1 = list( fn(fits_i[[j]], type=type) ))
       colnames(tmp) = j
       return(tmp)
-    }) %>% dplyr::bind_cols()
-  }) %>% setNames(names(py_obj$fits)) %>%
+    }) %>% dplyr::bind_cols() %>%
+      dplyr::mutate(parname=i)
 
-    ## transform it into a tibble
-    sapply(tibble::as_tibble) %>%
-    tibble::as_tibble(rownames=NA) %>%
-    tibble::rownames_to_column(var="rowname") %>%
-    tidyr::pivot_longer(cols=!rowname, names_to="colname",
+  }) %>%
+    dplyr::bind_rows() %>%
+
+    tidyr::pivot_longer(cols=!parname,
+                        names_to="seed",
                         values_to="pyro_fit") %>%
-    tidyr::separate(colname, into=c("parname","seed"), sep="[.]") %>%
     tidyr::separate(parname, into=c("parname","value"), sep=":") %>%
-
-    ## if clustering
     tidyr::separate(value, into=c("value","value_fit"), extra="drop", fill="right", sep="_") %>%
     dplyr::mutate(parname=stringr::str_replace_all(parname, "k_denovo", "K"),
                   parname=stringr::str_replace_all(parname, "cluster", "G"),
@@ -227,8 +225,7 @@ get_alternatives_from_py = function(py_obj, fn, type="") {
                   value=as.integer(value),
                   value_fit=ifelse(is.na(value_fit), as.integer(value),
                                    as.integer(value_fit)),
-                  type=!!type) %>%
-    dplyr::select(-rowname)
+                  type=!!type)
 
 }
 

@@ -84,17 +84,19 @@ get_scores = function(x, types=get_types(x)) {
     dplyr::bind_rows(
       get_alternatives(x) %>%
         dplyr::rowwise() %>%
-        dplyr::mutate(bic=ifelse(
-          parname == "K",
-          pyro_fit$QC %>% dplyr::filter(stat=="bic") %>% dplyr::pull(value) %>% unlist(),
-          pyro_fit$pyro$QC %>% dplyr::filter(stat=="bic") %>% dplyr::pull(value) %>% unlist()
-        ),
+        dplyr::mutate(
+          bic=ifelse(
+            parname == "K",
+            pyro_fit$QC %>% dplyr::filter(stat=="bic") %>% dplyr::pull(value) %>% unlist(),
+            pyro_fit$pyro$QC %>% dplyr::filter(stat=="bic") %>% dplyr::pull(value) %>% unlist()
+          ),
 
-        likelihood=ifelse(
-          parname == "K",
-          pyro_fit$QC %>% dplyr::filter(stat=="likelihood") %>% dplyr::pull(value) %>% unlist(),
-          pyro_fit$pyro$QC %>% dplyr::filter(stat=="likelihood") %>% dplyr::pull(value) %>% unlist()
-        )) %>%
+          likelihood=ifelse(
+            parname == "K",
+            pyro_fit$QC %>% dplyr::filter(stat=="likelihood") %>% dplyr::pull(value) %>% unlist(),
+            pyro_fit$pyro$QC %>% dplyr::filter(stat=="likelihood") %>% dplyr::pull(value) %>% unlist()
+          )
+        ) %>%
 
         dplyr::ungroup()
     ) %>%

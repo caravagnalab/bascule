@@ -151,7 +151,7 @@ fit_clustering = function(x,
                           compile = FALSE,
 
                           store_parameters = FALSE,
-                          store_fits = FALSE,
+                          store_fits = TRUE,
 
                           seed_list = c(10)) {
   exposures = get_exposure(x, matrix=TRUE)
