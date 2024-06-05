@@ -1,3 +1,22 @@
+#' Function to visualize the estimated exposures
+#'
+#' @param x basilica object.
+#' @param types List of variant types to visualize.
+#' @param samples List of samples to visualize.
+#' @param clusters List of clusters to visualize.
+#' @param sample_name Logical. If `TRUE`, sample names will be reported on the x axis.
+#' @param sigs_levels Deprecated.
+#' @param cls Custom color palette for signatures.
+#' @param add_centroid Logical. If `TRUE`, also clustering's centroids will be plotted.
+#' @param muts Deprecated.
+#' @param sort_by Signature to sort patients' exposures by.
+#' @param elim_thr merge all signatures with low exposure as single signature called 'lowexp'
+#'
+#' @return ggplot object.
+#' @export
+#'
+#' @examples
+#' plot_exposures(example_fit)
 plot_exposures = function(x, types=get_types(x), samples=get_samples(x),
                           clusters=get_cluster_labels(x),
                           sample_name=F, sigs_levels=NULL, cls=NULL,
@@ -23,6 +42,7 @@ plot_exposures = function(x, types=get_types(x), samples=get_samples(x),
   return(p)
 }
 
+
 match_type = function(types, sigs) {
   sapply(sigs, function(sid) {
     matches = sapply(types, function(tid) grepl(tid, x=sid))
@@ -33,7 +53,10 @@ match_type = function(types, sigs) {
 }
 
 
-plot_centroids = function(x, types=get_types(x), cls=NULL, sigs_levels=NULL, flip_coord=FALSE, sort_by=NULL) {
+plot_centroids = function(x, types=get_types(x), cls=NULL, sigs_levels=NULL,
+                          flip_coord=FALSE, sort_by=NULL, concise=F,
+                          exposure_thr=0.05, quantile_thr=0.9) {
+
   centr = get_centroids(x)
   if (!have_groups(x) || is.null(centr)) return(NULL)
   a_pr = centr %>%
@@ -46,6 +69,24 @@ plot_centroids = function(x, types=get_types(x), cls=NULL, sigs_levels=NULL, fli
     dplyr::rename(samples=clusters)
 
   if (is.null(cls)) cls = gen_palette(x, types=types)
+
+
+  # Just plot significant signatures in each cluster [concise=TRUE]
+  if (concise) {
+    scores = get_clusters_score(x, types, exposure_thr, quantile_thr) %>%
+      subset(significance == T) %>% dplyr::rename("sigs"="signature", "samples"="cluster")
+    #colnames(scores)[colnames(scores) == 'signature'] = 'sigs'
+    #colnames(scores)[colnames(scores) == 'cluster'] = 'clusters'
+
+    df_list = list(a_pr, scores)
+    df = Reduce(function(x, y) merge(x, y, all=TRUE), df_list)
+
+    df$sigs[is.na(df$score)] = rep("others", length(df$sigs[is.na(df$score)]))
+
+    a_pr = df[, c(1,2,3,4)]
+
+    cls["others"] = "#000000" # assign black color to new signature
+  }
 
   return(
     plot_exposures_aux(exposures=a_pr, cls=cls, titlee="Centroids",
