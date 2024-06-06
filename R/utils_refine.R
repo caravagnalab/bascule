@@ -1,22 +1,20 @@
-refine_denovo_signatures = function(x) {
+refine_denovo_signatures = function(x, types=get_types(x)) {
 
-  alternatives = get_alternatives(x)
+  alternatives = get_alternatives(x) %>% dplyr::filter(type %in% types)
+
   alternatives_refined = alternatives %>%
 
     dplyr::rename(tid=type) %>%
     dplyr::filter(parname=="K") %>%
 
     dplyr::rowwise() %>%
-    dplyr::mutate(basilica_fit_refined=list(
+    dplyr::mutate(results_refined=list(
       refinement_single_fit(x, pyro_fit=pyro_fit, type=tid)
-      )) %>%
+    )) %>%
 
-    ## update the value for K and for the score
-    dplyr::mutate(value_refined=get_n_denovo(basilica_fit_refined)[[tid]],
-                  score_refined=get_scores(basilica_fit_refined) %>%
-                    dplyr::filter(type==tid, score_id=="bic") %>%
-                    dplyr::pull(score) %>% unlist(),
-                  pyro_fit_refined=list(basilica_fit_refined[["nmf"]][[tid]][["pyro"]])) %>%
+    dplyr::mutate(value_refined=results_refined[["value_refined"]],
+                  score_refined=results_refined[["score_refined"]],
+                  pyro_fit_refined=results_refined[["pyro_fit_refined"]]) %>%
     dplyr::ungroup() %>%
 
     dplyr::rename(type=tid)
@@ -27,9 +25,9 @@ refine_denovo_signatures = function(x) {
 
   ## substitute the best fits as main objects and add the new alternatives
   for (i in 1:nrow(best_fit)) {
-    tid = alternatives_refined[[i,"type"]]
-    seed = alternatives_refined[[i,"seed"]]
-    pyro_fit_refined = alternatives_refined[[i,"pyro_fit_refined"]][[1]]
+    tid = best_fit[[i,"type"]]
+    seed = best_fit[[i,"seed"]]
+    pyro_fit_refined = best_fit[[i,"pyro_fit_refined"]][[1]]
 
     x = set_attribute(x, what="nmf", type=tid, name="pyro", value=pyro_fit_refined)
     x = set_exposures(x, expos=pyro_fit_refined$exposure, type=tid)
@@ -103,7 +101,15 @@ refinement_single_fit = function(x, type, pyro_fit=NULL) {
 
     cli::cli_process_done("Signature {candidate} discarded")
   }
-  return(x)
+  # return(x)
+
+  return(
+    list("value_refined"=get_n_denovo(x)[[type]],
+         "score_refined"=get_scores(x) %>%
+           dplyr::filter(type==!!type, score_id=="bic") %>%
+           dplyr::pull(score) %>% unlist(),
+         "pyro_fit_refined"=list(x[["nmf"]][[type]][["pyro"]]))
+  )
 }
 
 
@@ -297,9 +303,3 @@ compute_n_parameters = function(x, type) {
   if (!is.null(expos)) n_pars = n_pars + dim(expos)[1] * dim(expos)[2]
   return(n_pars)
 }
-
-
-
-
-
-
