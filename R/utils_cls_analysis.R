@@ -2,34 +2,23 @@ get_clusters_score = function(x, types=get_types(x), exposure_thr=0.05, quantile
   return(
     lapply(
       types,
-      function(tid) get_clusters_score_aux(x, tid, exposure_thr, quantile_thr) %>%
-        dplyr::mutate(type=tid)) %>% do.call(rbind, .) %>% dplyr::filter(!is.na(type))
+      function(tid)
+        get_clusters_score_aux(x, type=tid,
+                               exposure_thr=exposure_thr,
+                               quantile_thr=quantile_thr) %>%
+        dplyr::mutate(type=tid)) %>%
+      do.call(rbind, .) %>% dplyr::filter(!is.na(type))
   )
-
-  # df = lapply(
-  #   cluster_labels, # list of cluster labels
-  #   function(cid) {
-  #     lapply(
-  #       types, # list of context types
-  #       function(tid) {
-  #         scores %>%
-  #           subset(cluster == cid & type == tid) %>%
-  #           mutate(
-  #             quantileValue = scores %>%
-  #               subset(cluster == cid & type == tid) %>%
-  #               dplyr::pull(score) %>%
-  #               quantile(probs = c(0.9))
-  #           )
-  #       }
-  #     ) %>% do.call(rbind, .)
-  #   }
-  # ) %>% do.call(rbind, .)
 }
 
 
 get_clusters_score_aux = function(x, type, exposure_thr, quantile_thr) {
-  exposures = get_exposure(x, types=type, matrix=FALSE, add_groups=TRUE)[[type]] %>% subset(value > exposure_thr)
+  exposures = get_exposure(x, types=type, matrix=FALSE, add_groups=TRUE)[[type]]
+  exposures = exposures %>% dplyr::group_by(sigs) %>%
+    dplyr::filter(any(value >= exposure_thr))
   df = data.frame(signature=c(), cluster=c(), varRatio=c(), activeRatio=c(), mutRatio=c(), score=c())
+
+  if (nrow(exposures) == 0) return(df)
 
   for (cls in get_cluster_labels(x)) {
     for ( signature in ( exposures %>% subset(clusters == cls) %>% dplyr::pull(sigs) %>% unique ) ) {
@@ -106,23 +95,3 @@ get_clusters_score_aux = function(x, type, exposure_thr, quantile_thr) {
   return(df1)
 }
 
-
-# significant.signatures = function(x, types, threshold) {
-#
-#   df = get_clusters_score(x, types, threshold)
-#
-#   q = tapply(df$score, df$cluster, function(x) quantile(x, probs=c(0.9)))
-#
-#   xx = data.frame(matrix(ncol=3, nrow=0))
-#   colnames(xx) = c("signature", "cluster", "score")
-#
-#   for (i in 1:length(q)) {
-#     xx = rbind(
-#       xx,
-#       df %>% subset( cluster == names(q[i]) & score > q[[i]], select=c("signature", "cluster", "score") )
-#     )
-#   }
-#   rownames(xx)=seq(length=nrow(xx))
-#
-#   return(xx)
-# }
