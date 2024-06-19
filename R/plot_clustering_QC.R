@@ -25,10 +25,11 @@ plot_cls_score_heatmap <- function(x, type, exposure_thr=0.05) {
     geom_text(color="black", size=3) +  # Add text annotations
     # scale_fill_gradient(low="white", high="steelblue") +  # Choose your desired color gradient
     labs(
-      title="Significant signatures in each cluster",
+      title="Significant signatures in clusters", 
+      subtitle = "(based on clustering scores)", 
       x="Clusters",
       y="Signatures", 
-      fill = "Clustering Score") + 
+      fill = "Score") + 
     theme_minimal() +
     theme(
       # remove the vertical grid lines
@@ -36,7 +37,8 @@ plot_cls_score_heatmap <- function(x, type, exposure_thr=0.05) {
       # explicitly set the horizontal lines (or they will disappear too)
       panel.grid.major.y=element_line( linewidth=.1, color="black" ),
       #legend.position="none"
-    )
+    ) + 
+    theme_bw()
 
   return(p)
 }
