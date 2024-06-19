@@ -1,3 +1,4 @@
+
 # plots heatmap of scores
 plot_cls_score_heatmap <- function(x, type, exposure_thr=0.05) {
 
@@ -20,10 +21,14 @@ plot_cls_score_heatmap <- function(x, type, exposure_thr=0.05) {
 
   p = ggplot(data=df, aes(x=cluster, y=signature, fill=round(score, 3), label=round(score, 3))) +
     geom_tile(color="white") +
-    scale_fill_gradient(low="grey", high="red") +
+    scale_fill_gradient(low="grey", high="dodgerblue1") +
     geom_text(color="black", size=3) +  # Add text annotations
     # scale_fill_gradient(low="white", high="steelblue") +  # Choose your desired color gradient
-    labs(fill='clustering score') +
+    labs(
+      title="Significant signatures in each cluster",
+      x="Clusters",
+      y="Signatures", 
+      fill = "Clustering Score") + 
     theme_minimal() +
     theme(
       # remove the vertical grid lines
@@ -31,14 +36,12 @@ plot_cls_score_heatmap <- function(x, type, exposure_thr=0.05) {
       # explicitly set the horizontal lines (or they will disappear too)
       panel.grid.major.y=element_line( linewidth=.1, color="black" ),
       #legend.position="none"
-    ) +
-    labs(title="significant signatures in each cluster",
-         x="Clusters",
-         y="Signatures")
+    )
 
   return(p)
 }
 
+#===============================================================================
 
 # input : basilica object
 # output: ggplot (samples frequency in clusters)
@@ -46,15 +49,16 @@ plot_cluster_freq = function(x) {
   df = get_cluster_assignments(x) # dataframe
   p=ggplot(df, aes(x=clusters)) +
     geom_bar(stat="count", fill="purple") +
-    labs(x="Clusters", y="Number of samples", title="Distribution of samples in clusters") +
-    theme_minimal()
+    labs(title="Distribution of samples in clusters", x="Clusters", y="Number of Samples") +
+    theme_bw()
   return(p)
 }
 
+#===============================================================================
 
 # plot the final score for a cluster and single type
 # a : scores data-frame
-# b : single context type
+# b : context type (single value)
 # c : cluster name
 plot_scores_aux1_1 = function(a, b, c) {
 
@@ -69,9 +73,9 @@ plot_scores_aux1_1 = function(a, b, c) {
     geom_line() +
     geom_point() +
     geom_hline(yintercept=df$score_quantile, linetype="dashed", color="black") +
-    labs(x="Mutational Signature", y="Value", title=paste0("Signatures Score (Final) in Cluster: ", b)) +
+    labs(title=paste0("Signatures Score (Final) in Cluster: ", b), x="Mutational Signature", y="Value") +
     theme(axis.text.x=element_text(angle=90)) +
-    theme_bw()
+    theme_bw() + guides(color = guide_legend(title = "Clustering Scores"))
 
   return(p)
 }
@@ -79,7 +83,7 @@ plot_scores_aux1_1 = function(a, b, c) {
 
 # plot the final score for a cluster and all context types
 # a : scores data-frame
-# b : all context types
+# b : context types (multiple)
 # c : cluster name
 plot_scores_aux1 = function(a, b, c) {
 
@@ -113,8 +117,8 @@ plot_scores_aux2_1 = function(a, b, c) {
              aes(x=signature, y=value, color=name, group=name)) +
     geom_line() +
     geom_point() +
-    labs(x="Mutational Signature", y="Value", title=paste0("Signatures Score (Ingredients) in Cluster: ", b)) +
-    theme_minimal()
+    labs(title=paste0("Signatures Score (Ingredients) in Cluster: ", b), x="Mutational Signature", y="Value") +
+    theme_bw()
   return(p)
 }
 
@@ -138,15 +142,15 @@ plot_scores_aux2 = function(a, b, c) {
 
 
 plot_cluster_scores = function(x, clusters=get_cluster_labels(x),
-                               types=get_types(x), exposure_thr=0.05,
+                               types=get_types(x), min_exposure=0.05,
                                quantile_thr=0.9) {
 
-  a = get_clusters_score(x, types, exposure_thr, quantile_thr)
+  a = get_clusters_score(x, types, min_exposure, quantile_thr)
 
   lapply(clusters, function(cluster_name) {
     p1 = plot_scores_aux1(a=a, b=types, c=cluster_name)
     p2 = plot_scores_aux2(a=a, b=types, c=cluster_name)
-    p3 = plot_exposures(x, types, clusters=cluster_name, elim_thr=exposure_thr)
+    p3 = plot_exposures(x, types, clusters=cluster_name, min_exposure=min_exposure)
 
     return( (p1 | p2) / p3 )
   }) %>% setNames(clusters)

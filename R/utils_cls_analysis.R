@@ -1,3 +1,5 @@
+
+
 get_clusters_score = function(x, types=get_types(x), exposure_thr=0.05, quantile_thr=0.9) {
   return(
     lapply(
@@ -13,9 +15,9 @@ get_clusters_score = function(x, types=get_types(x), exposure_thr=0.05, quantile
 
 
 get_clusters_score_aux = function(x, type, exposure_thr, quantile_thr) {
-  exposures = get_exposure(x, types=type, matrix=FALSE, add_groups=TRUE)[[type]]
-  exposures = exposures %>% dplyr::group_by(sigs) %>%
-    dplyr::filter(any(value >= exposure_thr))
+  exposures = get_exposure(x, types=type, matrix=FALSE, add_groups=TRUE)[[type]] %>% subset(value > exposure_thr)
+  #exposures = exposures %>% dplyr::group_by(sigs) %>%
+  #  dplyr::filter(any(value >= exposure_thr))
   df = data.frame(signature=c(), cluster=c(), varRatio=c(), activeRatio=c(), mutRatio=c(), score=c())
 
   if (nrow(exposures) == 0) return(df)
