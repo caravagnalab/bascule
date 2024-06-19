@@ -35,16 +35,30 @@ plot_gradient_norms = function(x, types=get_types(x)) {
 
 
 
-plot_scores = function(x, types=get_types(x)) {
+#' Plot model selection scores
+#'
+#' @description
+#' Function to plot the model selection scores for NMF on each variant type and clustering.
+#' Reported scores are BIC and negative log-likelihood.
+#'
+#' @param x basilica object.
+#' @param types List of variant types to visualize.
+#' @param remove_outliers Logical. If `TRUE`, outliers in each score will be removed.
+#'
+#' @return ggplot2 object.
+#' @export
+plot_scores = function(x, types=get_types(x), remove_outliers=FALSE) {
   scores = get_scores(x) %>%
     dplyr::group_by(score_id, parname, type) %>%
     dplyr::mutate(is.min=score==min(score),
                   label=replace(is.min, is.min==T, "Best fit"),
-                  label=replace(label, label==F | score_id=="likelihood", NA)) %>%
+                  label=replace(label, label==F | score_id=="likelihood", NA))
 
-    dplyr::group_by(score_id, parname, type) %>%
-    dplyr::mutate(is.outlier=score %in% boxplot.stats(score)$out) %>%
-    dplyr::filter(!is.outlier)
+  if (remove_outliers)
+    scores = scores %>%
+      dplyr::group_by(score_id, parname, type) %>%
+      dplyr::mutate(is.outlier=score %in% boxplot.stats(score)$out) %>%
+      dplyr::filter(!is.outlier)
 
   scores_nmf = scores %>%
     dplyr::filter(parname == "K") %>%

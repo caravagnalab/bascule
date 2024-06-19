@@ -12,11 +12,15 @@ reference:
   contents:
   - fit
   - fit_clustering
+  - refine_denovo_signatures
 
 - title: Getters
   desc:  Utility functions to extract attributes.
   contents:
   - get_input
+  - get_signames
+  - get_fixed_signames
+  - get_denovo_signames
 
 - title: Plotting functions
   desc:  Plotting functions available in the package
@@ -27,6 +31,7 @@ reference:
   - merge_clusters
   - plot_fit
   - plot_similarity_reference
+  - plot_scores
 
 - title: S3 objects
   desc:  Print and plot S3 functions

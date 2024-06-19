@@ -1,0 +1,75 @@
+---
+title: "Inference"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, warning=FALSE, message=FALSE}
+library(basilica)
+basilica::configure_environment()
+```
+
+
+We can load the data `example_dataeset`, a basilica object containing the true signatures and exposures used to generate the mutation counts matrix. In the object, data for SBS and DBS is reported.
+```{r}
+data(example_dataset)
+```
+
+We can extract the mutation count matrix from the object using the `get_input` function. With `reconstructed=FALSE` we are obtaining the observed counts, and not the reconstructed ones computed as the matrix multiplication of exposures and signatures.
+
+```{r}
+counts = get_input(example_dataset, matrix=T, reconstructed=F)
+counts[["SBS"]]
+counts[["DBS"]]
+```
+
+We use as reference the COSMIC catalogue for SBS and DBS.
+
+```{r}
+reference_cat = list("SBS"=COSMIC_sbs_filt, "DBS"=COSMIC_dbs)
+```
+
+In the example dataset, the true number of signatures is five for both SBS and DBS, thus we can provide as list of K to test values from 0 to 7.
+
+```{r}
+K_list = 0:7
+```
+
+Now, we can fit the model. Let's first fit the NMF to perform signatures deconvolution. 
+```{r}
+x = fit(counts=counts, k_list=K_list, n_steps=3000,
+        reference_cat=reference_cat, 
+        keep_sigs=c("SBS1","SBS5"), # force fixed signatures
+        store_fits=TRUE)
+```
+
+```{r}
+print(x)
+```
+
+
+You can inspect the model selection procedure.
+```{r}
+plot_scores(x)
+```
+
+
+You can visualize the inferred signatures. Here, we notice that from `r nrow(COSMIC_sbs_filt)` and `r nrow(COSMIC_dbs)` SBS and DBS signatures, the model only selects `r length(get_fixed_signames(x)$SBS)` and  `r length(get_fixed_signames(x)$DBS)` signatures from the catalogue. Moreover, it also infers a denovo signature from the SBS counts.
+
+```{r}
+plot_signatures(x)
+```
+
+We can notice from the signatures plots a clear similarity 
+
+```{r}
+x_refined = refine_denovo_signatures(x)
+x_refined_cluster = fit_clustering(x_refined, cluster=3)
+```
+
+

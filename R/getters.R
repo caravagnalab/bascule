@@ -1,17 +1,39 @@
 # Signatures #####
 ## names ####
+
+#' Get signatures names
+#'
+#' @param x basilica object.
+#' @param types List of variant types to retrieve signames for.
+#'
+#' @return list of signature names with names equal to `types`.
+#' @export
 get_signames = function(x, types=get_types(x)) {
   lapply(types, function(t)
     get_signatures(x, types=t, matrix=TRUE)[[t]] %>% rownames()) %>%
     setNames(types)
 }
 
+#' Get reference signatures names
+#'
+#' @param x basilica object.
+#' @param types List of variant types to retrieve signames for.
+#'
+#' @return list of reference signature names with names equal to `types`.
+#' @export
 get_fixed_signames = function(x, types=get_types(x)) {
   lapply(types, function(t)
     get_fixed_signatures(x, types=t, matrix=TRUE)[[t]] %>% rownames()) %>%
     setNames(types)
 }
 
+#' Get denovo signatures names
+#'
+#' @param x basilica object.
+#' @param types List of variant types to retrieve signames for.
+#'
+#' @return list of de novo signature names with names equal to `types`.
+#' @export
 get_denovo_signames = function(x, types=get_types(x)) {
   lapply(types, function(t)
     get_denovo_signatures(x, types=t, matrix=TRUE)[[t]] %>% rownames()) %>%

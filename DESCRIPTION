@@ -5,6 +5,7 @@ Version: 0.1.0
 Author: Azad Sadr
 Maintainer: Azad Sadr <azad.sadr.h@gmail.com>
 Authors@R: c(
+    person("Elena", "Buscaroli", role=c("aut", "cre"), email="ele.buscaroli@gmail.com"),
     person("Azad", "Sadr", role=c("aut", "cre"), email="azad.sadr.h@gmail.com"),
     person("Giulio", "Caravagna", role=c("aut"), email="gcaravagn@gmail.com")
     )

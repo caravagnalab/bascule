@@ -9,13 +9,11 @@ plot_exposures(
   types = get_types(x),
   samples = get_samples(x),
   clusters = get_cluster_labels(x),
-  sample_name = F,
-  sigs_levels = NULL,
-  cls = NULL,
+  sample_name = FALSE,
+  color_palette = NULL,
   add_centroid = FALSE,
-  muts = FALSE,
   sort_by = NULL,
-  elim_thr = 0
+  min_exposure = 0
 )
 }
 \arguments{
@@ -29,17 +27,13 @@ plot_exposures(
 
 \item{sample_name}{Logical. If `TRUE`, sample names will be reported on the x axis.}
 
-\item{sigs_levels}{Deprecated.}
-
-\item{cls}{Custom color palette for signatures.}
+\item{color_palette}{Custom color palette for signatures.}
 
 \item{add_centroid}{Logical. If `TRUE`, also clustering's centroids will be plotted.}
 
-\item{muts}{Deprecated.}
-
 \item{sort_by}{Signature to sort patients' exposures by.}
 
-\item{elim}{merge all signatures with low exposure as single signature called 'lowexp'}
+\item{min_exposure}{Only signatures with exposures greater than `min_exposure` in all samples will be highlighted.}
 }
 \value{
 ggplot object.
