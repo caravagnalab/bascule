@@ -1,5 +1,15 @@
-plot_mixture_weights = function(x) {
-  pis = get_mixing_proportions(x)
+plot_mixture_weights = function(x, empirical=FALSE) {
+
+  if (empirical) {
+    pis = get_cluster_assignments(x) %>%
+      dplyr::group_by(clusters) %>%
+      dplyr::summarise(value=dplyr::n()) %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate(value=value/sum(value))
+  } else {
+    pis = get_mixing_proportions(x)
+  }
+
   if (!have_groups(x) || is.null(pis)) return(NULL)
   cls = gen_palette(n=nrow(pis)) %>% setNames(pis$clusters)
 
