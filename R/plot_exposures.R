@@ -33,26 +33,29 @@ plot_exposures = function(x,
 
   if (is.null(color_palette)) cls = gen_palette(x, types=sort(types))
 
-  # merging signatures where their exposure in all the samples are below the threshold
+  # # merging signatures where their exposure in all the samples are below the threshold
   max_exposures = tapply(exposures$value, exposures$sigs, max)
   to_remove = exposures$sigs[exposures$sigs %in% (max_exposures[max_exposures < min_exposure] %>% names)] %>% unique()
   to_keep = setdiff(names(cls), to_remove)
-  cls[to_remove] = grDevices::gray.colors(n=length(to_remove), start=0.5, end=0.9) %>% sample()
+  # cls[to_remove] = grDevices::gray.colors(n=length(to_remove), start=0.5, end=0.9) %>% sample()
+
+  exposures = exposures %>% dplyr::mutate(sigs=dplyr::case_when(sigs %in% to_remove ~ "Other", .default=sigs))
+  cls["Other"] = "gainsboro"
 
   p = plot_exposures_aux(exposures=exposures, cls=cls,
                          titlee="Exposure",
                          sample_name=sample_name,
                          sort_by=sort_by,
-                         sigs_levels=c(to_keep, to_remove)) +
-    scale_fill_manual(values=cls, breaks=to_keep)
+                         sigs_levels=c(to_keep, "Other")) +
+    scale_fill_manual(values=cls, breaks=c(to_keep, "Other"))
 
   p_centr = plot_centroids(x,
                            types=types,
                            cls=cls,
                            sort_by=sort_by,
-                           exposure_thr=0, quantile_thr=0,
-                           sigs_levels=c(to_keep, to_remove)) +
-    scale_fill_manual(values=cls, breaks=to_keep)
+                           exposure_thr=min_exposure, quantile_thr=0,
+                           sigs_levels=c(to_keep, "Other")) +
+    scale_fill_manual(values=cls, breaks=c(to_keep, "Other"))
 
   if (add_centroid)
     p = patchwork::wrap_plots(p, p_centr, ncol=2, widths=c(9,1), guides="collect")
@@ -99,8 +102,11 @@ plot_centroids = function(x,
 
     to_keep = scores %>% dplyr::filter(significance) %>% dplyr::pull(sigs) %>% unique() %>% as.character()
     to_remove = setdiff(names(cls), to_keep)
-    cls[to_remove] = grDevices::gray.colors(n=length(to_remove), start=0.5, end=0.9) %>% sample()
-    sigs_levels = c(to_keep, to_remove)
+    # cls[to_remove] = grDevices::gray.colors(n=length(to_remove), start=0.5, end=0.9) %>% sample()
+    sigs_levels = c(to_keep, "Other")
+
+    a_pr = a_pr %>% dplyr::mutate(sigs=dplyr::case_when(sigs %in% to_remove ~ "Other", .default=sigs))
+    cls["Other"] = "gainsboro"
   }
 
   return(
@@ -110,7 +116,7 @@ plot_centroids = function(x,
                        sample_name=TRUE,
                        sample_levels=NULL,
                        sigs_levels=sigs_levels) +
-      scale_fill_manual(values=cls, breaks=to_keep)
+      scale_fill_manual(values=cls)
   )
 }
 
@@ -151,5 +157,5 @@ plot_exposures_aux = function(exposures,
     p = p + facet_grid(type ~ clusters, scales="free_x", space="free_x") else
       p = p + facet_grid(type ~ ., scales="free_x", space="free_x")
 
-    return(p)
+  return(p)
 }
