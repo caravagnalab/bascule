@@ -15,9 +15,9 @@ get_clusters_score = function(x, types=get_types(x), exposure_thr=0.05, quantile
 
 
 get_clusters_score_aux = function(x, type, exposure_thr, quantile_thr) {
-  exposures = get_exposure(x, types=type, matrix=FALSE, add_groups=TRUE)[[type]] %>% subset(value > exposure_thr)
-  #exposures = exposures %>% dplyr::group_by(sigs) %>%
-  #  dplyr::filter(any(value >= exposure_thr))
+  exposures = get_exposure(x, types=type, matrix=FALSE, add_groups=TRUE)[[type]] #%>% subset(value > exposure_thr)
+  exposures = exposures %>% dplyr::group_by(sigs) %>%
+    dplyr::filter(any(value > exposure_thr))
   df = data.frame(signature=c(), cluster=c(), varRatio=c(), activeRatio=c(), mutRatio=c(), score=c())
 
   if (nrow(exposures) == 0) return(df)
@@ -39,7 +39,7 @@ get_clusters_score_aux = function(x, type, exposure_thr, quantile_thr) {
       }
 
       # samples with active signature / all samples
-      num_one = exposures %>% subset(clusters == cls & sigs == signature, select=c("samples")) %>% unique() %>% nrow()
+      num_one = exposures %>% subset(clusters == cls & sigs == signature & value > exposure_thr, select=c("samples")) %>% unique() %>% nrow()
       num_all = exposures %>% subset(clusters == cls, select=c("samples")) %>% unique() %>% nrow()
       ratio_active = num_one / num_all
 

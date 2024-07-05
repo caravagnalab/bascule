@@ -1,3 +1,4 @@
+
 # plots heatmap of scores
 plot_cls_score_heatmap = function(x, type, exposure_thr=0.05) {
 
@@ -56,11 +57,11 @@ plot_cls_score_heatmap = function(x, type, exposure_thr=0.05) {
 # }
 
 
-plot_cluster_scores = function(x, type, cluster_label, final_score=TRUE) {
+plot_cluster_scores = function(x, type, cluster_label, final_score=TRUE, exposure_thr=0.05, quantile_thr=0.9) {
 
   if (!(cluster_label %in% get_cluster_labels(x))) warning("invalid cluster label!")
 
-  scores = get_clusters_score(x, types=type, exposure_thr=0.05, quantile_thr=0.9) %>%
+  scores = get_clusters_score(x, types=type, exposure_thr=exposure_thr, quantile_thr=quantile_thr) %>%
     subset(type==type & cluster==cluster_label)
 
   if (final_score==TRUE) {
@@ -71,8 +72,8 @@ plot_cluster_scores = function(x, type, cluster_label, final_score=TRUE) {
       geom_hline(aes(yintercept=score_quantile), linetype="dashed", color="black") +
       labs(title=paste0("Signatures scores (final) in cluster ", cluster_label),
            x="Signature", y="Score") +
+      theme_bw() + 
       theme(axis.text.x=element_text(angle=90)) +
-      theme_bw() +
       guides(color=guide_legend(title="Cluster"))
 
     return(p)
@@ -89,7 +90,8 @@ plot_cluster_scores = function(x, type, cluster_label, final_score=TRUE) {
       geom_point() +
       labs(title=paste0("Signatures scores (partial) in cluster ", cluster_label),
            x="Signature", y="Score") +
-      theme_bw() +
+      theme_bw() + 
+      theme(axis.text.x=element_text(angle=90)) +
       guides(color=guide_legend(title="Score name"))
 
     return(p)
