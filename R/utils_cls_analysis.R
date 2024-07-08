@@ -1,12 +1,12 @@
 
 
-get_clusters_score = function(x, types=get_types(x), exposure_thr=0.05, quantile_thr=0.9) {
+get_clusters_score = function(x, types=get_types(x), min_exposure=0.05, quantile_thr=0.9) {
   return(
     lapply(
       types,
       function(tid)
         get_clusters_score_aux(x, type=tid,
-                               exposure_thr=exposure_thr,
+                               min_exposure=min_exposure,
                                quantile_thr=quantile_thr) %>%
         dplyr::mutate(type=tid)) %>%
       do.call(rbind, .) %>% dplyr::filter(!is.na(type))
@@ -14,10 +14,13 @@ get_clusters_score = function(x, types=get_types(x), exposure_thr=0.05, quantile
 }
 
 
-get_clusters_score_aux = function(x, type, exposure_thr, quantile_thr) {
-  exposures = get_exposure(x, types=type, matrix=FALSE, add_groups=TRUE)[[type]] #%>% subset(value > exposure_thr)
+#-------------------------------------------------------------------------------
+
+
+get_clusters_score_aux = function(x, type, min_exposure, quantile_thr) {
+  exposures = get_exposure(x, types=type, matrix=FALSE, add_groups=TRUE)[[type]] #%>% subset(value > min_exposure)
   exposures = exposures %>% dplyr::group_by(sigs) %>%
-    dplyr::filter(any(value > exposure_thr))
+    dplyr::filter(any(value > min_exposure))
   df = data.frame(signature=c(), cluster=c(), varRatio=c(), activeRatio=c(), mutRatio=c(), score=c())
 
   if (nrow(exposures) == 0) return(df)
@@ -39,7 +42,7 @@ get_clusters_score_aux = function(x, type, exposure_thr, quantile_thr) {
       }
 
       # samples with active signature / all samples
-      num_one = exposures %>% subset(clusters == cls & sigs == signature & value > exposure_thr, select=c("samples")) %>% unique() %>% nrow()
+      num_one = exposures %>% subset(clusters == cls & sigs == signature & value > min_exposure, select=c("samples")) %>% unique() %>% nrow()
       num_all = exposures %>% subset(clusters == cls, select=c("samples")) %>% unique() %>% nrow()
       ratio_active = num_one / num_all
 
@@ -92,7 +95,7 @@ get_clusters_score_aux = function(x, type, exposure_thr, quantile_thr) {
     }
   ) %>% do.call(rbind, .)
 
-  df1 = df1 %>% dplyr::mutate(significance = score >= score_quantile)
+  df1 = df1 %>% dplyr::mutate( significance = (score >= score_quantile) )
 
   return(df1)
 }

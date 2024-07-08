@@ -23,7 +23,9 @@ plot_exposures = function(x,
                           color_palette=NULL,
                           add_centroid=FALSE,
                           sort_by=NULL,
-                          min_exposure=0) {
+                          min_exposure=0, 
+                          quantile_thr=0) {
+  
 
   exposures = lapply(types, function(t)
     get_exposure(x, types=types, samples=samples,
@@ -32,30 +34,60 @@ plot_exposures = function(x,
     do.call(rbind, .)
 
   if (is.null(color_palette)) cls = gen_palette(x, types=sort(types))
+  
+  sigs_levels <- NULL
+  
+  if ( min_exposure > 0 & quantile_thr == 0 ) {
+    # # merging signatures where their exposure in all the samples are below the threshold
+    max_exposures = tapply(exposures$value, exposures$sigs, max)
+    to_remove = exposures$sigs[exposures$sigs %in% (max_exposures[max_exposures < min_exposure] %>% names)] %>% unique()
+    to_keep = setdiff(names(cls), to_remove)
+    exposures <- exposures %>% subset(sigs %in% to_keep)
+    sigs_levels <- c(to_keep, "Others")
+    # cls[to_remove] = grDevices::gray.colors(n=length(to_remove), start=0.5, end=0.9) %>% sample()
+  } else if (min_exposure > 0 || quantile_thr > 0) {
+    scores <- get_clusters_score(
+      x, types=types, min_exposure=min_exposure, quantile_thr=quantile_thr) %>% 
+      dplyr::rename("sigs"="signature", "samples"="cluster")
+    
+    # merge two dataframe
+    merged = merge(
+      exposures, 
+      scores[, c("sigs", "samples", "score", "significance", "type")], 
+      by.x=c('sigs', 'clusters', 'type'), 
+      by.y=c('sigs', 'samples', 'type')
+    )
+    
+    merged <- merged %>% dplyr::mutate(signature = dplyr::case_when(!significance ~ "Others", .default=sigs))
+    merged <- merged[, c("samples", "signature", "value", "clusters", "type", "score", "significance")]
+    merged <- merged %>% dplyr::rename("sigs"="signature")
+    exposures <- merged
+    
+    to_keep <- exposures %>% subset(significance) %>% dplyr::pull(sigs) %>% unique
+    cls <- NULL
+    if (is.null(cls)) cls = gen_palette(x, types=types)
+    cls <- cls[ to_keep ]
+    cls["Others"] = "gainsboro"
+    sigs_levels <- c(to_keep, "Others")
+  }
 
-  # # merging signatures where their exposure in all the samples are below the threshold
-  max_exposures = tapply(exposures$value, exposures$sigs, max)
-  to_remove = exposures$sigs[exposures$sigs %in% (max_exposures[max_exposures < min_exposure] %>% names)] %>% unique()
-  to_keep = setdiff(names(cls), to_remove)
-  # cls[to_remove] = grDevices::gray.colors(n=length(to_remove), start=0.5, end=0.9) %>% sample()
+  p = plot_exposures_aux(
+    exposures=exposures, 
+    cls=cls, 
+    titlee="Exposure", 
+    sample_name=sample_name, 
+    sort_by=sort_by, 
+    sigs_levels=sigs_levels) + 
+    scale_fill_manual(values=cls, breaks=sigs_levels)
 
-  exposures = exposures %>% dplyr::mutate(sigs=dplyr::case_when(sigs %in% to_remove ~ "Other", .default=sigs))
-  cls["Other"] = "gainsboro"
-
-  p = plot_exposures_aux(exposures=exposures, cls=cls,
-                         titlee="Exposure",
-                         sample_name=sample_name,
-                         sort_by=sort_by,
-                         sigs_levels=c(to_keep, "Other")) +
-    scale_fill_manual(values=cls, breaks=c(to_keep, "Other"))
-
-  p_centr = plot_centroids(x,
-                           types=types,
-                           cls=cls,
-                           sort_by=sort_by,
-                           exposure_thr=min_exposure, quantile_thr=0,
-                           sigs_levels=c(to_keep, "Other")) +
-    scale_fill_manual(values=cls, breaks=c(to_keep, "Other"))
+  p_centr = plot_centroids(
+    x, 
+    types=types, 
+    cls=cls, 
+    sort_by=sort_by, 
+    min_exposure=min_exposure, quantile_thr=quantile_thr, 
+    sigs_levels=sigs_levels
+  ) + scale_fill_manual(values=cls, breaks=sigs_levels)
 
   if (add_centroid)
     p = patchwork::wrap_plots(p, p_centr, ncol=2, widths=c(9,1), guides="collect")
@@ -63,6 +95,7 @@ plot_exposures = function(x,
   return(p)
 }
 
+#-------------------------------------------------------------------------------
 
 match_type = function(types, sigs) {
   sapply(sigs, function(sid) {
@@ -73,44 +106,63 @@ match_type = function(types, sigs) {
   }) %>% setNames(NULL)
 }
 
+#-------------------------------------------------------------------------------
 
-plot_centroids = function(x,
-                          types=get_types(x),
-                          cls=NULL,
-                          sort_by=NULL,
-                          exposure_thr=0,
-                          quantile_thr=0, ...) {
-
-  centr = get_centroids(x)
+plot_centroids = function(
+    x,
+    types = get_types(x),
+    cls = NULL,
+    sort_by = NULL,
+    min_exposure = 0,
+    quantile_thr = 0, 
+    ...
+) {
+  
+  centr0 = get_centroids(x)
+  
   if ("sigs_levels" %in% names(list(...)))
     sigs_levels = list(...)$sigs_levels else sigs_levels = NULL
 
-  if (!have_groups(x) || is.null(centr)) return(NULL)
-  a_pr = centr %>%
-    dplyr::mutate(type=match_type(types, sigs)) %>%
-    dplyr::filter(!is.na(type)) %>%
+  if (!have_groups(x) || is.null(centr0)) return(NULL)
+    
+  centr = centr0 %>% 
+    dplyr::mutate(type=match_type(types, sigs)) %>% 
+    dplyr::filter(!is.na(type)) %>% 
     dplyr::rename(samples=clusters)
-
+  
   if (is.null(cls)) cls = gen_palette(x, types=sort(types))
+  
 
   # Just plot significant signatures in each cluster [concise=TRUE]
-  to_keep = a_pr$sigs %>% unique()
-  if (exposure_thr > 0 | quantile_thr > 0) {
-    scores = get_clusters_score(x, types=types, exposure_thr=exposure_thr,
-                                quantile_thr=quantile_thr) %>%
+  to_keep = centr$sigs %>% unique()
+  
+  if (min_exposure > 0 || quantile_thr > 0) {
+    scores = get_clusters_score(
+      x, types=types, min_exposure=min_exposure, quantile_thr=quantile_thr) %>% 
       dplyr::rename("sigs"="signature", "samples"="cluster")
-
-    to_keep = scores %>% dplyr::filter(significance) %>% dplyr::pull(sigs) %>% unique() %>% as.character()
-    to_remove = setdiff(names(cls), to_keep)
-    # cls[to_remove] = grDevices::gray.colors(n=length(to_remove), start=0.5, end=0.9) %>% sample()
-    sigs_levels = c(to_keep, "Other")
-
-    a_pr = a_pr %>% dplyr::mutate(sigs=dplyr::case_when(sigs %in% to_remove ~ "Other", .default=sigs))
-    cls["Other"] = "gainsboro"
+    
+    # merge two dataframe
+    merged = merge(
+      centr, 
+      scores[, c("sigs", "samples", "score", "significance", "type")], 
+      by.x=c('sigs', 'samples', 'type'), 
+      by.y=c('sigs', 'samples', 'type')
+    )
+    
+    merged <- merged %>% dplyr::mutate(signature = dplyr::case_when(!significance ~ "Others", .default=sigs))
+    merged <- merged[, c("signature", "samples", "value", "score", "type", "significance")]
+    merged <- merged %>% dplyr::rename("sigs"="signature")
+    centr <- merged
+    
+    to_keep <- centr %>% subset(significance) %>% dplyr::pull(sigs) %>% unique
+    cls <- NULL
+    if (is.null(cls)) cls = gen_palette(x, types=types)
+    cls <- cls[ to_keep ]
+    cls["Others"] = "gainsboro"
   }
 
   return(
-    plot_exposures_aux(exposures=a_pr,
+    plot_exposures_aux(exposures=centr,
                        cls=cls,
                        titlee="Centroids",
                        sample_name=TRUE,
