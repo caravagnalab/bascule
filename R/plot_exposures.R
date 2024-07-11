@@ -35,59 +35,37 @@ plot_exposures = function(x,
 
   if (is.null(color_palette)) cls = gen_palette(x, types=sort(types))
 
-  sigs_levels = NULL
+  # merging signatures where their exposure in all the samples are below the threshold
+  to_keep = exposures$sigs %>% unique(); sigs_levels = NULL
+  if (exposure_thr > 0 | quantile_thr > 0) {
+    scores = get_clusters_score(x, types=types, exposure_thr=exposure_thr,
+                                quantile_thr=quantile_thr) %>%
+      dplyr::rename("sigs"="signature", "clusters"="cluster") %>% tibble::as_tibble()
 
-  if ( exposure_thr > 0 & quantile_thr == 0 ) {
-    # # merging signatures where their exposure in all the samples are below the threshold
-    max_exposures = tapply(exposures$value, exposures$sigs, max)
-    to_remove = exposures$sigs[exposures$sigs %in% (max_exposures[max_exposures < exposure_thr] %>% names)] %>% unique()
-    to_keep = setdiff(names(cls), to_remove)
-    exposures = exposures %>% subset(sigs %in% to_keep)
-    sigs_levels = c(to_keep, "Others")
-    # cls[to_remove] = grDevices::gray.colors(n=length(to_remove), start=0.5, end=0.9) %>% sample()
-  } else if (exposure_thr > 0 || quantile_thr > 0) {
-    scores = get_clusters_score(
-      x, types=types, exposure_thr=exposure_thr, quantile_thr=quantile_thr) %>%
-      dplyr::rename("sigs"="signature", "samples"="cluster")
+    exposures = exposures %>% dplyr::left_join(scores) %>%
+      dplyr::mutate(sigs=ifelse(significance, sigs, "Other")) %>%
+      dplyr::select(samples, clusters, sigs, value, type)
 
-    # merge two dataframe
-    merged = merge(
-      exposures,
-      scores[, c("sigs", "samples", "score", "significance", "type")],
-      by.x=c('sigs', 'clusters', 'type'),
-      by.y=c('sigs', 'samples', 'type')
-    )
-
-    merged = merged %>% dplyr::mutate(signature = dplyr::case_when(!significance ~ "Others", .default=sigs))
-    merged = merged[, c("samples", "signature", "value", "clusters", "type", "score", "significance")]
-    merged = merged %>% dplyr::rename("sigs"="signature")
-    exposures = merged
-
-    to_keep = exposures %>% subset(significance) %>% dplyr::pull(sigs) %>% unique
-    cls = NULL
-    if (is.null(cls)) cls = gen_palette(x, types=types)
-    cls = cls[ to_keep ]
-    cls["Others"] = "gainsboro"
-    sigs_levels = c(to_keep, "Others")
+    to_keep = exposures$sigs %>% unique() %>% as.character()
+    sigs_levels = c(to_keep %>% purrr::discard(.p=function(x) x=="Other"), "Other")
+    cls["Other"] = "gainsboro"
   }
 
-  p = plot_exposures_aux(
-    exposures=exposures,
-    cls=cls,
-    titlee="Exposure",
-    sample_name=sample_name,
-    sort_by=sort_by,
-    sigs_levels=sigs_levels) +
+  p = plot_exposures_aux(exposures=exposures, cls=cls,
+                         titlee="Exposure",
+                         sample_name=sample_name,
+                         sort_by=sort_by,
+                         sigs_levels=sigs_levels) +
     scale_fill_manual(values=cls, breaks=sigs_levels)
 
-  p_centr = plot_centroids(
-    x,
-    types=types,
-    cls=cls,
-    sort_by=sort_by,
-    exposure_thr=exposure_thr, quantile_thr=quantile_thr,
-    sigs_levels=sigs_levels
-  ) + scale_fill_manual(values=cls, breaks=sigs_levels)
+  p_centr = plot_centroids(x,
+                           types=types,
+                           cls=cls,
+                           sort_by=sort_by,
+                           exposure_thr=exposure_thr,
+                           quantile_thr=quantile_thr,
+                           sigs_levels=sigs_levels) +
+    scale_fill_manual(values=cls, breaks=sigs_levels)
 
   if (add_centroid)
     p = patchwork::wrap_plots(p, p_centr, ncol=2, widths=c(9,1), guides="collect")
@@ -114,57 +92,42 @@ plot_centroids = function(x,
                           quantile_thr = 0,
                           ...) {
 
-  centr0 = get_centroids(x)
+  centr = get_centroids(x)
+  if ("sigs_levels" %in% names(list(...))) { sigs_levels = list(...)$sigs_levels } else { sigs_levels = NULL }
 
-  if ("sigs_levels" %in% names(list(...)))
-    sigs_levels = list(...)$sigs_levels else sigs_levels = NULL
+  if (!have_groups(x) || is.null(centr)) return(NULL)
 
-  if (!have_groups(x) || is.null(centr0)) return(NULL)
-
-  centr = centr0 %>%
+  a_pr = centr %>%
     dplyr::mutate(type=match_type(types, sigs)) %>%
     dplyr::filter(!is.na(type)) %>%
     dplyr::rename(samples=clusters)
 
   if (is.null(cls)) cls = gen_palette(x, types=sort(types))
 
-
   # Just plot significant signatures in each cluster [concise=TRUE]
-  to_keep = centr$sigs %>% unique()
+  to_keep = a_pr$sigs %>% unique()
+  if (exposure_thr > 0 | quantile_thr > 0) {
+    scores = get_clusters_score(x, types=types, exposure_thr=exposure_thr,
+                                quantile_thr=quantile_thr) %>%
+      dplyr::rename("sigs"="signature", "samples"="cluster") %>% tibble::as_tibble()
 
-  if (exposure_thr > 0 || quantile_thr > 0) {
-    scores = get_clusters_score(
-      x, types=types, exposure_thr=exposure_thr, quantile_thr=quantile_thr) %>%
-      dplyr::rename("sigs"="signature", "samples"="cluster")
+    a_pr = a_pr %>% dplyr::left_join(scores) %>%
+      dplyr::mutate(sigs=ifelse(significance, sigs, "Other")) %>%
+      dplyr::select(samples, sigs, value, type)
 
-    # merge two dataframe
-    merged = merge(
-      centr,
-      scores[, c("sigs", "samples", "score", "significance", "type")],
-      by.x=c('sigs', 'samples', 'type'),
-      by.y=c('sigs', 'samples', 'type')
-    )
-
-    merged = merged %>% dplyr::mutate(signature = dplyr::case_when(!significance ~ "Others", .default=sigs))
-    merged = merged[, c("signature", "samples", "value", "score", "type", "significance")]
-    merged = merged %>% dplyr::rename("sigs"="signature")
-    centr = merged
-
-    to_keep = centr %>% subset(significance) %>% dplyr::pull(sigs) %>% unique
-    cls = NULL
-    if (is.null(cls)) cls = gen_palette(x, types=types)
-    cls = cls[ to_keep ]
-    cls["Others"] = "gainsboro"
+    to_keep = a_pr$sigs %>% unique() %>% as.character()
+    sigs_levels = c(to_keep %>% purrr::discard(.p=function(x) x=="Other"), "Other")
+    cls["Other"] = "gainsboro"
   }
 
   return(
-    plot_exposures_aux(exposures=centr,
+    plot_exposures_aux(exposures=a_pr,
                        cls=cls,
                        titlee="Centroids",
                        sample_name=TRUE,
                        sample_levels=NULL,
                        sigs_levels=sigs_levels) +
-      scale_fill_manual(values=cls)
+      scale_fill_manual(values=cls) + theme(axis.text.x=element_text(angle=0))
   )
 }
 
@@ -178,6 +141,7 @@ plot_exposures_aux = function(exposures,
                               sample_levels=NULL) {
 
   if (!is.null(sigs_levels))
+    # sigs_levels = exposures$sigs %>% unique()
     exposures = exposures %>% dplyr::mutate(sigs=factor(sigs, levels=sigs_levels))
 
   if (!is.null(sort_by))
