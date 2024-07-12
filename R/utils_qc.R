@@ -13,7 +13,7 @@ convert_dn_names = function(x, x.simul=NULL, reference_cat=NULL, cutoff=0.8) {
     c(am_t$assigned_tp, am_t$added_fp %>% setNames(am_t$added_fp))
   }) %>% unlist()
 
-  rename_object(x, map_names)
+  rename_object(x, map_names=map_names)
 }
 
 
@@ -79,14 +79,17 @@ compare_sigs_inf_gt = function(sigs.fit, sigs.simul, cutoff=0.8) {
 
 rename_object = function(x, map_names, types=get_types(x)) {
   ## MISSING CONVERSION OF STORED OBJECTS
+  # mapp : keys -> "original" names (w denovo); values -> "new" names (mapped)
   mapp = names(map_names) %>% setNames(map_names)
   for (tid in types) {
     if (is.null(get_denovo_signames(x)[[tid]])) next
 
     alpha_long = get_exposure(x)[[tid]] %>%
-      dplyr::mutate(sigs=mapp[sigs])
+      dplyr::rowwise() %>%
+      dplyr::mutate(sigs=mapp[sigs]) %>% dplyr::ungroup()
     dn_long = get_denovo_signatures(x)[[tid]] %>%
-      dplyr::mutate(sigs=mapp[sigs])
+      dplyr::rowwise() %>%
+      dplyr::mutate(sigs=mapp[sigs]) %>% dplyr::ungroup()
 
     x = set_exposures(x, expos=alpha_long, type=tid)
     x = set_denovo_signatures(x, sigs=dn_long, type=tid)
@@ -104,11 +107,11 @@ rename_object = function(x, map_names, types=get_types(x)) {
   }
 
   if (have_groups(x)) {
-    new_colnames = colnames(x$clustering$pyro$params$infered_params$alpha_prior)
+    new_colnames = old_colnames = colnames(x$clustering$pyro$params$infered_params$alpha_prior)
     for (new_name in names(map_names)) {
       old_name = map_names[[new_name]]
       new_colnames = new_colnames %>%
-        stringr::str_replace_all(pattern=old_name, replacement=new_name)
+        stringr::str_replace_all(pattern=paste0(old_name, "$"), replacement=new_name)
     }
 
     colnames(x$clustering$pyro$params$infered_params$alpha_prior) =
@@ -116,10 +119,11 @@ rename_object = function(x, map_names, types=get_types(x)) {
       colnames(x$clustering$pyro$params$init_params$variances) =
       new_colnames
 
-    x$clustering$centroids = x$clustering$pyro$params$infered_params$alpha_prior %>%
-      wide_to_long(what="exposures") %>%
-      dplyr::rename(clusters=samples) %>%
-      dplyr::mutate(clusters=paste0("G",as.integer(clusters)-1))
+    new_colnames = new_colnames %>% setNames(old_colnames)
+    x$clustering$centroids = x$clustering$centroids %>%
+      dplyr::rowwise() %>%
+      dplyr::mutate(sigs=new_colnames[[grep(x=names(new_colnames), pattern=paste0(sigs,"$"), value=T)]]) %>%
+      dplyr::ungroup()
   }
 
   return(x)
