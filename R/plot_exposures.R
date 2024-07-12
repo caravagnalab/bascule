@@ -56,7 +56,7 @@ plot_exposures = function(x,
                          sample_name=sample_name,
                          sort_by=sort_by,
                          sigs_levels=sigs_levels) +
-    scale_fill_manual(values=cls, breaks=sigs_levels)
+    scale_fill_manual(values=cls, breaks=to_keep)
 
   p_centr = plot_centroids(x,
                            types=types,
@@ -65,7 +65,7 @@ plot_exposures = function(x,
                            exposure_thr=exposure_thr,
                            quantile_thr=quantile_thr,
                            sigs_levels=sigs_levels) +
-    scale_fill_manual(values=cls, breaks=sigs_levels)
+    scale_fill_manual(values=cls, breaks=to_keep)
 
   if (add_centroid)
     p = patchwork::wrap_plots(p, p_centr, ncol=2, widths=c(9,1), guides="collect")
