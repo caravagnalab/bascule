@@ -55,7 +55,19 @@ x %>% plot_cls_score_heatmap()
 
 
 ## Last fit ####
-x = readRDS("~/Google Drive/My Drive/work/basilica_shared/fit_12062024/fit_refined_cls2.Breast.Rds") %>% merge_clusters()
+x_orig = readRDS("~/Google Drive/My Drive/work/basilica_shared/fit_12062024/fit_refined_cls2.Breast.Rds") %>% merge_clusters()
+x_mapped = x_orig %>% convert_dn_names(reference_cat=list("SBS"=COSMIC_sbs_filt, "DBS"=COSMIC_dbs))
+
+get_assigned_missing(x_orig, reference_cat=list("SBS"=COSMIC_sbs_filt, "DBS"=COSMIC_dbs))
+
+x_orig %>% plot_centroids(quantile_thr=0.5)
+x_mapped %>% plot_centroids(quantile_thr=0.5)
+
+x_mapped %>% get_centroids() %>% dplyr::filter(sigs=="SBS40a") %>% dplyr::pull(value)
+x %>% get_centroids() %>% dplyr::filter(sigs=="SBSD7") %>% dplyr::pull(value)
+
+x %>% plot_exposures()
+x %>% convert_dn_names(reference_cat=list("SBS"=COSMIC_sbs_filt, "DBS"=COSMIC_dbs)) %>% plot_exposures()
 
 x %>% plot_centroids()
 x %>% plot_exposures()
