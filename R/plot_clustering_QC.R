@@ -57,11 +57,11 @@ plot_cls_score_heatmap = function(x, type, exposure_thr=0.05) {
 # }
 
 
-plot_cluster_scores = function(x, type, cluster_label, final_score=TRUE, exposure_thr=0.05, quantile_thr=0.9) {
+plot_cluster_scores = function(x, type, cluster_label, final_score=TRUE, min_exposure=0.05, quantile_thr=0.9) {
 
   if (!(cluster_label %in% get_cluster_labels(x))) warning("invalid cluster label!")
 
-  scores = get_clusters_score(x, types=type, exposure_thr=exposure_thr, quantile_thr=quantile_thr) %>%
+  scores = get_clusters_score(x, types=type, min_exposure=min_exposure, quantile_thr=quantile_thr) %>%
     subset(type==type & cluster==cluster_label)
 
   if (final_score==TRUE) {
@@ -73,7 +73,7 @@ plot_cluster_scores = function(x, type, cluster_label, final_score=TRUE, exposur
       labs(title=paste0("Signatures scores (final) in cluster ", cluster_label),
            x="Signature", y="Score") +
       theme_bw() + 
-      theme(axis.text.x=element_text(angle=90)) +
+      theme(axis.text.x=element_text(angle = 45, vjust = 1, hjust = 1)) +
       guides(color=guide_legend(title="Cluster"))
 
     return(p)
