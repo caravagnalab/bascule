@@ -1,4 +1,7 @@
+
+
 get_clusters_score = function(x, types=get_types(x), exposure_thr=0.05, quantile_thr=0.9) {
+  #exposure_thr <- min_exposure
   return(
     lapply(types, function(tid) {
       get_clusters_score_aux(x, type=tid,

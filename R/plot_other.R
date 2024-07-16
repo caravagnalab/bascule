@@ -1,3 +1,7 @@
+
+
+
+
 plot_mixture_weights = function(x, empirical=FALSE) {
 
   if (empirical) {
@@ -23,7 +27,6 @@ plot_mixture_weights = function(x, empirical=FALSE) {
       theme(axis.title.y.right=element_text(angle=90))
   )
 }
-
 
 
 plot_beta_star = function(x, types=get_types(x)) {
