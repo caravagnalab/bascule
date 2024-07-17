@@ -9,7 +9,7 @@ plot_mixture_weights = function(x, empirical=FALSE) {
       dplyr::group_by(clusters) %>%
       dplyr::summarise(value=dplyr::n()) %>%
       dplyr::ungroup() %>%
-      dplyr::mutate(value=value/sum(value))
+      dplyr::mutate(value = value)
   } else {
     pis = get_mixing_proportions(x)
   }
