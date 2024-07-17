@@ -91,8 +91,9 @@ plot_cluster_scores = function(x, type, cluster_label, final_score=TRUE, exposur
       labs(title=paste0("Signatures Score in Cluster ", cluster_label, " (Partials)"),
            x="Signature", y="Score") +
       theme_bw() + 
-      theme(axis.text.x=element_text(angle=45, vjust = 1, hjust = 1), legend.position = "none") +
-      guides(color=guide_legend(title="Score name"))
+      theme(axis.text.x=element_text(angle=45, vjust = 1, hjust = 1)) + 
+      scale_color_manual(labels = c("Active Samples", "Mutational Burden", "Variance Stability"), values = c("red", "green", "blue")) + 
+      guides(color=guide_legend(title="Partial Scores (relative)"))
 
     return(p)
 
