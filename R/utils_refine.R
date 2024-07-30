@@ -11,7 +11,8 @@
 #' @param types List of variant types to perform de novo refinement on.
 #'
 #' @return basilica object.
-#' @export
+#' @export refine_denovo_signatures
+
 refine_denovo_signatures = function(x, types=get_types(x)) {
 
   alternatives = get_alternatives(x) %>% dplyr::filter(type %in% types)
@@ -115,7 +116,6 @@ refinement_single_fit = function(x, type, pyro_fit=NULL) {
 
     cli::cli_process_done("Signature {candidate} discarded")
   }
-  # return(x)
 
   return(
     list("value_refined"=get_n_denovo(x)[[type]],
@@ -129,7 +129,6 @@ refinement_single_fit = function(x, type, pyro_fit=NULL) {
 
 
 # Linear combination #####
-
 solve_quadratic_optimization = function(a,
                                         b,
                                         filt_pi = 0.05,
@@ -258,6 +257,37 @@ compute_refinement_score_aux = function(fixed, denovo, coefs, sigName) {
   reconstructed_vector = t(rbind(fixed, denovo)) %*% coefs
   score = cosine.vector(reconstructed_vector, denovo[sigName,])
   return(round(score, digits=3))
+}
+
+
+## Delete signatures ####
+# input
+#   denovo ----> denovo signatures (wide)
+#   exposure --> exposure (wide)
+#   coefs -----> linear combination coefficients
+#   sigName ---> denovo dignature name to delete
+# output
+#   list (denovo, exposure)
+delete.signature_aux = function(denovo, exposure, coefs, sigName) {
+
+  if (!(sigName %in% rownames(denovo))) {
+    cli::cli_alert_warning("Wrong signature selected!")
+    return(NULL)
+  }
+
+  if (all(coefs==0)) {
+    cli::cli_alert_warning("Can not delete! This signature is not explained by other signatures")
+    return(x)
+  }
+
+  exp = exposure %>% dplyr::select(-dplyr::all_of(sigName))
+  for (refname in names(coefs)) {
+    exp[,refname] = exposure[,refname] + exposure[,sigName]*coefs[refname]
+  }
+
+  denovo = denovo[!rownames(denovo) %in% c(sigName), ]
+
+  return(list(denovo=denovo, exposure=exp))
 }
 
 

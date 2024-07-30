@@ -75,8 +75,6 @@ compare_sigs_inf_gt = function(sigs.fit, sigs.simul, cutoff=0.8) {
 }
 
 
-
-
 rename_object = function(x, map_names, types=get_types(x)) {
   ## MISSING CONVERSION OF STORED OBJECTS
   # mapp : keys -> "original" names (w denovo); values -> "new" names (mapped)
