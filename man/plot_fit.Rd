@@ -7,7 +7,7 @@
 plot_fit(x)
 }
 \arguments{
-\item{x}{}
+\item{x}{Bascule object}
 }
 \value{
 assembled plots

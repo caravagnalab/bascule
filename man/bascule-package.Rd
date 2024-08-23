@@ -6,7 +6,7 @@
 \alias{bascule-package}
 \title{bascule: bascule}
 \description{
-This packages provides the bascule (Bayesian signature learning including a catalogue) algorithm to detect single-nucleotide substituion signatures in cancer. The main feature of bascule is to provide a full Bayesian hierarchical formulation based on non-negative matrix factorisation, leveraging a semi-supervised trainig set (i.e., a catalogue). The tool is specifically developed to detect de novo mutational signatures that are different from the pre-defined reference catalogue.
+This packages provides the bascule (Bayesian inference and clustering with mutational signatures and an established catalogue) algorithm to detect single-nucleotide substituion signatures in cancer. bascule provides a full Bayesian formulation based on non-negative matrix factorisation, leveraging a catalogue of known signatures. The tool is specifically developed to detect de novo mutational signatures of any type (SBS, DBS, IDS, ...) that are different from the pre-defined reference catalogue and to perform clustering of samples from all the signature types jointly.
 }
 \seealso{
 Useful links:

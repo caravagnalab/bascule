@@ -4,7 +4,7 @@
 \alias{configure_environment}
 \title{Configure the reticulate environment}
 \usage{
-configure_environment(envname = "bascule-env")
+configure_environment(envname = "bascule-env", use_default = FALSE)
 }
 \arguments{
 \item{env_name}{name of the \code{conda} environment to use, if available.}
