@@ -12,8 +12,11 @@ knitr::opts_chunk$set(
 ```{r setup, warning=FALSE, message=FALSE}
 knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 library(bascule)
-configure_environment(use_default=TRUE)
-reticulate::use_condaenv(condaenv="bascule-env")
+reticulate::py_install(packages="pybascule", 
+                       envname="r-reticulate", 
+                       pip=TRUE, 
+                       python_version="3.9.16")
+reticulate::use_condaenv(condaenv="r-reticulate")
 py = reticulate::import("pybascule")
 ```
 
@@ -46,13 +49,13 @@ K_list = 0:7
 Now, we can fit the model. Let's first fit the NMF to perform signatures deconvolution. 
 ```{r}
 x = fit(counts=counts, k_list=K_list, n_steps=3000,
-        reference_cat=reference_cat, 
+        reference_cat=reference_cat,
         keep_sigs=c("SBS1","SBS5"), # force fixed signatures
         store_fits=TRUE, py=py)
 ```
 
 ```{r}
-print(x)
+x
 ```
 
 

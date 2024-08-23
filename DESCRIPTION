@@ -45,7 +45,8 @@ Imports:
     patchwork,
     scales,
     quadprog,
-    progress
+    progress,
+    ggh4x
 RoxygenNote: 7.3.1
 URL: https://github.com/caravagnalab/bascule,
     https://caravagnalab.github.io/bascule/

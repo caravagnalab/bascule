@@ -9,9 +9,6 @@
 #'
 #' @return ggplot object.
 #' @export
-#'
-#' @examples
-#' plot_data(example_fit)
 plot_data = function(x, types=get_types(x), samples=get_samples(x),
                      clusters=get_cluster_labels(x), reconstructed=TRUE,
                      color_by_sigs=FALSE) {

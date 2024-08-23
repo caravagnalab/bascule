@@ -32,6 +32,3 @@ ggplot object.
 \description{
 Function to visualize the input and reconstructed mutation counts.
 }
-\examples{
-plot_data(example_fit)
-}

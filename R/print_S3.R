@@ -86,11 +86,8 @@ print.bascule_obj = function(x, ...)
 #'
 #' @return Nothing.
 #'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' }
+#' @export plot.bascule_obj
+
 plot.bascule_obj = function(x, ...)
 {
   stopifnot(inherits(x, "cnaqc"))

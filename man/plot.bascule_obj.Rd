@@ -17,7 +17,3 @@ Nothing.
 \description{
 The default plot is the CNA segments in wide format
 }
-\examples{
-\dontrun{
-}
-}
