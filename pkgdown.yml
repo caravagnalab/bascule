@@ -1,9 +1,10 @@
 pandoc: 3.1.11
-pkgdown: 2.0.9
+pkgdown: 2.1.0
 pkgdown_sha: ~
-articles: {}
-last_built: 2024-06-19T14:09Z
+articles:
+  bascule: bascule.html
+  articles/Inference: Inference.html
+last_built: 2024-08-23T22:12Z
 urls:
-  reference: https:://caravagnalab.github.io/basilica/reference
-  article: https:://caravagnalab.github.io/basilica/articles
-
+  reference: https:://caravagnalab.github.io/bascule/reference
+  article: https:://caravagnalab.github.io/bascule/articles

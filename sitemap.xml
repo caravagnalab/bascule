@@ -1,90 +1,40 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/404.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/LICENSE-text.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/LICENSE.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/authors.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/index.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/COSMIC_dbs.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/COSMIC_filt_merged.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/COSMIC_sbs.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/COSMIC_sbs_filt.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/Degasperi_SBS_GEL_PCAWG_HW.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/Degasperi_catalogue.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/basilica-package.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/configure_environment.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/fit.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/fit_clustering.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/get_input.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/have_loaded_env.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/have_python_deps.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/load_conda_env.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/merge_clusters.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/plot.basilica_obj.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/plot_data.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/plot_exposures.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/plot_fit.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/plot_signatures.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/plot_similarity_reference.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/print.basilica_obj.html</loc>
-  </url>
-  <url>
-    <loc>https:://caravagnalab.github.io/basilica/reference/which_conda_env.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https:://caravagnalab.github.io/bascule/404.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/LICENSE-text.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/LICENSE.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/articles/Inference.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/articles/bascule.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/articles/index.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/authors.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/index.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/COSMIC_dbs.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/COSMIC_filt_merged.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/COSMIC_sbs.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/COSMIC_sbs_filt.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/Degasperi_SBS_GEL_PCAWG_HW.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/Degasperi_catalogue.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/bascule-package.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/configure_environment.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/fit.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/fit_clustering.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/get_denovo_signames.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/get_fixed_signames.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/get_input.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/get_signames.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/have_loaded_env.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/have_python_deps.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/index.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/load_conda_env.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/merge_clusters.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/plot.bascule_obj.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/plot_data.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/plot_exposures.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/plot_fit.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/plot_scores.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/plot_signatures.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/plot_similarity_reference.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/print.bascule_obj.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/refine_denovo_signatures.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/which_conda_env.html</loc></url>
 </urlset>
+
