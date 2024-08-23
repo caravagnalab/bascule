@@ -27,7 +27,7 @@ have_loaded_env = function() {
 #' @importFrom reticulate py_list_packages conda_list py_discover_config
 #' @export have_python_deps
 
-have_python_deps = function(envname="", py_pkgs=c("pybasilica")) {
+have_python_deps = function(envname="", py_pkgs=c("pybascule")) {
   if (envname == "")
     envname = which_conda_env()
 
@@ -74,7 +74,7 @@ which_conda_env = function() {
 #' @importFrom reticulate use_condaenv
 #' @export load_conda_env
 
-load_conda_env = function(envname="basilica-env") {
+load_conda_env = function(envname="bascule-env") {
   Sys.unsetenv("RETICULATE_PYTHON")
   tryCatch(
     expr = {
@@ -90,7 +90,7 @@ load_conda_env = function(envname="basilica-env") {
 }
 
 
-have_conda_env = function(envname="basilica-env"){
+have_conda_env = function(envname="bascule-env"){
   tryCatch(expr = envname %in% reticulate::conda_list()$name,
            error = function(e) FALSE )
 }
@@ -104,31 +104,31 @@ have_conda = function() {
 }
 
 
-create_conda_env = function(envname="basilica-env") {
+create_conda_env = function(envname="bascule-env") {
   cli::cli_alert_warning(paste0("A new conda environment named `", envname, "` is being installed."))
   reticulate::conda_create(envname=envname, python_version="3.9")
 }
 
 
-using_conda_env = function(envname="basilica-env") {
+using_conda_env = function(envname="bascule-env") {
   config = reticulate::py_discover_config()
   grepl(envname, config$python)
 }
 
 
-install_miniconda_basilica = function() {
+install_miniconda_bascule = function() {
   reticulate::install_miniconda()
 }
 
 
-install_python_deps = function(envname="basilica-env", pip=TRUE) {
+install_python_deps = function(envname="bascule-env", pip=TRUE) {
   if (pip) {
-    cli::cli_process_start("Installing the `pybasilica` package from PyPI.")
-    pkg = "pybasilica"
+    cli::cli_process_start("Installing the `pybascule` package from PyPI.")
+    pkg = "pybascule"
   } else {
-    cli::cli_process_start("Installing the `pybasilica` package from GitHub. Insert the branch to use: ")
+    cli::cli_process_start("Installing the `pybascule` package from GitHub. Insert the branch to use: ")
     branch = readline()
-    pkg = paste0("git+https://github.com/caravagnalab/pybasilica@", branch)
+    pkg = paste0("git+https://github.com/caravagnalab/pybascule@", branch)
   }
 
   system(paste0(reticulate::py_config()$python, " -m pip install ", pkg, " --upgrade"))

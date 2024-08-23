@@ -2,7 +2,7 @@
 % Please edit documentation in R/fit.R
 \name{fit}
 \alias{fit}
-\title{Fit a basilica object}
+\title{Fit a bascule object}
 \usage{
 fit(
   counts,
@@ -46,7 +46,7 @@ fit(
 
 \item{n_steps}{Number of iterations for inference.}
 
-\item{py}{User-installed version of \code{pybasilica} package}
+\item{py}{User-installed version of \code{pybascule} package}
 
 \item{enumer}{Enumeration used for clustering (either `parallel` or `sequential`).}
 
@@ -69,8 +69,8 @@ fit(
 \item{seed_list}{List of seeds used for every input configuration.}
 }
 \value{
-Basilica object.
+Bascule object.
 }
 \description{
-Fit a basilica object
+Fit a bascule object
 }

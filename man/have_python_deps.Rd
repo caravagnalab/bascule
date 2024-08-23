@@ -4,7 +4,7 @@
 \alias{have_python_deps}
 \title{Check if \code{Python} packages are installed in the environment.}
 \usage{
-have_python_deps(envname = "", py_pkgs = c("pybasilica"))
+have_python_deps(envname = "", py_pkgs = c("pybascule"))
 }
 \arguments{
 \item{envname}{the name of the environment to check. If empty, the function will check the

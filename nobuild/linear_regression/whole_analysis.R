@@ -15,7 +15,7 @@ x1.sparse = pyfit(
   stage = "random_noise"
 )
 
-xx1.sparse = create_basilica_obj(x1.sparse)
+xx1.sparse = create_bascule_obj(x1.sparse)
 hhp = plot_similarity_reference(xx1.sparse %>% filter_exposures(min_exp=0.15))
 ggsave("~/Desktop/heatmap.pdf", plot=hhp, height = 20, width = 20)
 xx1.sparse %>% filter_exposures() %>% plot_signatures()
@@ -39,7 +39,7 @@ x1 = pyfit(
   stage = "random_noise"
 )
 
-xx1 = create_basilica_obj(x1)
+xx1 = create_bascule_obj(x1)
 hhp = plot_similarity_reference(xx1 %>% filter_exposures(), by_subs = F)
 xx1 %>% filter_exposures() %>% plot_signatures()
 xx1 %>% filter_exposures() %>% plot_exposures()
@@ -66,7 +66,7 @@ x2 = pyfit(
 )
 
 
-xx2 = create_basilica_obj(x2, NULL, n_denovo=x2$denovo_signatures %>% rownames())
+xx2 = create_bascule_obj(x2, NULL, n_denovo=x2$denovo_signatures %>% rownames())
 xx2 %>% plot_exposures()
 xx2 %>% plot_signatures()
 xx2 %>% plot_similarity_reference(reference = COSMIC_filtered)

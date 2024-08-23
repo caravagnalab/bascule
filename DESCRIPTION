@@ -1,27 +1,29 @@
-Package: basilica
+Package: bascule
 Type: Package
-Title: basilica
+Title: bascule
 Version: 0.1.0
-Author: Azad Sadr
-Maintainer: Azad Sadr <azad.sadr.h@gmail.com>
+Author: Elena Buscaroli <ele.buscaroli@gmail.com>
+Maintainer: Elena Buscaroli <ele.buscaroli@gmail.com>
 Authors@R: c(
     person("Elena", "Buscaroli", role=c("aut", "cre"), email="ele.buscaroli@gmail.com"),
     person("Azad", "Sadr", role=c("aut", "cre"), email="azad.sadr.h@gmail.com"),
     person("Giulio", "Caravagna", role=c("aut"), email="gcaravagn@gmail.com")
     )
-Description: This packages provides the basilica (Bayesian signature learning including a 
-    catalogue) algorithm to detect single-nucleotide substituion signatures in cancer. The main
-    feature of basilica is to provide a full Bayesian hierarchical formulation based on non-negative 
-    matrix factorisation, leveraging a semi-supervised trainig set (i.e., a catalogue). The tool is 
-    specifically developed to detect de novo mutational signatures that are different from the 
-    pre-defined reference catalogue.
+Description: This packages provides the bascule (Bayesian inference and clustering 
+    with mutational signatures and an established catalogue) algorithm to detect 
+    single-nucleotide substituion signatures in cancer. bascule provides a full 
+    Bayesian formulation based on non-negative matrix factorisation, leveraging a 
+    catalogue of known signatures. The tool is specifically developed to detect de 
+    novo mutational signatures of any type (SBS, DBS, IDS, ...) that are different 
+    from the pre-defined reference catalogue and to perform clustering of samples 
+    from all the signature types jointly.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 Config/reticulate:
   list(
     packages = list(
-      list(package = "pybasilica==0.1.2", pip = TRUE)
+      list(package = "pybascule", pip = TRUE)
     )
   )
 Imports: 
@@ -45,8 +47,8 @@ Imports:
     quadprog,
     progress
 RoxygenNote: 7.3.1
-URL: https://github.com/caravagnalab/basilica,
-    https://caravagnalab.github.io/basilica/
+URL: https://github.com/caravagnalab/bascule,
+    https://caravagnalab.github.io/bascule/
 Depends: 
     R (>= 2.10)
 Suggests: 

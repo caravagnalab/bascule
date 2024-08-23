@@ -3,7 +3,7 @@
 #' @description Function to configure the Python dependencies on R.
 #' If a Python environment is not available, the function will check if there is a version of
 #' \code{conda} or \code{miniconda}, otherwise it will install \code{miniconda}, on which
-#' install the Python package \code{pybasilica}.
+#' install the Python package \code{pybascule}.
 #'
 #' @param env_name name of the \code{conda} environment to use, if available.
 #'
@@ -12,12 +12,12 @@
 #'
 #' @export configure_environment
 
-configure_environment = function(envname="basilica-env") {
+configure_environment = function(envname="bascule-env", use_default=FALSE) {
   # install miniconda if needed
   check_conda()
 
   # check a conda environment is present or load one
-  envname = check_conda_env(envname=envname)
+  envname = check_conda_env(envname=envname, use_default=use_default)
 
   load_conda_env(envname)
 
@@ -47,7 +47,7 @@ check_conda = function(use_default=F) {
 }
 
 
-check_conda_env = function(envname="basilica-env", use_default=F) {
+check_conda_env = function(envname="bascule-env", use_default=F) {
   if (have_loaded_env()) {
     envname = sapply(reticulate::conda_list()$name, grepl, reticulate::py_discover_config()$python) %>%
       which() %>% names()
@@ -55,16 +55,16 @@ check_conda_env = function(envname="basilica-env", use_default=F) {
     return(envname)
   }
 
-  if (!have_conda_env("basilica-env")) {
-    cli::cli_alert_info("The environment 'basilica-env' is not present.\n")
+  if (!have_conda_env("bascule-env")) {
+    cli::cli_alert_info("The environment 'bascule-env' is not present.\n")
 
     if (use_default) answ = "create" else {
-      cli::cli_alert_warning("Do you want to load an existing environment, to create a new one named 'basilica-env' or to cancel? (load/create/cancel)\n")
+      cli::cli_alert_warning("Do you want to load an existing environment, to create a new one named 'bascule-env' or to cancel? (load/create/cancel)\n")
       answ = readline()
     }
 
     if (answ == "create") {
-      envname = "basilica-env"
+      envname = "bascule-env"
       create_conda_env()
     } else if (answ == "load") {
       cli::cli_alert_info("Insert the environment name: ")
@@ -75,8 +75,8 @@ check_conda_env = function(envname="basilica-env", use_default=F) {
     }
 
   } else {
-    cli::cli_alert_info("The environment 'basilica-env' is already present and will be loaded!\n")
-    envname = "basilica-env"
+    cli::cli_alert_info("The environment 'bascule-env' is already present and will be loaded!\n")
+    envname = "bascule-env"
   }
 
   if (!have_loaded_env())
@@ -87,7 +87,7 @@ check_conda_env = function(envname="basilica-env", use_default=F) {
 
 
 
-check_python_deps = function(envname="basilica-env", pip=FALSE) {
+check_python_deps = function(envname="bascule-env", pip=FALSE) {
   tryCatch(
     expr = install_python_deps(envname, pip=pip),
     error = function(e) cli::cli_alert_warning("Not able to install the Python package.")

@@ -1,10 +1,10 @@
 library(lsa)
 library(dplyr)
 library(ggplot2)
-source("~/GitHub/simbasilica/nobuild/script_test/helper_fns.R")
-# py = reticulate::import_from_path("pybasilica","~/GitHub/pybasilica/")
-devtools::load_all("~/GitHub/basilica/")
-devtools::load_all("~/GitHub/simbasilica/")
+source("~/GitHub/simbascule/nobuild/script_test/helper_fns.R")
+# py = reticulate::import_from_path("pybascule","~/GitHub/pybascule/")
+devtools::load_all("~/GitHub/bascule/")
+devtools::load_all("~/GitHub/simbascule/")
 
 
 # SBS ####

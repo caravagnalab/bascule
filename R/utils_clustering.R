@@ -6,10 +6,10 @@
 #' The merging will stop as soon as the cosine similarity between all pairs of clusters
 #' is below `cutoff`
 #'
-#' @param x basilica object.
+#' @param x bascule object.
 #' @param cutoff Minimum value of similarity to merge two clusters.
 #'
-#' @return basilica object.
+#' @return bascule object.
 #' @export
 
 merge_clusters = function(x, cutoff=0.8) {

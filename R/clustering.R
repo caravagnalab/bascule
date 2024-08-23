@@ -9,7 +9,7 @@ pyro_clustering = function(exposures, cluster, lr=0.005, n_steps=3000,
 
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
 
-  if (is.null(py)) py = reticulate::import("pybasilica")
+  if (is.null(py)) py = reticulate::import("pybascule")
   cluster = reticulate::r_to_py(as.integer(cluster))
   seed_list = reticulate::r_to_py(as.integer(seed_list))
   input_expos = reticulate::r_to_py(exposures %>% setNames(NULL))

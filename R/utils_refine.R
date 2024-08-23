@@ -7,10 +7,10 @@
 #' of one or more reference signatures, it will be removed and its exposures
 #' will be distributed among the similar signatures.
 #'
-#' @param x basilica object.
+#' @param x bascule object.
 #' @param types List of variant types to perform de novo refinement on.
 #'
-#' @return basilica object.
+#' @return bascule object.
 #' @export refine_denovo_signatures
 
 refine_denovo_signatures = function(x, types=get_types(x)) {

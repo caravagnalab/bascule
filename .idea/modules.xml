@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/basilica.iml" filepath="$PROJECT_DIR$/.idea/basilica.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/bascule.iml" filepath="$PROJECT_DIR$/.idea/bascule.iml" />
     </modules>
   </component>
 </project>

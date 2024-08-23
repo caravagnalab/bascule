@@ -4,15 +4,15 @@ if (Sys.getenv("GITHUB_PATH") == "") path=paste0("~/dati_elenab/signatures/") el
 # counts = read.csv("./nobuild/test_groups/counts_all.tsv", header=T, row.names=1, sep="\t")
 # colnames(counts) = header
 
-py = reticulate::import_from_path(module="pybasilica", path="~/GitHub/pybasilica/")
+py = reticulate::import_from_path(module="pybascule", path="~/GitHub/pybascule/")
 devtools::load_all()
 library(ggplot2)
 
-simul = readRDS("/Users/elenab/GitHub/simbasilica/nobuild/simulations/simulations_elena/simul.N350.G2.s1.Rds")
-x.true = create_basilica_obj_simul(simul)
+simul = readRDS("/Users/elenab/GitHub/simbascule/nobuild/simulations/simulations_elena/simul.N350.G2.s1.Rds")
+x.true = create_bascule_obj_simul(simul)
 
 # fit with the old model
-# simul.fit = readRDS("/Users/elenab/GitHub/simbasilica/simulations/fit.N350.G2.s1.Rds")
+# simul.fit = readRDS("/Users/elenab/GitHub/simbascule/simulations/fit.N350.G2.s1.Rds")
 sigs_true = x.true %>% get_signatures() %>% rownames()
 counts = simul$x[[1]]
 x = two_steps_inference(counts, k_list=0:7,
@@ -85,7 +85,7 @@ p_tot_low = lapply(idd_low, function(pid) {
 })
 
 
-pdf("~/GitHub/basilica/nobuild/linear_regression/simulated_fits.pdf", height = 10, width = 18)
+pdf("~/GitHub/bascule/nobuild/linear_regression/simulated_fits.pdf", height = 10, width = 18)
 plots_simul + patchwork::plot_annotation(title="Simulated (true) values")
 plots_fit + patchwork::plot_annotation(title="Estimated values")
 p_tot

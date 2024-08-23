@@ -1,7 +1,7 @@
 .onLoad <- function(libname, pkgname) {
 
-  pk = 'basilica'
-  www = "https://caravagnalab.github.io/basilica/"
+  pk = 'bascule'
+  www = "https://caravagnalab.github.io/bascule/"
 
   cli::cli_alert_success( 'Loading {.field {pk}}. Support : {.url { www}}' )
 

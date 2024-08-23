@@ -1,8 +1,8 @@
 require(dplyr)
 
-# # reticulate::use_condaenv('basilica-env')
-# # reticulate::py_discover_config('basilica-env')
-# # reticulate::py_list_packages('basilica-env')
+# # reticulate::use_condaenv('bascule-env')
+# # reticulate::py_discover_config('bascule-env')
+# # reticulate::py_list_packages('bascule-env')
 # #
 # # devtools::install()
 #
@@ -12,15 +12,15 @@ require(dplyr)
 #
 # usethis::use_data(Degasperi_SBS_GEL_PCAWG_HW, overwrite = TRUE)
 
-M = basilica::Degasperi_SBS_GEL_PCAWG_HW[['Myeloid']]
+M = bascule::Degasperi_SBS_GEL_PCAWG_HW[['Myeloid']]
 M_matrix = M %>% select(-sample, -organ, -cohort, -usedInCommonExtractionSBS,
                         -usedInCommonExtractionDBS)
 
-M_matrix = basilica::example_input
+M_matrix = bascule::example_input
 
 x = fit(
     x = M_matrix,
-    reference_catalogue = basilica::COSMIC_catalogue,
+    reference_catalogue = bascule::COSMIC_catalogue,
     k = 7,
     lr = 0.01,
     steps = 1000,
@@ -46,8 +46,8 @@ Degasperi_catalogue = Degasperi_catalogue[, -1]
 Degasperi_catalogue = Degasperi_catalogue %>% t
 Degasperi_catalogue = apply(Degasperi_catalogue, c(1,2), as.numeric)
 
-(basilica::COSMIC_catalogue %>% colnames) == (Degasperi_catalogue %>% colnames)
+(bascule::COSMIC_catalogue %>% colnames) == (Degasperi_catalogue %>% colnames)
 
-Degasperi_catalogue = Degasperi_catalogue[, (basilica::COSMIC_catalogue %>% colnames)]
+Degasperi_catalogue = Degasperi_catalogue[, (bascule::COSMIC_catalogue %>% colnames)]
 
 usethis::use_data(Degasperi_catalogue)

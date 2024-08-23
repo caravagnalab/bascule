@@ -286,7 +286,7 @@ get_nmf_initial_parameters = function(x, what, types=get_types(x)) {
 
 # Aux functions #####
 
-## returns a dataframe with the basilica object for each tested configuration
+## returns a dataframe with the bascule object for each tested configuration
 get_alternatives = function(x) {
   alternatives_nmf = get_pyro_stat(x, what="nmf", statname="alternatives") %>%
     purrr::discard(purrr::is_empty)

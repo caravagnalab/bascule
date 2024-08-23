@@ -1,6 +1,6 @@
-devtools::load_all("~/GitHub/simbasilica/")
+devtools::load_all("~/GitHub/simbascule/")
 load_deps()
-devtools::load_all("~/GitHub/basilica/")
+devtools::load_all("~/GitHub/bascule/")
 
 
 ## SIMULATED ####
@@ -27,7 +27,7 @@ x_refined_cluster %>% merge_clusters() %>% plot_signatures()
 ## REAL ####
 
 ## Old fits #####
-x = readRDS("~/Google Drive/My Drive/work/basilica_shared/fit_27052024/fit_wcat.Breast.Rds")
+x = readRDS("~/Google Drive/My Drive/work/bascule_shared/fit_27052024/fit_wcat.Breast.Rds")
 for (tid in get_types(x)) {
   alt_t = x$nmf[[tid]]$pyro$alternatives
 
@@ -55,7 +55,7 @@ x %>% plot_cls_score_heatmap()
 
 
 ## Last fit ####
-x_orig = readRDS("~/Google Drive/My Drive/work/basilica_shared/fit_12062024/fit_refined_cls2.Breast.Rds") %>% merge_clusters()
+x_orig = readRDS("~/Google Drive/My Drive/work/bascule_shared/fit_12062024/fit_refined_cls2.Breast.Rds") %>% merge_clusters()
 x_mapped = x_orig %>% convert_dn_names(reference_cat=list("SBS"=COSMIC_sbs_filt, "DBS"=COSMIC_dbs))
 
 get_assigned_missing(x_orig, reference_cat=list("SBS"=COSMIC_sbs_filt, "DBS"=COSMIC_dbs))

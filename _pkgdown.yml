@@ -1,10 +1,10 @@
-url: https:://caravagnalab.github.io/basilica/
+url: https:://caravagnalab.github.io/bascule/
 template:
   bootstrap: 5
 
 repo:
   url:
-    home: https:://caravagnalab.github.io/basilica/
+    home: https:://caravagnalab.github.io/bascule/
 
 reference:
 - title: Perform inference
@@ -36,8 +36,8 @@ reference:
 - title: S3 objects
   desc:  Print and plot S3 functions
   contents:
-  - print.basilica_obj
-  - plot.basilica_obj
+  - print.bascule_obj
+  - plot.bascule_obj
 
 - title: Data
   desc:  Description of datasets available in the package.

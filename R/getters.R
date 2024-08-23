@@ -3,7 +3,7 @@
 
 #' Get signatures names
 #'
-#' @param x basilica object.
+#' @param x bascule object.
 #' @param types List of variant types to retrieve signames for.
 #'
 #' @return list of signature names with names equal to `types`.
@@ -16,7 +16,7 @@ get_signames = function(x, types=get_types(x)) {
 
 #' Get reference signatures names
 #'
-#' @param x basilica object.
+#' @param x bascule object.
 #' @param types List of variant types to retrieve signames for.
 #'
 #' @return list of reference signature names with names equal to `types`.
@@ -29,7 +29,7 @@ get_fixed_signames = function(x, types=get_types(x)) {
 
 #' Get denovo signatures names
 #'
-#' @param x basilica object.
+#' @param x bascule object.
 #' @param types List of variant types to retrieve signames for.
 #'
 #' @return list of de novo signature names with names equal to `types`.
@@ -75,7 +75,7 @@ get_signatures_aux = function(x, what, types=get_types(x), matrix=FALSE) {
 # Input #####
 #' Get input data
 #'
-#' @param x basilica object.
+#' @param x bascule object.
 #' @param types List of variant types to subset
 #' @param samples List of samples to subset
 #' @param clusters List of clusters to subset

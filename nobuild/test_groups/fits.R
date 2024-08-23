@@ -27,7 +27,7 @@ compute_cosine_denovo = function(denovo_list, by_subs=F) {
 
 devtools::load_all()
 
-reticulate::use_condaenv("basilica-env")
+reticulate::use_condaenv("bascule-env")
 
 header = read.csv("./nobuild/test_groups/counts_all.tsv", header=F, sep="\t", nrows=1) %>% setNames(NULL)
 counts = read.csv("./nobuild/test_groups/counts_all.tsv", header=T, row.names=1, sep="\t")
@@ -58,8 +58,8 @@ sample_patients = function(counts, N=100, organ_list=c("Colorectal"), cohort_lis
 counts_groups = sample_patients(counts, N=200, cohort_list="GEL", organ_list=c("Colorectal","Lung"), seed=4)
 table(counts_groups$organ)
 
-py_path = paste0(path, "pybasilica")
-py = reticulate::import_from_path(module="pybasilica", path=py_path)
+py_path = paste0(path, "pybascule")
+py = reticulate::import_from_path(module="pybascule", path=py_path)
 # py = NULL
 
 sbs.names = c("SBS1","SBS5",
@@ -80,7 +80,7 @@ x.nogrps = fit(x = counts_groups$counts, py=py, k=0:7,
                reference_catalogue=reference_sub, delta=0.85, phi=0.1,
                reg_weight=1., reg_bic=TRUE, filtered_cat = TRUE)
 
-x.nogrps2 = readRDS("~/GitHub/basilica/nobuild/test_fit.Rds")
+x.nogrps2 = readRDS("~/GitHub/bascule/nobuild/test_fit.Rds")
 x.grps2 = readRDS("./nobuild/test_fit.hier2.Rds")
 
 saveRDS(x.nogrps, "./nobuild/test_fit.Rds")
@@ -170,7 +170,7 @@ x.grps = fit(counts_groups$counts, py=py, groups=counts_groups$groups_idx,
 
 
 
-pdf("~/GitHub/basilica/nobuild/test_groups/test1.pdf", height = 8, width = 12)
+pdf("~/GitHub/bascule/nobuild/test_groups/test1.pdf", height = 8, width = 12)
 plot_signatures(x.nogrps)
 plot_signatures(x.grps)
 

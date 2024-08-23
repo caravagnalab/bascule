@@ -20,7 +20,7 @@ pyfit = function(counts,
 
   TIME = as.POSIXct(Sys.time(), format = "%H:%M:%S")
 
-  if (is.null(py)) py = reticulate::import("pybasilica")
+  if (is.null(py)) py = reticulate::import("pybascule")
 
   if (length(k_list) > 1) k_list = reticulate::r_to_py(as.integer(k_list)) else
     k_list = reticulate::r_to_py(list(as.integer(k_list)))

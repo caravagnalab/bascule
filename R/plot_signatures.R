@@ -1,6 +1,6 @@
 #' Function to visualize the estimated and reference signatures.
 #'
-#' @param x basilica object.
+#' @param x bascule object.
 #' @param types List of variant types to visualize.
 #' @param context Logical. If `TRUE`, context names will be reported on the x axis.
 #' @param cls Custom color palette for signatures.

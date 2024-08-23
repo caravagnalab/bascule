@@ -23,7 +23,7 @@ fit_clustering(
 )
 }
 \arguments{
-\item{x}{Basilica object with signatures deconvolution performed.}
+\item{x}{Bascule object with signatures deconvolution performed.}
 
 \item{cluster}{Maximum number of clusters.}
 
@@ -35,7 +35,7 @@ fit_clustering(
 
 \item{n_steps}{Number of steps for the inference.}
 
-\item{py}{User-installed version of \code{pybasilica} package}
+\item{py}{User-installed version of \code{pybascule} package}
 
 \item{enumer}{Enumeration used for clustering (either `parallel` or `sequential`).}
 
@@ -54,7 +54,7 @@ fit_clustering(
 \item{seed_list}{List of seeds used for every input configuration.}
 }
 \value{
-Basilica object.
+Bascule object.
 }
 \description{
 Fit clustering

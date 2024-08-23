@@ -1,7 +1,7 @@
 library(dplyr)
 library(ggplot2)
 
-ttypes = basilica::Degasperi_SBS_GEL_PCAWG_HW %>% names
+ttypes = bascule::Degasperi_SBS_GEL_PCAWG_HW %>% names
 
 cache = TRUE
 
@@ -10,7 +10,7 @@ runs = easypar::run(
 
     cli::cli_h1(cohort)
 
-    input = basilica::Degasperi_SBS_GEL_PCAWG_HW[[cohort]] %>%
+    input = bascule::Degasperi_SBS_GEL_PCAWG_HW[[cohort]] %>%
       dplyr::select(
         -sample,
         -organ,
@@ -31,8 +31,8 @@ runs = easypar::run(
     {
       fit_COSMIC = fit(
         x = input,
-        reference_catalogue = basilica::COSMIC_catalogue,
-        input_catalogue = basilica::COSMIC_catalogue["SBS1", ],
+        reference_catalogue = bascule::COSMIC_catalogue,
+        input_catalogue = bascule::COSMIC_catalogue["SBS1", ],
         cohort = cohort,
         k = 1:5,
         lr = 0.01,
@@ -98,7 +98,7 @@ runs = easypar::run(
     {
       fit_degasperi = fit(
         x = input,
-        reference_catalogue = basilica::Degasperi_catalogue,
+        reference_catalogue = bascule::Degasperi_catalogue,
         cohort = cohort,
         k = 1:5,
         lr = 0.01,

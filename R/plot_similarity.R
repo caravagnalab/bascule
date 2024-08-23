@@ -1,6 +1,6 @@
 #' Function to visualize the similarity of denovo and reference signatures.
 #'
-#' @param x Basilica object.
+#' @param x Bascule object.
 #' @param similarity_cutoff add
 #' @param reference External reference catalogue to compare the denovo with.
 #' @param by_subs Logical. If set to \code{TRUE}, the similarity is computed

@@ -13,11 +13,12 @@ plot_exposures(
   color_palette = NULL,
   add_centroid = FALSE,
   sort_by = NULL,
-  min_exposure = 0
+  exposure_thr = 0,
+  quantile_thr = 0
 )
 }
 \arguments{
-\item{x}{basilica object.}
+\item{x}{bascule object.}
 
 \item{types}{List of variant types to visualize.}
 
@@ -33,7 +34,9 @@ plot_exposures(
 
 \item{sort_by}{Signature to sort patients' exposures by.}
 
-\item{min_exposure}{Only signatures with exposures greater than `min_exposure` in all samples will be highlighted.}
+\item{exposure_thr}{Only signatures with exposures greater than `exposure_thr` in all samples will be highlighted.}
+
+\item{quantile_thr}{add}
 }
 \value{
 ggplot object.

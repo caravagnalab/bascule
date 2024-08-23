@@ -1,20 +1,20 @@
-#' Print for class \code{'basilica_obj'}.
+#' Print for class \code{'bascule_obj'}.
 #'
-#' @param x An obj of class \code{'basilica_obj'}.
+#' @param x An obj of class \code{'bascule_obj'}.
 #' @param ... Default S3 method parameter.
 #'
 #' @return Nothing.
 #'
-#' @exportS3Method print basilica_obj
-#' @export print.basilica_obj
+#' @exportS3Method print bascule_obj
+#' @export print.bascule_obj
 
-print.basilica_obj = function(x, ...)
+print.bascule_obj = function(x, ...)
 {
-  stopifnot(inherits(x, "basilica_obj"))
+  stopifnot(inherits(x, "bascule_obj"))
 
   cli::cli_rule(
     paste(
-      crayon::bgYellow(crayon::black(paste0("[ Basilica ] ", x$cohort))),
+      crayon::bgYellow(crayon::black(paste0("[ Bascule ] ", x$cohort))),
       '{.field {x$n_samples}} samples with {.field {x$input$counts %>% sum}} total mutations.'
     )
   )
@@ -75,13 +75,13 @@ print.basilica_obj = function(x, ...)
 # }
 
 
-#' Plot for class \code{'basilica_obj'}.
+#' Plot for class \code{'bascule_obj'}.
 #'
 #' @description
 #'
 #' The default plot is the CNA segments in wide format
 #'
-#' @param x An obj of class \code{'basilica_obj'}.
+#' @param x An obj of class \code{'bascule_obj'}.
 #' @param ... Default S3 method parameter.
 #'
 #' @return Nothing.
@@ -91,7 +91,7 @@ print.basilica_obj = function(x, ...)
 #' @examples
 #' \dontrun{
 #' }
-plot.basilica_obj = function(x, ...)
+plot.bascule_obj = function(x, ...)
 {
   stopifnot(inherits(x, "cnaqc"))
 }

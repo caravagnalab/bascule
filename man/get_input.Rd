@@ -16,7 +16,7 @@ get_input(
 )
 }
 \arguments{
-\item{x}{basilica object.}
+\item{x}{bascule object.}
 
 \item{types}{List of variant types to subset}
 

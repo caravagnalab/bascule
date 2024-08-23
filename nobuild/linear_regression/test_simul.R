@@ -1,12 +1,12 @@
 library(lsa)
 library(dplyr)
 library(ggplot2)
-source("~/GitHub/simbasilica/nobuild/script_test/helper_fns.R")
-py = reticulate::import_from_path("pybasilica","~/GitHub/pybasilica/")
-devtools::load_all("~/GitHub/basilica/")
-devtools::load_all("~/GitHub/simbasilica/")
+source("~/GitHub/simbascule/nobuild/script_test/helper_fns.R")
+py = reticulate::import_from_path("pybascule","~/GitHub/pybascule/")
+devtools::load_all("~/GitHub/bascule/")
+devtools::load_all("~/GitHub/simbascule/")
 
-path = "~/GitHub/basilica/nobuild/linear_regression/"
+path = "~/GitHub/bascule/nobuild/linear_regression/"
 
 make_plots = function(x, x.true=NULL, reconstructed=T, cls=NULL,
                       sort_by=NULL, what="SBS", epsilon=FALSE,
@@ -42,7 +42,7 @@ x = single_dataset(350, 2, 150:350, reference_catalogue, denovo_catalogue,
                    out_path=path)
 
 x.simul = readRDS(paste0(path, "simul.N350.G2.s23.test1.Rds"))
-xx = create_basilica_obj_simul(x.simul)
+xx = create_bascule_obj_simul(x.simul)
 
 
 ## Inference on simulated data ####
@@ -136,7 +136,7 @@ x.simul2 = single_dataset(500, 2, 150:350, reference_catalogue, denovo_catalogue
                           private_sigs=list("rare"=private_rare,"common"=private_common),
                           private_fracs=list("rare"=0.05,"common"=0.3),
                           cosine_limit, seed=23, out_path="./nobuild/script_test/simulations/")
-xx2 = create_basilica_obj_simul(x.simul2)
+xx2 = create_bascule_obj_simul(x.simul2)
 x.fit2 = two_steps_inference(x.simul2$x[[1]],
                              k=0:7,
                              input_catalogue=COSMIC_filt_merged,
@@ -144,7 +144,7 @@ x.fit2 = two_steps_inference(x.simul2$x[[1]],
                              enforce_sparsity2=FALSE,
                              py=py)
 x.new2 = x.fit2$tot
-saveRDS(x.new2, "~/GitHub/simbasilica/nobuild/test_new1.Rds")
+saveRDS(x.new2, "~/GitHub/simbascule/nobuild/test_new1.Rds")
 
 
 

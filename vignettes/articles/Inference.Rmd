@@ -10,12 +10,13 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup, warning=FALSE, message=FALSE}
-library(basilica)
-basilica::configure_environment()
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+library(bascule)
+configure_environment(use_default=TRUE)
 ```
 
 
-We can load the data `example_dataeset`, a basilica object containing the true signatures and exposures used to generate the mutation counts matrix. In the object, data for SBS and DBS is reported.
+We can load the data `example_dataeset`, a bascule object containing the true signatures and exposures used to generate the mutation counts matrix. In the object, data for SBS and DBS is reported.
 ```{r}
 data(example_dataset)
 ```
@@ -24,8 +25,8 @@ We can extract the mutation count matrix from the object using the `get_input` f
 
 ```{r}
 counts = get_input(example_dataset, matrix=T, reconstructed=F)
-counts[["SBS"]]
-counts[["DBS"]]
+head(counts[["SBS"]])
+head(counts[["DBS"]])
 ```
 
 We use as reference the COSMIC catalogue for SBS and DBS.

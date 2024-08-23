@@ -4,7 +4,7 @@
 \alias{configure_environment}
 \title{Configure the reticulate environment}
 \usage{
-configure_environment(envname = "basilica-env")
+configure_environment(envname = "bascule-env")
 }
 \arguments{
 \item{env_name}{name of the \code{conda} environment to use, if available.}
@@ -13,5 +13,5 @@ configure_environment(envname = "basilica-env")
 Function to configure the Python dependencies on R.
 If a Python environment is not available, the function will check if there is a version of
 \code{conda} or \code{miniconda}, otherwise it will install \code{miniconda}, on which
-install the Python package \code{pybasilica}.
+install the Python package \code{pybascule}.
 }

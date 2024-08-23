@@ -7,7 +7,7 @@
 get_fixed_signames(x, types = get_types(x))
 }
 \arguments{
-\item{x}{basilica object.}
+\item{x}{bascule object.}
 
 \item{types}{List of variant types to retrieve signames for.}
 }

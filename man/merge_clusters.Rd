@@ -7,12 +7,12 @@
 merge_clusters(x, cutoff = 0.8)
 }
 \arguments{
-\item{x}{basilica object.}
+\item{x}{bascule object.}
 
 \item{cutoff}{Minimum value of similarity to merge two clusters.}
 }
 \value{
-basilica object.
+bascule object.
 }
 \description{
 This function will iteratively merge clusters that result similar in the centroid.

@@ -7,12 +7,12 @@
 refine_denovo_signatures(x, types = get_types(x))
 }
 \arguments{
-\item{x}{basilica object.}
+\item{x}{bascule object.}
 
 \item{types}{List of variant types to perform de novo refinement on.}
 }
 \value{
-basilica object.
+bascule object.
 }
 \description{
 Function to refine the inferred de novo signatures.

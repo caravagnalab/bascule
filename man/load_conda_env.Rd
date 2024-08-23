@@ -4,7 +4,7 @@
 \alias{load_conda_env}
 \title{Load the input \code{conda} environment.}
 \usage{
-load_conda_env(envname = "basilica-env")
+load_conda_env(envname = "bascule-env")
 }
 \description{
 Function to load the input \code{conda} environment. The function

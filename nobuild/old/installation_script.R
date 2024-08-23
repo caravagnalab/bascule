@@ -1,8 +1,8 @@
 library(reticulate)
 
-reticulate::use_condaenv('basilica-env')
+reticulate::use_condaenv('bascule-env')
 devtools::install()
 
 
 
-basilica::..
+bascule::..

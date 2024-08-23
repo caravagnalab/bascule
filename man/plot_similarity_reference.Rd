@@ -14,7 +14,7 @@ plot_similarity_reference(
 )
 }
 \arguments{
-\item{x}{Basilica object.}
+\item{x}{Bascule object.}
 
 \item{reference}{External reference catalogue to compare the denovo with.}
 

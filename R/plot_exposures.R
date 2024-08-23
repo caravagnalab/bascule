@@ -1,6 +1,6 @@
 #' Function to visualize the estimated exposures
 #'
-#' @param x basilica object.
+#' @param x bascule object.
 #' @param types List of variant types to visualize.
 #' @param samples List of samples to visualize.
 #' @param clusters List of clusters to visualize.

@@ -1,4 +1,4 @@
-#' Fit a basilica object
+#' Fit a bascule object
 #'
 #' @param counts List of mutation counts matrices from multiple variant types.
 #' @param k_list List of number of denovo signatures to test.
@@ -9,7 +9,7 @@
 #' @param lr Learning rate used for SVI.
 #' @param optim_gamma Deprecated
 #' @param n_steps Number of iterations for inference.
-#' @param py User-installed version of \code{pybasilica} package
+#' @param py User-installed version of \code{pybascule} package
 #' @param enumer Enumeration used for clustering (either `parallel` or `sequential`).
 #' @param nonparametric Deprecated. The model only works in nonparametric way.
 #' @param autoguide Logical. If `TRUE`, the clustering model will use the Pyro autoguide.
@@ -21,7 +21,7 @@
 #' @param store_fits Logical. If `TRUE`, all tested fits, i.e., for every value of `K`, will be stored in the object.
 #' @param seed_list List of seeds used for every input configuration.
 #'
-#' @return Basilica object.
+#' @return Bascule object.
 #' @export fit
 fit = function(counts, k_list,
                cluster=NULL,
@@ -51,7 +51,7 @@ fit = function(counts, k_list,
   if (!is.list(counts)) counts = list("T1"=counts)
   if (!is.list(reference_cat)) reference_cat = list("T1"=reference_cat)
 
-  bas = list(); class(bas) = "basilica_obj"
+  bas = list(); class(bas) = "bascule_obj"
 
   types = names(counts)
 
@@ -116,13 +116,13 @@ fit = function(counts, k_list,
 
 #' Fit clustering
 #'
-#' @param x Basilica object with signatures deconvolution performed.
+#' @param x Bascule object with signatures deconvolution performed.
 #' @param cluster Maximum number of clusters.
 #' @param hyperparameters List of hyperparameters passed to the NMF and clustering models.
 #' @param lr Learning rate for SVI optimizer.
 #' @param optim_gamma Deprecated.
 #' @param n_steps Number of steps for the inference.
-#' @param py User-installed version of \code{pybasilica} package
+#' @param py User-installed version of \code{pybascule} package
 #' @param enumer Enumeration used for clustering (either `parallel` or `sequential`).
 #' @param nonparametric Deprecated. The model only works in nonparametric way.
 #' @param autoguide Logical. If `TRUE`, the clustering model will use the Pyro autoguide.
@@ -132,7 +132,7 @@ fit = function(counts, k_list,
 #' @param store_fits Logical. If `TRUE`, all tested fits, i.e., for every value of `K`, will be stored in the object.
 #' @param seed_list List of seeds used for every input configuration.
 #'
-#' @return Basilica object.
+#' @return Bascule object.
 #' @export fit_clustering
 fit_clustering = function(x,
                           cluster,

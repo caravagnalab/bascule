@@ -41,7 +41,7 @@ plot_gradient_norms = function(x, types=get_types(x)) {
 #' Function to plot the model selection scores for NMF on each variant type and clustering.
 #' Reported scores are BIC and negative log-likelihood.
 #'
-#' @param x basilica object.
+#' @param x bascule object.
 #' @param types List of variant types to visualize.
 #' @param remove_outliers Logical. If `TRUE`, outliers in each score will be removed.
 #'

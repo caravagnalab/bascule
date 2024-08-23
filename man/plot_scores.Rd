@@ -7,7 +7,7 @@
 plot_scores(x, types = get_types(x), remove_outliers = FALSE)
 }
 \arguments{
-\item{x}{basilica object.}
+\item{x}{bascule object.}
 
 \item{types}{List of variant types to visualize.}
 

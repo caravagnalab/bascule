@@ -46,7 +46,7 @@ plot_cls_score_heatmap = function(x, type, exposure_thr=0.05) {
 
 
 ## SAME AS plot_mixture_weights(x, empirical=TRUE)
-# # input : basilica object
+# # input : bascule object
 # # output: ggplot (samples frequency in clusters)
 # plot_cluster_freq = function(x) {
 #   df = get_cluster_assignments(x) # dataframe
