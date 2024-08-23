@@ -1,6 +1,6 @@
 #' Report of the fit
 #'
-#' @param x
+#' @param x Bascule object
 #'
 #' @import ggplot2
 #'
