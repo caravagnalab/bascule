@@ -29,6 +29,3 @@ ggplot object.
 \description{
 Function to visualize the estimated and reference signatures.
 }
-\examples{
-plot_signatures(example_fit)
-}

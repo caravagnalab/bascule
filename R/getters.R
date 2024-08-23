@@ -86,9 +86,6 @@ get_signatures_aux = function(x, what, types=get_types(x), matrix=FALSE) {
 #'
 #' @return list of long or wide-formatted mutations counts.
 #' @export
-#'
-#' @examples
-#' get_input(example_fit)
 get_input = function(x, types=get_types(x), samples=get_samples(x),
                      clusters=get_cluster_labels(x), matrix=FALSE,
                      reconstructed=FALSE, add_groups=FALSE, by_sigs=FALSE) {

@@ -13,9 +13,6 @@
 #'
 #' @return ggplot object.
 #' @export
-#'
-#' @examples
-#' plot_exposures(example_fit)
 plot_exposures = function(x,
                           types=get_types(x),
                           samples=get_samples(x),

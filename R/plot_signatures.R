@@ -8,9 +8,6 @@
 #'
 #' @return ggplot object.
 #' @export
-#'
-#' @examples
-#' plot_signatures(example_fit)
 plot_signatures = function(x, types=get_types(x), context=T, cls=NULL,
                            signames=get_signames(x)) {
 

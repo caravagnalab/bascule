@@ -38,6 +38,3 @@ list of long or wide-formatted mutations counts.
 \description{
 Get input data
 }
-\examples{
-get_input(example_fit)
-}

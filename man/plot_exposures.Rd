@@ -44,6 +44,3 @@ ggplot object.
 \description{
 Function to visualize the estimated exposures
 }
-\examples{
-plot_exposures(example_fit)
-}
