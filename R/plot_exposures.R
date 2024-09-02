@@ -10,6 +10,7 @@
 #' @param sort_by Signature to sort patients' exposures by.
 #' @param exposure_thr Only signatures with exposures greater than `exposure_thr` in all samples will be highlighted.
 #' @param quantile_thr add
+#' @param signatures_list add
 #'
 #' @return ggplot object.
 #' @export
@@ -22,7 +23,8 @@ plot_exposures = function(x,
                           add_centroid=FALSE,
                           sort_by=NULL,
                           exposure_thr=0,
-                          quantile_thr=0) {
+                          quantile_thr=0,
+                          signatures_list=get_signames(x)) {
 
   exposures = lapply(types, function(t)
     get_exposure(x, types=types, samples=samples,
@@ -43,17 +45,25 @@ plot_exposures = function(x,
       dplyr::mutate(sigs=ifelse(significance, sigs, "Other")) %>%
       dplyr::select(samples, clusters, sigs, value, type)
 
-    to_keep = exposures$sigs %>% unique() %>% as.character()
-    sigs_levels = c(to_keep %>% purrr::discard(.p=function(x) x=="Other"), "Other")
-    cls["Other"] = "gainsboro"
+    # to_keep = exposures$sigs %>% unique() %>% as.character()
+    # sigs_levels = c(to_keep %>% purrr::discard(.p=function(x) x=="Other"), "Other")
+    # cls["Other"] = "gainsboro"
   }
+
+  to_keep = intersect(unlist(signatures_list), exposures$sigs) %>% as.character()
+  sigs_levels = c(sort(to_keep) %>% purrr::discard(.p=function(x) x=="Other"), "Other")
+  cls["Other"] = "gainsboro"
+
+  # keep only signatures passed as input
+  exposures = exposures %>%
+    dplyr::mutate(sigs=ifelse(sigs%in%to_keep, sigs, "Other"))
 
   p = plot_exposures_aux(exposures=exposures, cls=cls,
                          titlee="Exposure",
                          sample_name=sample_name,
                          sort_by=sort_by,
                          sigs_levels=sigs_levels) +
-    scale_fill_manual(values=cls, breaks=to_keep)
+    scale_fill_manual(values=cls)
 
   p_centr = plot_centroids(x,
                            types=types,
@@ -62,7 +72,7 @@ plot_exposures = function(x,
                            exposure_thr=exposure_thr,
                            quantile_thr=quantile_thr,
                            sigs_levels=sigs_levels) +
-    scale_fill_manual(values=cls, breaks=to_keep)
+    scale_fill_manual(values=cls)
 
   if (add_centroid)
     p = patchwork::wrap_plots(p, p_centr, ncol=2, widths=c(9,1), guides="collect")
@@ -87,6 +97,7 @@ plot_centroids = function(x,
                           sort_by = NULL,
                           exposure_thr = 0,
                           quantile_thr = 0,
+                          signatures_list = get_signames(x),
                           ...) {
 
   centr = get_centroids(x)
@@ -102,7 +113,6 @@ plot_centroids = function(x,
   if (is.null(cls)) cls = gen_palette(x, types=sort(types))
 
   # Just plot significant signatures in each cluster [concise=TRUE]
-  to_keep = a_pr$sigs %>% unique()
   if (exposure_thr > 0 | quantile_thr > 0) {
     scores = get_clusters_score(x, types=types, exposure_thr=exposure_thr,
                                 quantile_thr=quantile_thr) %>%
@@ -112,10 +122,18 @@ plot_centroids = function(x,
       dplyr::mutate(sigs=ifelse(significance, sigs, "Other")) %>%
       dplyr::select(samples, sigs, value, type)
 
-    to_keep = a_pr$sigs %>% unique() %>% as.character()
-    sigs_levels = c(to_keep %>% purrr::discard(.p=function(x) x=="Other"), "Other")
-    cls["Other"] = "gainsboro"
+    # to_keep = a_pr$sigs %>% unique() %>% as.character()
+    # sigs_levels = c(to_keep %>% purrr::discard(.p=function(x) x=="Other"), "Other")
+    # cls["Other"] = "gainsboro"
   }
+
+  to_keep = intersect(unlist(signatures_list), a_pr$sigs) %>% as.character()
+  sigs_levels = c(gtools::mixedsort(to_keep) %>% purrr::discard(.p=function(x) x=="Other"), "Other")
+  cls["Other"] = "gainsboro"
+
+  # keep only signatures passed as input
+  a_pr = a_pr %>%
+    dplyr::mutate(sigs=ifelse(sigs%in%to_keep, sigs, "Other"))
 
   return(
     plot_exposures_aux(exposures=a_pr,
@@ -152,7 +170,7 @@ plot_exposures_aux = function(exposures,
 
   p = exposures %>%
     ggplot(aes(x=factor(samples, levels=sample_levels), y=value, fill=sigs)) +
-    geom_bar(stat="identity", position="stack") +
+    geom_bar(stat="identity", position="stack", show.legend=T) +
     theme_bw() + theme(axis.text.x=element_text(angle=90)) +
     guides(fill=guide_legend(title="Signatures")) + ylab("") + xlab("")
 
