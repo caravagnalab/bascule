@@ -44,10 +44,6 @@ plot_exposures = function(x,
     exposures = exposures %>% dplyr::left_join(scores) %>%
       dplyr::mutate(sigs=ifelse(significance, sigs, "Other")) %>%
       dplyr::select(samples, clusters, sigs, value, type)
-
-    # to_keep = exposures$sigs %>% unique() %>% as.character()
-    # sigs_levels = c(to_keep %>% purrr::discard(.p=function(x) x=="Other"), "Other")
-    # cls["Other"] = "gainsboro"
   }
 
   to_keep = intersect(unlist(signatures_list), exposures$sigs) %>% as.character()
@@ -121,10 +117,6 @@ plot_centroids = function(x,
     a_pr = a_pr %>% dplyr::left_join(scores) %>%
       dplyr::mutate(sigs=ifelse(significance, sigs, "Other")) %>%
       dplyr::select(samples, sigs, value, type)
-
-    # to_keep = a_pr$sigs %>% unique() %>% as.character()
-    # sigs_levels = c(to_keep %>% purrr::discard(.p=function(x) x=="Other"), "Other")
-    # cls["Other"] = "gainsboro"
   }
 
   to_keep = intersect(unlist(signatures_list), a_pr$sigs) %>% as.character()
@@ -135,12 +127,14 @@ plot_centroids = function(x,
   a_pr = a_pr %>%
     dplyr::mutate(sigs=ifelse(sigs%in%to_keep, sigs, "Other"))
 
+  sample_levels = gtools::mixedsort(unique(a_pr$samples))
+
   return(
     plot_exposures_aux(exposures=a_pr,
                        cls=cls,
                        titlee="Centroids",
                        sample_name=TRUE,
-                       sample_levels=NULL,
+                       sample_levels=sample_levels,
                        sigs_levels=sigs_levels) +
       scale_fill_manual(values=cls) + theme(axis.text.x=element_text(angle=0))
   )
@@ -156,7 +150,6 @@ plot_exposures_aux = function(exposures,
                               sample_levels=NULL) {
 
   if (!is.null(sigs_levels))
-    # sigs_levels = exposures$sigs %>% unique()
     exposures = exposures %>% dplyr::mutate(sigs=factor(sigs, levels=sigs_levels))
 
   if (!is.null(sort_by))
