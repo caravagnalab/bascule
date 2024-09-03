@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   bascule: bascule.html
   articles/Inference: Inference.html
-last_built: 2024-09-02T08:29Z
+last_built: 2024-09-03T08:45Z
 urls:
   reference: https:://caravagnalab.github.io/bascule/reference
   article: https:://caravagnalab.github.io/bascule/articles
