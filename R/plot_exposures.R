@@ -93,6 +93,7 @@ match_type = function(types, sigs) {
 
 plot_centroids = function(x,
                           types = get_types(x),
+                          clusters=get_cluster_labels(x),
                           cls = NULL,
                           sort_by = NULL,
                           exposure_thr = 0,
@@ -108,6 +109,7 @@ plot_centroids = function(x,
   a_pr = centr %>%
     dplyr::mutate(type=match_type(types, sigs)) %>%
     dplyr::filter(!is.na(type)) %>%
+    dplyr::filter(clusters %in% !!clusters) %>%
     dplyr::rename(samples=clusters)
 
   if (is.null(cls)) cls = gen_palette(x, types=sort(types))
