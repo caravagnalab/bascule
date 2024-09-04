@@ -32,7 +32,11 @@ plot_exposures = function(x,
       dplyr::mutate(type=t)) %>%
     do.call(rbind, .)
 
-  if (is.null(color_palette)) cls = gen_palette(x, types=sort(types))
+  if (is.null(color_palette)) {
+    cls = gen_palette(x, types=sort(types))
+  } else {
+    cls = color_palette
+  }
 
   # merging signatures where their exposure in all the samples are below the threshold
   to_keep = exposures$sigs %>% unique(); sigs_levels = NULL
