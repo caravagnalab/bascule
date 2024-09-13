@@ -14,12 +14,12 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
+```{r eval=FALSE}
 library(bascule)
 ```
 
 
-# prepare input data
+## prepare input data
 ```{r eval=FALSE}
 # loading the pybasilica python package
 py = reticulate::import_from_path(module="pybasilica", path="/u/azads/packages/pybasilica")
@@ -57,7 +57,7 @@ reference_cat = list("SBS"=COSMIC_sbs_filt[catalogue_sbs,],
                      "DBS"=COSMIC_dbs[catalogue_dbs,])
 ```
 
-# Fitting the Model
+## Fitting the Model
 ```{r eval=FALSE}
 
 x = fit(
@@ -75,14 +75,14 @@ x = fit(
 ```
 
 
-# Refine the signatures
+## Refine the signatures
 Here, we are trying to eliminate all de novo signatures that are explainable with linear combination of the other signatures.
 
 ```{r eval=FALSE}
 x_refined <- basilica:::refine_denovo_signatures(x)
 ```
 
-# Re-Clustering
+## Re-Clustering
 we perform the clustering step, using the new set of signatures.
 
 ```{r eval=FALSE}
@@ -97,7 +97,7 @@ x_refined_cls <- bascule:::fit_clustering(
 ```
 
 
-# Visualization
+## Visualization
 
 ```{r eval=FALSE}
 
