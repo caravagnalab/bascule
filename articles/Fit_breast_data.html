@@ -64,6 +64,9 @@
 
     
     
+<div class="section level2">
+<h2 id="package-setup">Package Setup<a class="anchor" aria-label="anchor" href="#package-setup"></a>
+</h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/caravagnalab/bascule" class="external-link">bascule</a></span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Loading <span style="color: #00BB00;">bascule</span>. Support : <span style="color: #0000BB; font-style: italic;">&lt;https://caravagnalab.github.io/bascule/&gt;</span></span></span></code></pre></div>
@@ -71,16 +74,22 @@
 <code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/knitr/man/opts_chunk.html" class="external-link">opts_chunk</a></span><span class="op">$</span><span class="fu">set</span><span class="op">(</span>warning <span class="op">=</span> <span class="cn">FALSE</span>, message <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/configure_environment.html">configure_environment</a></span><span class="op">(</span>envname<span class="op">=</span><span class="st">"bascule-env"</span>, use_default<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">py</span> <span class="op">=</span> <span class="fu">reticulate</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/reticulate/reference/import.html" class="external-link">import</a></span><span class="op">(</span><span class="st">"pybascule"</span><span class="op">)</span></span></code></pre></div>
+</div>
 <div class="section level2">
-<h2 id="fit-the-model">Fit the model<a class="anchor" aria-label="anchor" href="#fit-the-model"></a>
+<h2 id="model-fitting">Model Fitting<a class="anchor" aria-label="anchor" href="#model-fitting"></a>
 </h2>
+<p>Here, we load the breast tumor type fit object
+(<code>breast_data</code>) from the bascule package, and retrieve the
+input data (<code>counts</code>) from the loaded fit object.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"breast_data"</span><span class="op">)</span></span>
-<span><span class="va">x</span> <span class="op">=</span> <span class="va">breast_data</span><span class="op">$</span><span class="va">x</span></span></code></pre></div>
+<span><span class="va">x</span> <span class="op">=</span> <span class="va">breast_data</span><span class="op">$</span><span class="va">x</span></span>
+<span><span class="va">counts</span> <span class="op">=</span> <span class="fu"><a href="../reference/get_input.html">get_input</a></span><span class="op">(</span><span class="va">x</span>, matrix<span class="op">=</span><span class="cn">TRUE</span>, reconstructed<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<p>We execute the fit function using the input data
+(<code>counts</code>).</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">counts</span> <span class="op">=</span> <span class="fu"><a href="../reference/get_input.html">get_input</a></span><span class="op">(</span><span class="va">breast_data</span><span class="op">$</span><span class="va">x</span>, matrix<span class="op">=</span><span class="cn">TRUE</span>, reconstructed<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="va">x_pre_refinement</span> <span class="op">=</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span></span>
-<span>  counts<span class="op">=</span><span class="va">breast_data</span><span class="op">$</span><span class="va">counts</span>,</span>
+<code class="sourceCode R"><span><span class="va">x_pre_refinement</span> <span class="op">=</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span></span>
+<span>  counts<span class="op">=</span><span class="va">counts</span>,</span>
 <span>  k_list<span class="op">=</span><span class="fl">0</span><span class="op">:</span><span class="fl">25</span>,</span>
 <span>  cluster<span class="op">=</span><span class="fl">15</span>,</span>
 <span>  reference_cat<span class="op">=</span><span class="va">breast_data</span><span class="op">$</span><span class="va">reference_cat</span>,</span>
@@ -94,17 +103,18 @@
 <span>  <span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="refine-the-signatures">Refine the signatures<a class="anchor" aria-label="anchor" href="#refine-the-signatures"></a>
+<h2 id="signature-refinement">Signature Refinement<a class="anchor" aria-label="anchor" href="#signature-refinement"></a>
 </h2>
-<p>Here, we are trying to eliminate all de novo signatures that are
+<p>Here, we eliminate all inferred de novo signatures that are
 explainable with linear combination of the other signatures.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">x_refined</span> <span class="op">=</span> <span class="fu"><a href="../reference/refine_denovo_signatures.html">refine_denovo_signatures</a></span><span class="op">(</span><span class="va">x_pre_refinement</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="re-clustering">Re-Clustering<a class="anchor" aria-label="anchor" href="#re-clustering"></a>
+<h2 id="patients-re-clustering">Patients Re-Clustering<a class="anchor" aria-label="anchor" href="#patients-re-clustering"></a>
 </h2>
-<p>we perform the clustering step, using the new set of signatures.</p>
+<p>We redo the clustering step (if applicable), using the new set of the
+signatures and updated exposure matrix.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">x</span> <span class="op">=</span> <span class="fu"><a href="../reference/fit_clustering.html">fit_clustering</a></span><span class="op">(</span></span>
 <span>  <span class="va">x_pre_refinement</span>,</span>
@@ -119,33 +129,37 @@ explainable with linear combination of the other signatures.</p>
 <span><span class="va">x</span> <span class="op">=</span> <span class="va">x</span> <span class="op">%&gt;%</span> <span class="fu"><a href="../reference/merge_clusters.html">merge_clusters</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="visualization">Visualization<a class="anchor" aria-label="anchor" href="#visualization"></a>
+<h2 id="output-visualization">Output Visualization<a class="anchor" aria-label="anchor" href="#output-visualization"></a>
+</h2>
+</div>
+<div class="section level2">
+<h2 id="mutational-signatures-visualization">Mutational Signatures Visualization<a class="anchor" aria-label="anchor" href="#mutational-signatures-visualization"></a>
 </h2>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_signatures.html">plot_signatures</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: This manual palette can handle a maximum of 16 values. You have</span></span>
-<span><span class="co">#&gt; supplied 18</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_signatures.html">plot_signatures</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></code></pre></div>
 <p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-7-1.png" width="700"></p>
+<div class="section level3">
+<h3 id="exposure-matrix-visualization">Exposure Matrix Visualization<a class="anchor" aria-label="anchor" href="#exposure-matrix-visualization"></a>
+</h3>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
-<span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
-<span><span class="co">#&gt; Warning: No shared levels found between `names(values)` of the manual scale and the</span></span>
-<span><span class="co">#&gt; data's <span style="color: #00BB00;">colour</span> values.</span></span></code></pre></div>
-<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-7-2.png" width="700"></p>
+<span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span></code></pre></div>
+<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
+</div>
+<div class="section level3">
+<h3 id="clusters-centroids-visualization">Clusters Centroids Visualization<a class="anchor" aria-label="anchor" href="#clusters-centroids-visualization"></a>
+</h3>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="fu"><a href="../reference/plot_centroids.html">plot_centroids</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_centroids.html">plot_centroids</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
-<span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
-<span><span class="co">#&gt; Warning: No shared levels found between `names(values)` of the manual scale and the</span></span>
-<span><span class="co">#&gt; data's <span style="color: #00BB00;">colour</span> values.</span></span></code></pre></div>
-<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-7-3.png" width="700"></p>
+<span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span></code></pre></div>
+<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
