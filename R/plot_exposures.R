@@ -103,6 +103,8 @@ match_type = function(types, sigs) {
 #' @param signatures_list add
 #' @param ... Additional arguments
 #'
+#' @import gtools
+#'
 #' @return ggplot object.
 #' @export plot_centroids
 plot_centroids = function(x,

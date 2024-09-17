@@ -112,3 +112,8 @@ plot_signatures(x_refined_cluster)
 plot_centroids(x_refined_cluster)
 ```
 
+```{r}
+plot_exposures(x_refined_cluster)
+```
+
+
