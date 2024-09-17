@@ -14,10 +14,11 @@ knitr::opts_chunk$set(
 )
 ```
 
+## Package Setup
+
 ```{r}
 library(bascule)
 ```
-
 
 ```{r setup, eval=FALSE}
 knitr::opts_chunk$set(warning = FALSE, message = FALSE)
@@ -25,18 +26,21 @@ configure_environment(envname="bascule-env", use_default=TRUE)
 py = reticulate::import("pybascule")
 ```
 
-# Fit the model
+## Model Fitting
+
+Here, we load the breast tumor type fit object (`breast_data`) from the bascule package, and retrieve the input data (`counts`) from the loaded fit object.
 
 ```{r}
 data("breast_data")
 x = breast_data$x
+counts = get_input(x, matrix=TRUE, reconstructed=FALSE)
 ```
 
+We execute the fit function using the input data (`counts`).
 
 ```{r eval=FALSE}
-counts = get_input(breast_data$x, matrix=TRUE, reconstructed=FALSE)
 x_pre_refinement = fit(
-  counts=breast_data$counts,
+  counts=counts,
   k_list=0:25,
   cluster=15,
   reference_cat=breast_data$reference_cat,
@@ -51,15 +55,17 @@ x_pre_refinement = fit(
 ```
 
 
-# Refine the signatures
-Here, we are trying to eliminate all de novo signatures that are explainable with linear combination of the other signatures.
+## Signature Refinement
+
+Here, we eliminate all inferred de novo signatures that are explainable with linear combination of the other signatures.
 
 ```{r eval=FALSE}
 x_refined = refine_denovo_signatures(x_pre_refinement)
 ```
 
-# Re-Clustering
-we perform the clustering step, using the new set of signatures.
+## Patients Re-Clustering
+
+We redo the clustering step (if applicable), using the new set of the signatures and updated exposure matrix.
 
 ```{r eval=FALSE}
 x = fit_clustering(
@@ -76,13 +82,23 @@ x = x %>% merge_clusters()
 ```
 
 
-# Visualization
+## Output Visualization
 
-```{r}
+## Mutational Signatures Visualization
+
+```{r warning=FALSE}
 plot_signatures(x)
+```
 
+### Exposure Matrix Visualization
+
+```{r warning=FALSE}
 plot_exposures(x)
+```
 
+### Clusters Centroids Visualization
+
+```{r warning=FALSE}
 plot_centroids(x)
 ```
 
