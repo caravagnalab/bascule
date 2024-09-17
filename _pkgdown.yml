@@ -13,6 +13,7 @@ reference:
   - fit
   - fit_clustering
   - refine_denovo_signatures
+  - merge_clusters
 
 - title: Getters
   desc:  Utility functions to extract attributes.
@@ -21,6 +22,11 @@ reference:
   - get_signames
   - get_fixed_signames
   - get_denovo_signames
+  - get_signatures
+  - get_fixed_signatures
+  - get_denovo_signatures
+  - get_exposure
+  - convert_dn_names
 
 - title: Plotting functions
   desc:  Plotting functions available in the package
@@ -28,10 +34,12 @@ reference:
   - plot_data
   - plot_signatures
   - plot_exposures
-  - merge_clusters
+  - plot_centroids
   - plot_fit
   - plot_similarity_reference
   - plot_scores
+  - plot_gradient_norms
+  - plot_posterior_probs
 
 - title: S3 objects
   desc:  Print and plot S3 functions
@@ -45,9 +53,12 @@ reference:
   - COSMIC_sbs
   - COSMIC_sbs_filt
   - COSMIC_dbs
-  - COSMIC_filt_merged
-  - Degasperi_SBS_GEL_PCAWG_HW
-  - Degasperi_catalogue
+  - COSMIC_indels
+  - COSMIC_cn
+  - Degasperi_SBS
+  - Degasperi_DBS
+  - synthetic_data
+  - breast_data
 
 - title: Configure conda environment
   desc:  Helper functions to create and check dependencies.

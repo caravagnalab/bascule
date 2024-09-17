@@ -9,9 +9,13 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup, warning=FALSE, message=FALSE}
-knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```{r}
 library(bascule)
+```
+
+
+```{r setup, eval=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 reticulate::install_python(version="3.9.16")
 reticulate::py_install(packages="pybascule", 
                        pip=TRUE,
@@ -19,18 +23,19 @@ reticulate::py_install(packages="pybascule",
 py = reticulate::import("pybascule")
 ```
 
+# Load datasets
 
-We can load the data `example_dataeset`, a bascule object containing the true signatures and exposures used to generate the mutation counts matrix. In the object, data for SBS and DBS is reported.
+We can load the data `example_dataset`, a bascule object containing the true signatures and exposures used to generate the mutation counts matrix. In the object, data for SBS and DBS is reported.
 ```{r}
-data(example_dataset)
+data("synthetic_data")
 ```
 
 We can extract the mutation count matrix from the object using the `get_input` function. With `reconstructed=FALSE` we are obtaining the observed counts, and not the reconstructed ones computed as the matrix multiplication of exposures and signatures.
 
 ```{r}
-counts = get_input(example_dataset, matrix=T, reconstructed=F)
-head(counts[["SBS"]])
-head(counts[["DBS"]])
+counts = synthetic_data$counts
+head(counts[["SBS"]][, 1:10])
+head(counts[["DBS"]][, 1:10])
 ```
 
 We use as reference the COSMIC catalogue for SBS and DBS.
@@ -45,8 +50,10 @@ In the example dataset, the true number of signatures is five for both SBS and D
 K_list = 0:7
 ```
 
+# Fit the model
+
 Now, we can fit the model. Let's first fit the NMF to perform signatures deconvolution. 
-```{r}
+```{r eval=FALSE}
 x = fit(counts=counts, k_list=K_list, n_steps=3000,
         reference_cat=reference_cat,
         keep_sigs=c("SBS1","SBS5"), # force fixed signatures
@@ -54,15 +61,22 @@ x = fit(counts=counts, k_list=K_list, n_steps=3000,
 ```
 
 ```{r}
-x
+x = synthetic_data$x
 ```
 
+# Visualize the inference scores
 
 You can inspect the model selection procedure.
 ```{r}
 plot_scores(x)
 ```
 
+```{r}
+plot_gradient_norms(x)
+```
+
+
+# Visualize the inferred parameters
 
 You can visualize the inferred signatures. Here, we notice that from `r nrow(COSMIC_sbs_filt)` and `r nrow(COSMIC_dbs)` SBS and DBS signatures, the model only selects `r length(get_fixed_signames(x)$SBS)` and  `r length(get_fixed_signames(x)$DBS)` signatures from the catalogue. Moreover, it also infers a denovo signature from the SBS counts.
 
@@ -70,11 +84,31 @@ You can visualize the inferred signatures. Here, we notice that from `r nrow(COS
 plot_signatures(x)
 ```
 
-We can notice from the signatures plots a clear similarity 
 
-```{r}
+# Post fit heuristics and clustering
+
+We can notice from the signatures plots a clear similarity between certain signatures. 
+We can compute a linear combination on de novo signatures to remove those similar to reference ones.
+On the refined set of signatures we can run the model to perform clustering of samples based on exposures.
+
+```{r eval=FALSE}
 x_refined = refine_denovo_signatures(x)
 x_refined_cluster = fit_clustering(x_refined, cluster=3)
 ```
+```{r}
+x_refined_cluster = synthetic_data$x_refined_cluster
+```
 
+
+# Visualise clustering results 
+
+
+```{r}
+plot_signatures(x_refined_cluster)
+```
+
+
+```{r}
+plot_centroids(x_refined_cluster)
+```
 

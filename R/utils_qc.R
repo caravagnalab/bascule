@@ -1,5 +1,14 @@
 # Convert signatures names based on external object or catalogue #####
 
+#' Function to map de novo signatures to input catalogues
+#'
+#' @param x Object of class "bascule_obj"
+#' @param x.simul Another object of class "bascule_obj". If present, `x` de novo signatures will be mapped to `x_simul` ones
+#' @param reference_cat List of reference catalogues. If not `NULL`, `x` de novo signatures will be mapped to these catalogues.
+#' @param cutoff Threshold for the cosine similarity.
+#'
+#' @return Modified version of `x` with the mapped de novo names renamed.
+#' @export convert_dn_names
 convert_dn_names = function(x, x.simul=NULL, reference_cat=NULL, cutoff=0.8) {
   if (is.null(x.simul) & is.null(reference_cat)) {
     cli::cli_alert_warning("No signatures as input. Returning the original object.")

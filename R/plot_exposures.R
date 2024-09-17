@@ -13,7 +13,7 @@
 #' @param signatures_list add
 #'
 #' @return ggplot object.
-#' @export
+#' @export plot_exposures
 plot_exposures = function(x,
                           types=get_types(x),
                           samples=get_samples(x),
@@ -91,6 +91,20 @@ match_type = function(types, sigs) {
 }
 
 
+#' Plot clustering centroids
+#'
+#' @param x bascule object.
+#' @param types List of variant types to visualize.
+#' @param clusters List of clusters to visualize.
+#' @param cls Custom color palette for signatures.
+#' @param sort_by Signature to sort patients' exposures by.
+#' @param exposure_thr Only signatures with exposures greater than `exposure_thr` in all samples will be highlighted.
+#' @param quantile_thr add
+#' @param signatures_list add
+#' @param ... Additional arguments
+#'
+#' @return ggplot object.
+#' @export plot_centroids
 plot_centroids = function(x,
                           types = get_types(x),
                           clusters=get_cluster_labels(x),

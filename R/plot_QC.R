@@ -1,3 +1,12 @@
+#' Plot posterior probabilities
+#'
+#' Plot the posterior probabilities over the assignments.
+#'
+#' @param x bascule object
+#' @param samples List of samples to visualise.
+#'
+#' @return pheatmap object
+#' @export plot_posterior_probs
 plot_posterior_probs = function(x, samples=get_samples(x)) {
   if (!have_groups(x)) return(NULL)
 
@@ -6,7 +15,15 @@ plot_posterior_probs = function(x, samples=get_samples(x)) {
 }
 
 
-
+#' Plot parameters gradients norms
+#'
+#' Visualise the norms of the parameters gradients computed during the inference.
+#'
+#' @param x bascule object.
+#' @param types List of types to visualise gradient norms for.
+#'
+#' @return patchwork object
+#' @export plot_gradient_norms
 plot_gradient_norms = function(x, types=get_types(x)) {
   norms = get_gradient_norms(x, types=types)
 
@@ -46,13 +63,17 @@ plot_gradient_norms = function(x, types=get_types(x)) {
 #' @param remove_outliers Logical. If `TRUE`, outliers in each score will be removed.
 #'
 #' @return ggplot2 object.
-#' @export
+#' @export plot_scores
 plot_scores = function(x, types=get_types(x), remove_outliers=FALSE) {
+  best_scores = get_best_scores(x, types=types)
+
   scores = get_scores(x) %>%
-    dplyr::group_by(score_id, parname, type) %>%
-    dplyr::mutate(is.min=score==min(score),
-                  label=replace(is.min, is.min==T, "Best fit"),
-                  label=replace(label, label==F | score_id=="likelihood", NA))
+    dplyr::select(-value) %>% unique() %>%
+
+    dplyr::right_join(get_best_scores(x, types=types) %>% dplyr::select(-score)) %>%
+
+    dplyr::group_by(parname, type, score_id) %>%
+    dplyr::mutate(label=replace(NA, score==min(score) & score_id=="bic", "Best fit"))
 
   if (remove_outliers)
     scores = scores %>%
@@ -64,29 +85,33 @@ plot_scores = function(x, types=get_types(x), remove_outliers=FALSE) {
     dplyr::filter(parname == "K") %>%
     dplyr::filter(type %in% types) %>%
     ggplot(aes(x=as.integer(value_fit), y=score)) +
-    geom_point(aes(color=factor(seed)), shape=16, size=3) +
-    geom_line(aes(color=factor(seed)), linetype="solid") +
+    # geom_point(aes(color=factor(seed)), shape=16, size=3) +
+    # geom_line(aes(color=factor(seed)), linetype="solid") +
 
+    geom_point(shape=16, size=3) +
+    geom_line() +
     ggrepel::geom_label_repel(aes(label=label), box.padding=0.05, size=3,
                              na.rm=T, show.legend=F) +
     ggh4x::facet_nested_wrap(type ~ score_id, scales="free", nrow=length(types)) +
     theme_bw() + labs(title="Scores") + xlab("K") + ylab("Scores NMF") +
-    guides(color=guide_legend(title="Seed")) +
-    scale_x_continuous(breaks=scores %>% dplyr::filter(parname == "K") %>% dplyr::pull(value) %>% unique())
+    # guides(color=guide_legend(title="Seed")) +
+    scale_x_continuous(breaks=scores %>% dplyr::filter(parname == "K") %>% dplyr::pull(value_fit) %>% unique())
 
   if (!have_groups(x)) return(scores_nmf)
 
   scores_clst = scores %>%
     dplyr::filter(parname == "G") %>%
     ggplot(aes(x=as.integer(value_fit), y=score)) +
-    geom_point(aes(color=factor(seed)), size=3) +
-    geom_line(aes(color=factor(seed))) +
+    # geom_point(aes(color=factor(seed)), size=3) +
+    # geom_line(aes(color=factor(seed))) +
+    geom_point(shape=16, size=3) +
+    geom_line() +
     ggrepel::geom_label_repel(aes(label=label), box.padding=0.05, size=3, na.rm=T) +
     ggh4x::facet_nested_wrap(~ score_id, scales="free", nrow=1) +
     theme_bw() + labs(title="Scores") + xlab("G") + ylab("Scores clustering") +
     guides(color=guide_legend(title="Seed")) +
     # scale_y_continuous(labels=function(x) scales::scientific(x, digits=1)) +
-    scale_x_continuous(breaks=scores %>% dplyr::filter(parname == "G") %>% dplyr::pull(value) %>% unique())
+    scale_x_continuous(breaks=scores %>% dplyr::filter(parname == "G") %>% dplyr::pull(value_fit) %>% unique())
 
   design = paste0(rep("A",length(types)), collapse="\n") %>% paste0("\nB")
   patchwork::wrap_plots(scores_nmf, scores_clst, design=design)
@@ -117,19 +142,6 @@ plot_likelihoods = function(x) {
     theme_bw() + xlab("Iterations") + ylab("Log-likelihood") +
     labs(title="Log-likelihood")
 }
-
-
-# plot_penalty = function(x) {
-#   penalty = get_penalty(x)
-#   if (is.null(penalty)) return(NULL)
-#
-#   penalty %>%
-#     ggplot() +
-#     geom_line(aes(x=iteration, y=penalty)) +
-#     facet_grid(what ~ type, scales="free") +
-#     theme_bw() + xlab("Iterations") + ylab("Penalty") +
-#     labs(title="Penalty")
-# }
 
 
 plot_QC = function(x) {

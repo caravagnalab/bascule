@@ -40,6 +40,9 @@ get_gradient_norms = function(x, types=get_types(x)) {
                        reshape2::melt(id="step", variable.name="parameter", value.name="value") %>%
                        dplyr::mutate(type=tid)) %>%
     do.call(rbind, .)
+
+  if (is.null(qcs_clustering)) return(norms_nmf)
+
   norms_clustering = (qcs_clustering %>%
     dplyr::filter(stat==!!vname) %>%
     dplyr::pull(value))[[1]] %>%
@@ -49,6 +52,22 @@ get_gradient_norms = function(x, types=get_types(x)) {
     dplyr::mutate(type="Clustering")
 
   return(rbind(norms_nmf, norms_clustering))
+}
+
+
+get_best_scores = function(x, types=get_types(x)) {
+  get_scores(x) %>%
+    dplyr::select(-value) %>% unique() %>%
+
+    dplyr::filter(score_id=="bic", parname=="K" & type%in%types | parname=="G") %>%
+    dplyr::select(-score_id) %>%
+
+    dplyr::group_by(type, value_fit, parname) %>%
+    dplyr::mutate(min_score=min(score)) %>%
+    dplyr::filter(score==min_score) %>%
+
+    dplyr::ungroup() %>%
+    dplyr::select(-min_score)
 }
 
 

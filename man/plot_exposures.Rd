@@ -14,7 +14,8 @@ plot_exposures(
   add_centroid = FALSE,
   sort_by = NULL,
   exposure_thr = 0,
-  quantile_thr = 0
+  quantile_thr = 0,
+  signatures_list = get_signames(x)
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ plot_exposures(
 \item{exposure_thr}{Only signatures with exposures greater than `exposure_thr` in all samples will be highlighted.}
 
 \item{quantile_thr}{add}
+
+\item{signatures_list}{add}
 }
 \value{
 ggplot object.

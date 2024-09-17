@@ -5,7 +5,7 @@
 \alias{COSMIC_dbs}
 \title{COSMIC catalogue for DBS (version 3.4, GRCh37)}
 \format{
-add
+An object of class \code{data.frame} with 20 rows and 78 columns.
 }
 \usage{
 data(COSMIC_dbs)

@@ -7,7 +7,7 @@
 #' @param signames List of signatures to visualize.
 #'
 #' @return ggplot object.
-#' @export
+#' @export plot_signatures
 plot_signatures = function(x, types=get_types(x), context=T, cls=NULL,
                            signames=get_signames(x)) {
 

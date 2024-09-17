@@ -134,15 +134,15 @@ plot_similarity_reference = function(x, reference=NULL, type="SBS", similarity_c
 
 
 # if by_context is TRUE, it computes the cosine similarity by substitution type
-cosine.matrix <- function(a, b, substitutions=NULL) {
+cosine.matrix = function(a, b, substitutions=NULL) {
   # a and b are data.frame
 
-  df <- data.frame(matrix(0, nrow(a), nrow(b)))
-  rownames(df) <- rownames(a)
-  colnames(df) <- rownames(b)
+  df = data.frame(matrix(0, nrow(a), nrow(b)))
+  rownames(df) = rownames(a)
+  colnames(df) = rownames(b)
 
   cmp = nrow(a) * nrow(b)
-  pb <- progress::progress_bar$new(
+  pb = progress::progress_bar$new(
     format = paste0("  Cosine similarity (n = ", cmp, ") [:bar] :percent eta: :eta"),
     total = cmp,
     clear = FALSE,
@@ -151,13 +151,13 @@ cosine.matrix <- function(a, b, substitutions=NULL) {
 
 
   for (i in 1:nrow(a)) {
-    denovo <- a[i, ]
+    denovo = a[i, ]
     for (j in 1:nrow(b)) {
-      ref <- b[j, ]
+      ref = b[j, ]
       pb$tick()
 
-      score <- cosine.vector(denovo, ref, substitutions)
-      df[i,j] <- score
+      score = cosine.vector(denovo, ref, substitutions)
+      df[i,j] = score
     }
   }
 
@@ -167,7 +167,7 @@ cosine.matrix <- function(a, b, substitutions=NULL) {
 
 
 
-cosine.vector <- function(a, b, substitutions = NULL) {
+cosine.vector = function(a, b, substitutions = NULL) {
 
   if (is.matrix(a) && nrow(a)>1) a = t(a)
   if (is.matrix(b) && nrow(b)>1) b = t(b)
@@ -177,8 +177,8 @@ cosine.vector <- function(a, b, substitutions = NULL) {
       a = a[names(b)]
     }
 
-    numerator <- sum(a * b)
-    denominator <- sqrt(sum(a^2)) * sqrt(sum(b^2))
+    numerator = sum(a * b)
+    denominator = sqrt(sum(a^2)) * sqrt(sum(b^2))
     return(numerator / denominator)
   }
 

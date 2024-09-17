@@ -10,8 +10,7 @@
 #' @param cutoff Minimum value of similarity to merge two clusters.
 #'
 #' @return bascule object.
-#' @export
-
+#' @export merge_clusters
 merge_clusters = function(x, cutoff=0.8) {
   if (!have_groups(x)) return(x)
 

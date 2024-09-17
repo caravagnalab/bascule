@@ -37,8 +37,8 @@ gen_palette = function(x=NULL, types=get_types(x), n=NULL) {
 
 
 COSMIC_color_palette = function(seed=55) {
-  catalogues = list(COSMIC_sbs_filt, COSMIC_filt_merged,
-                    COSMIC_dbs, COSMIC_cn, COSMIC_indels, COSMIC_sbs)
+  catalogues = list(COSMIC_sbs_filt, COSMIC_dbs, COSMIC_cn,
+                    COSMIC_indels, COSMIC_sbs)
   sigs = sapply(catalogues, rownames) %>% unlist() %>% unique()
   set.seed(seed)
   return(Polychrome::createPalette(length(sigs), c("#6B8E23","#4169E1"), M=1000,

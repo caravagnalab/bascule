@@ -1,0 +1,89 @@
+---
+title: "Fit on real data"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Fit on real data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r}
+library(bascule)
+```
+
+
+```{r setup, eval=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+configure_environment(envname="bascule-env", use_default=TRUE)
+py = reticulate::import("pybascule")
+```
+
+# Fit the model
+
+```{r}
+data("breast_data")
+x = breast_data$x
+```
+
+
+```{r eval=FALSE}
+counts = get_input(breast_data$x, matrix=TRUE, reconstructed=FALSE)
+x_pre_refinement = fit(
+  counts=breast_data$counts,
+  k_list=0:25,
+  cluster=15,
+  reference_cat=breast_data$reference_cat,
+  n_steps=3000, lr=0.005,
+  seed_list=c(19,255,18321,331),
+  hyperparameters=list("penalty_scale"=0, "alpha_conc"=alpha_conc),
+  store_fits=TRUE,
+  py=py, 
+  CUDA=TRUE, 
+  autoguide=TRUE
+  )
+```
+
+
+# Refine the signatures
+Here, we are trying to eliminate all de novo signatures that are explainable with linear combination of the other signatures.
+
+```{r eval=FALSE}
+x_refined = refine_denovo_signatures(x_pre_refinement)
+```
+
+# Re-Clustering
+we perform the clustering step, using the new set of signatures.
+
+```{r eval=FALSE}
+x = fit_clustering(
+  x_pre_refinement,
+  cluster=15,
+  seed_list=c(19,255,18321,331),
+  hyperparameters=list("penalty_scale"=0, "alpha_conc"=alpha_conc),
+  store_fits=TRUE,
+  py=py, 
+  CUDA=TRUE, 
+  autoguide=TRUE
+)
+x = x %>% merge_clusters()
+```
+
+
+# Visualization
+
+```{r}
+plot_signatures(x)
+
+plot_exposures(x)
+
+plot_centroids(x)
+```
+
+

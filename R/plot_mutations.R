@@ -8,7 +8,7 @@
 #' @param color_by_sigs Logical. If `TRUE`, each context will report the number of mutations split by signature.
 #'
 #' @return ggplot object.
-#' @export
+#' @export plot_data
 plot_data = function(x, types=get_types(x), samples=get_samples(x),
                      clusters=get_cluster_labels(x), reconstructed=TRUE,
                      color_by_sigs=FALSE) {
