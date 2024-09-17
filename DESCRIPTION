@@ -50,7 +50,8 @@ Imports:
     Polychrome,
     ggrepel,
     ggsci,
-    lsa
+    lsa,
+    gtools
 RoxygenNote: 7.3.1
 URL: https://github.com/caravagnalab/bascule,
     https://caravagnalab.github.io/bascule/
