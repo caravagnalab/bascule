@@ -19,7 +19,7 @@
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/example-run.html">Example Run (Real Data)</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/Fit_breast_data.html">Fit on real data</a></li>
     <li><a class="dropdown-item" href="../articles/Inference.html">Inference</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -63,6 +63,12 @@
 
         </dt>
         <dd>De novo signatures refinement.</dd>
+      </dl><dl><dt>
+
+          <code><a href="merge_clusters.html">merge_clusters()</a></code>
+
+        </dt>
+        <dd>Function to merge similar clusters</dd>
       </dl></div><div class="section level2">
       <h2 id="getters">Getters<a class="anchor" aria-label="anchor" href="#getters"></a></h2>
 
@@ -98,6 +104,36 @@
 
         </dt>
         <dd>Get denovo signatures names</dd>
+      </dl><dl><dt>
+
+          <code><a href="get_signatures.html">get_signatures()</a></code>
+
+        </dt>
+        <dd>Get signatures</dd>
+      </dl><dl><dt>
+
+          <code><a href="get_fixed_signatures.html">get_fixed_signatures()</a></code>
+
+        </dt>
+        <dd>Get fixed (reference) signatures</dd>
+      </dl><dl><dt>
+
+          <code><a href="get_denovo_signatures.html">get_denovo_signatures()</a></code>
+
+        </dt>
+        <dd>Get de novo (reference) signatures</dd>
+      </dl><dl><dt>
+
+          <code><a href="get_exposure.html">get_exposure()</a></code>
+
+        </dt>
+        <dd>Get exposures</dd>
+      </dl><dl><dt>
+
+          <code><a href="convert_dn_names.html">convert_dn_names()</a></code>
+
+        </dt>
+        <dd>Function to map de novo signatures to input catalogues</dd>
       </dl></div><div class="section level2">
       <h2 id="plotting-functions">Plotting functions<a class="anchor" aria-label="anchor" href="#plotting-functions"></a></h2>
 
@@ -129,10 +165,10 @@
         <dd>Function to visualize the estimated exposures</dd>
       </dl><dl><dt>
 
-          <code><a href="merge_clusters.html">merge_clusters()</a></code>
+          <code><a href="plot_centroids.html">plot_centroids()</a></code>
 
         </dt>
-        <dd>Function to merge similar clusters</dd>
+        <dd>Plot clustering centroids</dd>
       </dl><dl><dt>
 
           <code><a href="plot_fit.html">plot_fit()</a></code>
@@ -151,6 +187,18 @@
 
         </dt>
         <dd>Plot model selection scores</dd>
+      </dl><dl><dt>
+
+          <code><a href="plot_gradient_norms.html">plot_gradient_norms()</a></code>
+
+        </dt>
+        <dd>Plot parameters gradients norms</dd>
+      </dl><dl><dt>
+
+          <code><a href="plot_posterior_probs.html">plot_posterior_probs()</a></code>
+
+        </dt>
+        <dd>Plot posterior probabilities</dd>
       </dl></div><div class="section level2">
       <h2 id="s-objects">S3 objects<a class="anchor" aria-label="anchor" href="#s-objects"></a></h2>
 
@@ -205,22 +253,40 @@
         <dd>COSMIC catalogue for DBS (version 3.4, GRCh37)</dd>
       </dl><dl><dt>
 
-          <code><a href="COSMIC_filt_merged.html">COSMIC_filt_merged</a></code>
+          <code><a href="COSMIC_indels.html">COSMIC_indels</a></code>
 
         </dt>
-        <dd>COSMIC catalogue (version XXXX)</dd>
+        <dd>COSMIC catalogue for Indels (version 3.4, GRCh37)</dd>
       </dl><dl><dt>
 
-          <code><a href="Degasperi_SBS_GEL_PCAWG_HW.html">Degasperi_SBS_GEL_PCAWG_HW</a></code>
+          <code><a href="COSMIC_cn.html">COSMIC_cn</a></code>
 
         </dt>
-        <dd>SBS data for PMID: 35949260</dd>
+        <dd>COSMIC catalogue for CN (version 3.4, GRCh37)</dd>
       </dl><dl><dt>
 
-          <code><a href="Degasperi_catalogue.html">Degasperi_catalogue</a></code>
+          <code><a href="Degasperi_SBS.html">Degasperi_SBS</a></code>
 
         </dt>
-        <dd>Degasperi catalogue (version XXXX)</dd>
+        <dd>Degasperi SBS catalogue</dd>
+      </dl><dl><dt>
+
+          <code><a href="Degasperi_DBS.html">Degasperi_DBS</a></code>
+
+        </dt>
+        <dd>Degasperi DBS catalogue</dd>
+      </dl><dl><dt>
+
+          <code><a href="synthetic_data.html">synthetic_data</a></code>
+
+        </dt>
+        <dd>Analysis of a synthetic cohort</dd>
+      </dl><dl><dt>
+
+          <code><a href="breast_data.html">breast_data</a></code>
+
+        </dt>
+        <dd>Analysis of breast tumours</dd>
       </dl></div><div class="section level2">
       <h2 id="configure-conda-environment">Configure conda environment<a class="anchor" aria-label="anchor" href="#configure-conda-environment"></a></h2>
 
