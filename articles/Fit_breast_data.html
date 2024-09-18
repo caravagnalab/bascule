@@ -65,7 +65,7 @@
     
     
 <div class="section level2">
-<h2 id="package-setup">Package Setup<a class="anchor" aria-label="anchor" href="#package-setup"></a>
+<h2 id="package-setup">Package setup<a class="anchor" aria-label="anchor" href="#package-setup"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/caravagnalab/bascule" class="external-link">bascule</a></span><span class="op">)</span></span>
@@ -76,7 +76,7 @@
 <span><span class="va">py</span> <span class="op">=</span> <span class="fu">reticulate</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/reticulate/reference/import.html" class="external-link">import</a></span><span class="op">(</span><span class="st">"pybascule"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="model-fitting">Model Fitting<a class="anchor" aria-label="anchor" href="#model-fitting"></a>
+<h2 id="fit-the-model">Fit the model<a class="anchor" aria-label="anchor" href="#fit-the-model"></a>
 </h2>
 <p>Here, we load the breast tumor type fit object
 (<code>breast_data</code>) from the bascule package, and retrieve the
@@ -103,7 +103,7 @@ input data (<code>counts</code>) from the loaded fit object.</p>
 <span>  <span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="signature-refinement">Signature Refinement<a class="anchor" aria-label="anchor" href="#signature-refinement"></a>
+<h2 id="de-novo-signatures-refinement">De novo signatures refinement<a class="anchor" aria-label="anchor" href="#de-novo-signatures-refinement"></a>
 </h2>
 <p>Here, we eliminate all inferred de novo signatures that are
 explainable with linear combination of the other signatures.</p>
@@ -111,7 +111,7 @@ explainable with linear combination of the other signatures.</p>
 <code class="sourceCode R"><span><span class="va">x_refined</span> <span class="op">=</span> <span class="fu"><a href="../reference/refine_denovo_signatures.html">refine_denovo_signatures</a></span><span class="op">(</span><span class="va">x_pre_refinement</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="patients-re-clustering">Patients Re-Clustering<a class="anchor" aria-label="anchor" href="#patients-re-clustering"></a>
+<h2 id="patients-clustering">Patients clustering<a class="anchor" aria-label="anchor" href="#patients-clustering"></a>
 </h2>
 <p>We redo the clustering step (if applicable), using the new set of the
 signatures and updated exposure matrix.</p>
@@ -129,17 +129,17 @@ signatures and updated exposure matrix.</p>
 <span><span class="va">x</span> <span class="op">=</span> <span class="va">x</span> <span class="op">%&gt;%</span> <span class="fu"><a href="../reference/merge_clusters.html">merge_clusters</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="output-visualization">Output Visualization<a class="anchor" aria-label="anchor" href="#output-visualization"></a>
+<h2 id="visualisation-of-the-results">Visualisation of the results<a class="anchor" aria-label="anchor" href="#visualisation-of-the-results"></a>
 </h2>
-</div>
-<div class="section level2">
-<h2 id="mutational-signatures-visualization">Mutational Signatures Visualization<a class="anchor" aria-label="anchor" href="#mutational-signatures-visualization"></a>
-</h2>
+<div class="section level3">
+<h3 id="mutational-signatures">Mutational signatures<a class="anchor" aria-label="anchor" href="#mutational-signatures"></a>
+</h3>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_signatures.html">plot_signatures</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></code></pre></div>
 <p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-7-1.png" width="700"></p>
+</div>
 <div class="section level3">
-<h3 id="exposure-matrix-visualization">Exposure Matrix Visualization<a class="anchor" aria-label="anchor" href="#exposure-matrix-visualization"></a>
+<h3 id="exposures-matrix">Exposures matrix<a class="anchor" aria-label="anchor" href="#exposures-matrix"></a>
 </h3>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
@@ -152,7 +152,7 @@ signatures and updated exposure matrix.</p>
 <p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
 </div>
 <div class="section level3">
-<h3 id="clusters-centroids-visualization">Clusters Centroids Visualization<a class="anchor" aria-label="anchor" href="#clusters-centroids-visualization"></a>
+<h3 id="clusters-centroids">Clusters centroids<a class="anchor" aria-label="anchor" href="#clusters-centroids"></a>
 </h3>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_centroids.html">plot_centroids</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
