@@ -44,7 +44,7 @@ We use as reference the COSMIC catalogue for SBS and DBS.
 reference_cat = list("SBS"=COSMIC_sbs_filt, "DBS"=COSMIC_dbs)
 ```
 
-In the example dataset, the true number of signatures is five for both SBS and DBS, thus we can provide as list of K to test values from 0 to 7.
+In the example dataset, the true number of signatures (reference plus de novo) is 5 for both SBS and DBS, thus we can provide as list of K de novo signatures to test values from 0 to 7.
 
 ```{r}
 K_list = 0:7
@@ -57,7 +57,8 @@ Now, we can fit the model. Let's first fit the NMF to perform signatures deconvo
 x = fit(counts=counts, k_list=K_list, n_steps=3000,
         reference_cat=reference_cat,
         keep_sigs=c("SBS1","SBS5"), # force fixed signatures
-        store_fits=TRUE, py=py)
+        store_fits=TRUE, 
+        py=py)
 ```
 
 ```{r}
@@ -66,10 +67,13 @@ x = synthetic_data$x
 
 # Visualize the inference scores
 
-You can inspect the model selection procedure.
-```{r}
+You can inspect the model selection procedure. The plot shows for each tested value of K (i.e., number of de novo signatures), the value of the BIC and likelihood of the respective model. In our implementation, the model with lowest BIC is considered as the best model.
+
+```{r message=FALSE, warning=FALSE}
 plot_scores(x)
 ```
+
+Another variable of interest is the evolution over the iterations of the norms of the gradients for each inferred parameter. A good result, as shown below, is when the norms decreases with inference, reporting an increased stability. 
 
 ```{r}
 plot_gradient_norms(x)
@@ -80,14 +84,14 @@ plot_gradient_norms(x)
 
 You can visualize the inferred signatures. Here, we notice that from `r nrow(COSMIC_sbs_filt)` and `r nrow(COSMIC_dbs)` SBS and DBS signatures, the model only selects `r length(get_fixed_signames(x)$SBS)` and  `r length(get_fixed_signames(x)$DBS)` signatures from the catalogue. Moreover, it also infers a denovo signature from the SBS counts.
 
-```{r}
+```{r fig.height=10, fig.width=12, message=FALSE, warning=FALSE}
 plot_signatures(x)
 ```
 
 
 # Post fit heuristics and clustering
 
-We can notice from the signatures plots a clear similarity between certain signatures. 
+We can notice from the signatures plots a clear similarity between signature SBSD1 and SBS31. 
 We can compute a linear combination on de novo signatures to remove those similar to reference ones.
 On the refined set of signatures we can run the model to perform clustering of samples based on exposures.
 
@@ -95,25 +99,46 @@ On the refined set of signatures we can run the model to perform clustering of s
 x_refined = refine_denovo_signatures(x)
 x_refined_cluster = fit_clustering(x_refined, cluster=3)
 ```
+
 ```{r}
 x_refined_cluster = synthetic_data$x_refined_cluster
 ```
 
 
-# Visualise clustering results 
+# Visualisation of the results
 
+## Mutational signatures
 
-```{r}
+The post-fit de novo signatures refinement discarded signature SBSD1, since it showed high similarity with reference signature SBS31.
+
+```{r fig.height=10, fig.width=12, message=FALSE, warning=FALSE}
 plot_signatures(x_refined_cluster)
 ```
 
 
-```{r}
-plot_centroids(x_refined_cluster)
-```
+## Exposures matrix
 
-```{r}
+We can visualise the exposures for each patient divided by final group assignment.
+In this case, BASCULE retrieved 3 groups. Each cluster is characterised by a set of SBS and DBS. For instance, group G0 is the largest one and is characterised by signatures DBS1, DBS11 and DBS3, and SBS1, SBS5 and SBS31.
+
+```{r fig.height=6, fig.width=12, message=FALSE, warning=FALSE}
 plot_exposures(x_refined_cluster)
 ```
 
+
+## Clustering centroids
+
+We can also inspect the inferred clustering centroids, reporting for each cluster an average of the group-specific signatures exposures.
+
+```{r fig.height=6, fig.width=6, message=FALSE, warning=FALSE}
+plot_centroids(x_refined_cluster)
+```
+
+## Posterior probabilities
+
+We can finally visualise the posterior probabilities for each sample's assignment. Each row (samples) of this heatmap sums to 1 and reports the posterior probabilities for each sample to be assigned to each cluster (columns).
+
+```{r fig.height=8, fig.width=8, message=FALSE, warning=FALSE}
+plot_posterior_probs(x_refined_cluster)
+```
 
