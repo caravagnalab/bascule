@@ -115,9 +115,9 @@ computed as the matrix multiplication of exposures and signatures.</p>
 <p>We use as reference the COSMIC catalogue for SBS and DBS.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">reference_cat</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"SBS"</span><span class="op">=</span><span class="va">COSMIC_sbs_filt</span>, <span class="st">"DBS"</span><span class="op">=</span><span class="va">COSMIC_dbs</span><span class="op">)</span></span></code></pre></div>
-<p>In the example dataset, the true number of signatures is five for
-both SBS and DBS, thus we can provide as list of K to test values from 0
-to 7.</p>
+<p>In the example dataset, the true number of signatures (reference plus
+de novo) is 5 for both SBS and DBS, thus we can provide as list of K de
+novo signatures to test values from 0 to 7.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">K_list</span> <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">7</span></span></code></pre></div>
 </div>
@@ -130,18 +130,26 @@ signatures deconvolution.</p>
 <code class="sourceCode R"><span><span class="va">x</span> <span class="op">=</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span>counts<span class="op">=</span><span class="va">counts</span>, k_list<span class="op">=</span><span class="va">K_list</span>, n_steps<span class="op">=</span><span class="fl">3000</span>,</span>
 <span>        reference_cat<span class="op">=</span><span class="va">reference_cat</span>,</span>
 <span>        keep_sigs<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"SBS1"</span>,<span class="st">"SBS5"</span><span class="op">)</span>, <span class="co"># force fixed signatures</span></span>
-<span>        store_fits<span class="op">=</span><span class="cn">TRUE</span>, py<span class="op">=</span><span class="va">py</span><span class="op">)</span></span></code></pre></div>
+<span>        store_fits<span class="op">=</span><span class="cn">TRUE</span>, </span>
+<span>        py<span class="op">=</span><span class="va">py</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">x</span> <span class="op">=</span> <span class="va">synthetic_data</span><span class="op">$</span><span class="va">x</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="visualize-the-inference-scores">Visualize the inference scores<a class="anchor" aria-label="anchor" href="#visualize-the-inference-scores"></a>
 </h2>
-<p>You can inspect the model selection procedure.</p>
+<p>You can inspect the model selection procedure. The plot shows for
+each tested value of K (i.e., number of de novo signatures), the value
+of the BIC and likelihood of the respective model. In our
+implementation, the model with lowest BIC is considered as the best
+model.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_scores.html">plot_scores</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Joining with `by = join_by(parname, value_fit, seed, type)`</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_scores.html">plot_scores</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></code></pre></div>
 <p><img src="Inference_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
+<p>Another variable of interest is the evolution over the iterations of
+the norms of the gradients for each inferred parameter. A good result,
+as shown below, is when the norms decreases with inference, reporting an
+increased stability.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_gradient_norms.html">plot_gradient_norms</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></code></pre></div>
 <p><img src="Inference_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
@@ -155,16 +163,16 @@ signatures from the catalogue. Moreover, it also infers a denovo
 signature from the SBS counts.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_signatures.html">plot_signatures</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Inference_files/figure-html/unnamed-chunk-11-1.png" width="700"></p>
+<p><img src="Inference_files/figure-html/unnamed-chunk-11-1.png" width="1152"></p>
 </div>
 <div class="section level2">
 <h2 id="post-fit-heuristics-and-clustering">Post fit heuristics and clustering<a class="anchor" aria-label="anchor" href="#post-fit-heuristics-and-clustering"></a>
 </h2>
 <p>We can notice from the signatures plots a clear similarity between
-certain signatures. We can compute a linear combination on de novo
-signatures to remove those similar to reference ones. On the refined set
-of signatures we can run the model to perform clustering of samples
-based on exposures.</p>
+signature SBSD1 and SBS31. We can compute a linear combination on de
+novo signatures to remove those similar to reference ones. On the
+refined set of signatures we can run the model to perform clustering of
+samples based on exposures.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">x_refined</span> <span class="op">=</span> <span class="fu"><a href="../reference/refine_denovo_signatures.html">refine_denovo_signatures</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="va">x_refined_cluster</span> <span class="op">=</span> <span class="fu"><a href="../reference/fit_clustering.html">fit_clustering</a></span><span class="op">(</span><span class="va">x_refined</span>, cluster<span class="op">=</span><span class="fl">3</span><span class="op">)</span></span></code></pre></div>
@@ -172,29 +180,49 @@ based on exposures.</p>
 <code class="sourceCode R"><span><span class="va">x_refined_cluster</span> <span class="op">=</span> <span class="va">synthetic_data</span><span class="op">$</span><span class="va">x_refined_cluster</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="visualise-clustering-results">Visualise clustering results<a class="anchor" aria-label="anchor" href="#visualise-clustering-results"></a>
+<h2 id="visualisation-of-the-results">Visualisation of the results<a class="anchor" aria-label="anchor" href="#visualisation-of-the-results"></a>
 </h2>
+<div class="section level3">
+<h3 id="mutational-signatures">Mutational signatures<a class="anchor" aria-label="anchor" href="#mutational-signatures"></a>
+</h3>
+<p>The post-fit de novo signatures refinement discarded signature SBSD1,
+since it showed high similarity with reference signature SBS31.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_signatures.html">plot_signatures</a></span><span class="op">(</span><span class="va">x_refined_cluster</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Inference_files/figure-html/unnamed-chunk-14-1.png" width="700"></p>
+<p><img src="Inference_files/figure-html/unnamed-chunk-14-1.png" width="1152"></p>
+</div>
+<div class="section level3">
+<h3 id="exposures-matrix">Exposures matrix<a class="anchor" aria-label="anchor" href="#exposures-matrix"></a>
+</h3>
+<p>We can visualise the exposures for each patient divided by final
+group assignment. In this case, BASCULE retrieved 3 groups. Each cluster
+is characterised by a set of SBS and DBS. For instance, group G0 is the
+largest one and is characterised by signatures DBS1, DBS11 and DBS3, and
+SBS1, SBS5 and SBS31.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_centroids.html">plot_centroids</a></span><span class="op">(</span><span class="va">x_refined_cluster</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
-<span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
-<span><span class="co">#&gt; Warning: No shared levels found between `names(values)` of the manual scale and the</span></span>
-<span><span class="co">#&gt; data's <span style="color: #00BB00;">colour</span> values.</span></span></code></pre></div>
-<p><img src="Inference_files/figure-html/unnamed-chunk-15-1.png" width="700"></p>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x_refined_cluster</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Inference_files/figure-html/unnamed-chunk-15-1.png" width="1152"></p>
+</div>
+<div class="section level3">
+<h3 id="clustering-centroids">Clustering centroids<a class="anchor" aria-label="anchor" href="#clustering-centroids"></a>
+</h3>
+<p>We can also inspect the inferred clustering centroids, reporting for
+each cluster an average of the group-specific signatures exposures.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x_refined_cluster</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
-<span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
-<span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
-<span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
-<span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
-<span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
-<span><span class="co">#&gt; Warning: No shared levels found between `names(values)` of the manual scale and the</span></span>
-<span><span class="co">#&gt; data's <span style="color: #00BB00;">colour</span> values.</span></span></code></pre></div>
-<p><img src="Inference_files/figure-html/unnamed-chunk-16-1.png" width="700"></p>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_centroids.html">plot_centroids</a></span><span class="op">(</span><span class="va">x_refined_cluster</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Inference_files/figure-html/unnamed-chunk-16-1.png" width="576"></p>
+</div>
+<div class="section level3">
+<h3 id="posterior-probabilities">Posterior probabilities<a class="anchor" aria-label="anchor" href="#posterior-probabilities"></a>
+</h3>
+<p>We can finally visualise the posterior probabilities for each
+sample’s assignment. Each row (samples) of this heatmap sums to 1 and
+reports the posterior probabilities for each sample to be assigned to
+each cluster (columns).</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_posterior_probs.html">plot_posterior_probs</a></span><span class="op">(</span><span class="va">x_refined_cluster</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Inference_files/figure-html/unnamed-chunk-17-1.png" width="768"></p>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
