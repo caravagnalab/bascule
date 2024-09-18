@@ -5,13 +5,24 @@
 #' @param x bascule object
 #' @param samples List of samples to visualise.
 #'
-#' @return pheatmap object
+#' @return ggplot object
 #' @export plot_posterior_probs
 plot_posterior_probs = function(x, samples=get_samples(x)) {
   if (!have_groups(x)) return(NULL)
 
-  params = get_pyro_stat(x,what="clustering",statname="params")[[1]]$infered_params
-  return(pheatmap::pheatmap(params$post_probs[samples,], cluster_rows=T, cluster_cols=F))
+  params = get_pyro_stat(x, what="clustering", statname="params")[[1]]$infered_params
+
+  params$post_probs[samples,] %>%
+    dplyr::rename_all(.funs=function(x) paste0("G", x)) %>%
+    tibble::rownames_to_column(var="samples") %>%
+    reshape2::melt(id="samples", variable.name="clusters") %>%
+    tibble::as_tibble() %>%
+
+    ggplot() +
+    geom_tile(aes(x=clusters, y=samples, fill=value)) +
+    scale_fill_distiller(direction=1) +
+    xlab("") + ylab("Samples") +
+    theme_bw() + theme(panel.grid=element_blank())
 }
 
 
