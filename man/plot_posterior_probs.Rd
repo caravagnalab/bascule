@@ -12,7 +12,7 @@ plot_posterior_probs(x, samples = get_samples(x))
 \item{samples}{List of samples to visualise.}
 }
 \value{
-pheatmap object
+ggplot object
 }
 \description{
 Plot the posterior probabilities over the assignments.

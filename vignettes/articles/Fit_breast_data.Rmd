@@ -33,7 +33,7 @@ py = reticulate::import("pybascule")
 
 We want to analyze 2,682 breast tumour samples from the GEL, ICGC, and HMF cohorts. For this purpose We load the breast tumor type data object `breast_data` (for more details visit [here](https://caravagnalab.github.io/bascule/reference/breast_data.html)) from the bascule package, and retrieve the input data (`counts`) from it.
 
-The `counts` object contains the SBS and DBS matrices, both with 2682 rows (representing samples), and 96 and 78 columns (representing mutational contexts) respectively. The values of the matrices are number of the mutations for corresponding sample and mutational context. The counts matrix can extracted using the `get_input` function in bascule package.
+The `counts` object is a list which contains two SBS and DBS matrices (`data.frame`), both with 2682 rows (representing samples), and 96 columns for SBS context and 78 columns for DBS context (representing mutational contexts). The values of the matrices are number of the mutations for corresponding sample and mutational context. The counts matrix can extracted from bascule fit object using the `get_input` function in the package.
 
 
 ```{r}
@@ -102,7 +102,7 @@ The analysis identified 19 SBS (12 de novo) and 5 DBS (2 de novo) signatures.
 
 # De novo Signatures Refinement
 
-In this step, we aim to remove any inferred de novo signatures that can be explained as a linear combination of other signatures. This is accomplished using the `refine_denovo_signatures` function, applied to the bascule object obtained from the `fit` function.
+After performing NMF, we obtain a list of de novo signatures, but these may be mixtures of different existing signatures inferred by the model. To address this issue, we aim to eliminate any inferred de novo signatures that can be represented as a linear combination of other signatures. This is done using the `refine_denovo_signatures` function, applied to the bascule object generated from the `fit` function in the previous step
 
 ```{r eval=FALSE}
 x_refined = refine_denovo_signatures(x_pre_refinement)
@@ -128,25 +128,35 @@ x_cls = fit_clustering(
 )
 ```
 
+we proceeded with the merging step and the tool detected 14 clusters among the breast cancer samples.
 
 # Merging
 
-we use the `merge_clusters()` function to merge the similar clusters.
+we use the `merge_clusters()` function to merge the similar clusters. This function will iteratively merge clusters that result similar in the centroid. The merging will stop as soon as the cosine similarity between all pairs of clusters is below cutoff value.
 
 ```{r eval=FALSE}
 x_merged <- merge_clusters(x_cls)
 ```
 
-Following clustering step, we proceeded with the merging step. Initially, the tool detected 14 clusters among the breast cancer samples. We then applied an iterative merging function, resulting in 5 clusters, using a cutoff value of 0.8.
+As we saw in re-clustering step, the tool detected 14 clusters among the breast cancer samples. We then applied an iterative merging function, resulting in 5 clusters, using a cutoff value of 0.8.
 
 # Mapping
 
-Later, with help of `convert_dn_names` function we map the de novo signatures to known signatures from the COSMIC catalogue and the findings from Degasperi et al.
+Later, with help of `convert_dn_names` function we map the de novo signatures to known signatures from the COSMIC catalogue and the findings from Degasperi et al. If similarity between the de novo signatures and a signature from known catalogues (COSMIC, Degasperi et al.) is higher than threshold, we substitute the de novo signatures with corresponding known signatures, so we can likely take advantage of their known etiology to analyze our results.
 
 ```{r eval=FALSE}
-x <- convert_dn_names(x_merged, reference_cat = list(SBS=COSMIC_sbs_filt, DBS=COSMIC_dbs), cutoff = 0.8)
+x <- convert_dn_names(
+  x_merged, 
+  reference_cat = list(
+    SBS=COSMIC_sbs_filt, 
+    DBS=COSMIC_dbs, 
+    DEGASPERI_SBS=Degasperi_SBS, 
+    DEGASPERI_DBS=Degasperi_DBS
+  ), 
+  cutoff = 0.8)
 ```
 
+within the SBS context, 6 de novo signatures corresponded to COSMIC signatures SBS7a, SBS17b, SBS26, SBS40a, SBS90, and SBS98. Additionally, one de novo signature aligned with the common signature SBS8, and two signatures matched rare signatures SBS44 and SBS97, both from the Degasperi et al. study. In the DBS context, we mapped two de novo signatures to COSMIC signatures DBS14 and DBS20.
 
 # Visualization
 
@@ -154,57 +164,72 @@ The bascule object obtained from the previous steps is ready for visualization s
 
 ## Fitting Scores
 
-The `plot_scores` visualize the model selection steps based on the BIC score. We can investigate that k (number of de novo signatures) value with lowest BIC score has been selected in inference step.
+The `plot_scores` visualize the model selection steps. The plot display the BIC and likelihood scores of NMF run for each k value (number of de novo signatures) for both SBS and DBS context. In the plot, the `x` axis is related to k values and the `y` axis is related to scores (BIC and Likelihood). The model selects the k value with lowest BIC score in iterative inference process.
+
 
 ```{r}
 plot_scores(x)
 ```
 
+Based on the BIC score, the model with 11 de novo signatures for SBS and 2 de novo signatures for DBS provides the best fit compared to all other models.
+
 
 ## Mutational Signatures
 
-We utilize the `plot_signatures` function to visualize the mutational signatures. The `types` and `signames` arguments allow us to specify the context type and the list of signatures to plot. The `get_denovo_signames` function is used to obtain the list of de novo signature names.
+We utilize the `plot_signatures` function to visualize the mutational signatures inferred by the model. The `types` and `signames` arguments allow us to specify the context type and the list of signatures to plot. The `get_denovo_signames` function is used to obtain the list of de novo signature names. Each plot consist of multiple signatures plot with their name on the right hand side.
 
 ```{r warning=TRUE}
 plot_signatures(x, types = "SBS", signames = get_denovo_signames(x))
+```
 
+The plot above shows 11 de novo signatures inferred by the tool in SBS context. The `x` axis shows the 96 possible SBS contexts and the `y` axis declare their respective density.
+
+```{r}
 plot_signatures(x, types = "DBS", signames = get_denovo_signames(x))
 ```
+
+The plot above shows 2 de novo signatures inferred by the tool in DBS context. The `x` axis shows the 78 possible DBS contexts and the `y` axis declare their respective density.
 
 
 ## Similarity Plot
 
-Function `plot_similarity_reference` plots the similarity between de novo and COSMIC signatures.
+Function `plot_similarity_reference` plots the similarity between de novo and COSMIC signatures based on cosine similarity values.
 
 ```{r}
 plot_similarity_reference(x)
 ```
 
+The heatmap plot on the left inspects the similarities between the de novo and COSMIC signatures. The rows are de novo signatures, columns are COSMIC signatures and the values are cosine similarity between the corresponding signatures. On the right you can see the signatures plot comparison of the most similar pairs in the heatmap plot. Since in the mapping step all the de novo signatures were mapped to known signatures with some threshold value (0.8 as default value), here you can see only similarity values below the mentioned threshold in mapping step for de novo signatures.
 
 ## Clusters Centroids
 
-The `plot_centroids()` function is used to plot the clustering centroids. it plots both SBS and DBS contexts here.
+The `plot_centroids()` function is used to plot the clustering centroids.
+
+Here, we visualize the clustering centroids of mutational signatures clusters. This plot provides a clear representation of how the mutational signatures are grouped based on their similarities. The `plot_centroids` function is used to generate this visualization, offering insight into the relationships and distances between different mutational signatures. By examining this plot, we can better understand the patterns and structure of the signature clustering results.
 
 ```{r warning=TRUE}
 plot_centroids(x)
 ```
 
+You can inspect the centroids for each cluster in two SBS and DBS context. the `x` axis defines the clusters, the `y` axis defines the density of signatures and the colors represent the signatures which are present in the clusters. Using the centroids we can analyze the patients clustering outcome. For detailed information we can follow the exposure plots of each cluster to find out the clustering logic and possible etiology behind it.
+
+
 ## Exposures Matrix
 
-The `plot_exposures` function is used to visualize the inferred exposure matrix. For clearer visualization, we plot the exposure matrix for each cluster separately. The `clusters` argument is used to specify which cluster to plot
+The `plot_exposures` function is used to visualize the inferred exposure matrix, where `x` axis represent samples, `y` axis represents the mutational signatures relative contributions and the colors identify the mutational signatures. The exposure matrix displays the contribution of each mutational signature across different samples. This plot provides a clear overview of how different mutational signatures contribute to the overall mutational profile across the dataset. For clearer visualization, we plot the exposure matrix for each cluster separately. The `clusters` argument is used to specify which cluster to plot.
 
 ```{r warning=TRUE}
 plot_exposures(x, clusters = c("G0"))
 ```
 
-In cluster G0 (n=272), the dominant mutational signatures (SBS2 and SBS13, and evenly DBS11, DBS13 and DBS2) are associated with APOBEC activity, linking this group to HER2 breast cancers.
+In the exposure plot for cluster G0 (n=272), the dominant mutational signatures are SBS2 and SBS13, along with DBS11, DBS13, and DBSD2 (mapped to DBS2 from COSMIC). These signatures are associated with APOBEC enzyme activity. APOBEC-driven mutational processes are frequently observed in HER2-positive breast cancers, suggesting a strong link between this cluster and HER2-driven tumorigenesis.
 
 
 ```{r}
 plot_exposures(x, clusters = c("G1"))
 ```
 
-The cluster G1 (n=2058), which is the largest among all, shows a strong presence of SBS3, SBSD11 (mapped to SBS8 from Degasperi et al.), DBS2 and DBS13. SBS3 and DBS13 are caused by homologous recombination deficiency (HRD); DBS2, instead, is linked to smoking in some cancers but is often observed also in cancers not directly linked with tobacco exposure. Based on these prevalent signatures, cluster G1 can be associated with triple-negative breast cancers.
+The cluster G1 (n=2058) exposure plot, which is the largest among all, shows a strong presence of SBS3, SBSD11 (mapped to SBS8 from Degasperi et al.), DBSD2 (mapped to DBS2 from COSMIC) and DBS13. SBS3 and DBS13 are caused by homologous recombination deficiency (HRD); DBS2, instead, is linked to smoking in some cancers but is often observed also in cancers not directly linked with tobacco exposure. Based on these prevalent signatures, cluster G1 can be associated with triple-negative breast cancers.
 
 Clusters G10 (n=169), G11 (n=69), and G13 (n=114) share similar SBS patterns, including exposure to SBS1, SBS2, SBS3, SBS11, and SBS13, pointing to a mix of APOBEC activity, HRD, and ageing-related mutational processes. BASCULE can differentiate these three clusters based on DBS exposure.
 
@@ -212,19 +237,19 @@ Clusters G10 (n=169), G11 (n=69), and G13 (n=114) share similar SBS patterns, in
 plot_exposures(x, clusters = c("G10"))
 ```
 
-In particular, G10 is strongly linked to DBS2 and DBS11, so it can be associated with APOBEC activity.
+Cluster G10 is notably associated with the mutational signatures DBSD2 (mapped to DBS2 from COSMIC) and DBS11. These signatures are linked to the activity of the APOBEC enzyme family. The strong link between G10 and these signatures suggests that APOBEC activity may be a driving factor behind the mutational processes in this cluster.
 
 ```{r}
 plot_exposures(x, clusters = c("G11"))
 ```
 
-The cluster G11 as the smallest cluster is primarily exposed to DBS14, a signature reported as artifactual in COSMIC. However, the presence of DBS13 in G11, suggests that this cluster is also linked to HRD.
+The cluster G11 as the smallest cluster is primarily exposed to DBSD1 (mapped to DBS14 from COSMIC), a signature reported as artifactual in COSMIC. However, the presence of DBS13 in G11, suggests that this cluster is also linked to homologous recombination deficiency (HRD).
 
 ```{r}
 plot_exposures(x, clusters = c("G13"))
 ```
 
-The cluster G13 is exposed to DBS13 and DBS20, so can be linked with HRD-related processes.
+Cluster G13 shows significant exposure to the mutational signatures DBS13 and DBS20. These particular signatures are associated with homologous recombination deficiency (HRD)-related processes. The presence of DBS13 and DBS20 in cluster G13 suggests that the samples in this group may be influenced by similar underlying genomic instability and repair deficiencies.
 
 
 
