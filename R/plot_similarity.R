@@ -10,7 +10,6 @@
 #' @param add_pheatmap Logical. If set to \code{TRUE}, the heatmap with the
 #'                     similarity values among signatures will be reported.
 #'
-#' @import ggpubr
 #' @return add
 #' @export plot_similarity_reference
 
