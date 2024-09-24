@@ -43,6 +43,10 @@ data("breast_data")
 # extract the bascule fit object for breast tumor type
 x = breast_data$x
 
+x
+```
+
+```{r}
 # retrieve the input data of the breast tumor type
 counts = get_input(x, matrix=TRUE, reconstructed=FALSE)
 
