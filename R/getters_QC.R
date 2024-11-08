@@ -98,8 +98,14 @@ get_scores = function(x, types=get_types(x)) {
         dplyr::filter(stat=="likelihood") %>% dplyr::pull(value) %>% unlist(),
       type="")
 
-  dplyr::bind_rows(scores_nmf, scores_cls) %>%
+  altern = get_alternatives(x)
+  if (is.null(altern)) p1 = data.frame()
 
+
+  ret = dplyr::bind_rows(scores_nmf, scores_cls)
+
+  if (!is.null(altern))
+    ret = ret %>%
     dplyr::bind_rows(
       get_alternatives(x) %>%
         dplyr::rowwise() %>%
@@ -118,11 +124,13 @@ get_scores = function(x, types=get_types(x)) {
         ) %>%
 
         dplyr::ungroup()
-    ) %>%
+    )
 
+
+  ret %>%
     tidyr::pivot_longer(cols=c("bic","likelihood"), values_to="score", names_to="score_id") %>%
 
-    dplyr::select(-pyro_fit) %>%
+    dplyr::select(-dplyr::contains("pyro_fit")) %>%
 
     unique()
 
