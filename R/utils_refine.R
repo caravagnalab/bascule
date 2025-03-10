@@ -207,7 +207,10 @@ solve_quadratic_optimization_aux = function(v,
 #   if matrix==FALSE --> dataframe (long format)
 
 qc_linearCombination = function(fixed, denovo, matrix=TRUE) {
-  df = data.frame(matrix(0, nrow=nrow(denovo), ncol=nrow(denovo) + nrow(fixed)))
+  nrow_fixed = 0
+  if (!is.null(fixed)) nrow_fixed = nrow(fixed)
+
+  df = data.frame(matrix(0, nrow=nrow(denovo), ncol=nrow(denovo) + nrow_fixed)) # nrow(fixed)))
   rownames(df) = rownames(denovo)
   colnames(df) = c(rownames(fixed), rownames(denovo))
 
