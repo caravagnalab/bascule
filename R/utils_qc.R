@@ -102,15 +102,17 @@ rename_object = function(x, map_names, types=get_types(x)) {
     x = set_denovo_signatures(x, sigs=dn_long, type=tid)
 
     init_params = get_nmf_initial_parameters(x, what="nmf")[[tid]]
-    x = set_nmf_init_params(x, type=tid,
-                            denovo=init_params$beta_dn_param %>%
-                              wide_to_long(what="beta") %>%
-                              dplyr::mutate(sigs=mapp[sigs]) %>%
-                              long_to_wide(what="beta"),
-                            expos=init_params$alpha %>%
-                              wide_to_long(what="exposures") %>%
-                              dplyr::mutate(sigs=mapp[sigs]) %>%
-                              long_to_wide(what="exposures"))
+    if (!is.null(init_params)) {
+      x = set_nmf_init_params(x, type=tid,
+                              denovo=init_params$beta_dn_param %>%
+                                wide_to_long(what="beta") %>%
+                                dplyr::mutate(sigs=mapp[sigs]) %>%
+                                long_to_wide(what="beta"),
+                              expos=init_params$alpha %>%
+                                wide_to_long(what="exposures") %>%
+                                dplyr::mutate(sigs=mapp[sigs]) %>%
+                                long_to_wide(what="exposures"))
+    }
   }
 
   if (have_groups(x)) {
