@@ -51,6 +51,7 @@ nmf_single_type = function(..., k_list, hyperparameters, reference_cat, cohort,
     a = rownames(reference_cat)
     b = rownames(catalogue2)
     alpha_conc = hyperparameters[["alpha_conc"]] %>% unlist()
+
     if (!is.null(alpha_conc)) hyperparameters[["alpha_conc"]] = alpha_conc[a %in% b]
   } else {
     x_ref = x_ref_filt = catalogue2 = NULL
