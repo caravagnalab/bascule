@@ -80,6 +80,10 @@ refinement_single_fit = function(x, type, pyro_fit=NULL) {
     if (nrow(denovo) == 0) break
 
     fixed = get_fixed_signatures(x, types=type, matrix=TRUE)[[type]]
+
+    if (nrow(denovo) <= 1 & is.null(fixed)) break
+    if (!is.null(fixed)) if ((nrow(denovo) + nrow(fixed)) < 2) break
+
     exposure = get_exposure(x, types=type, matrix=TRUE)[[type]]
 
     df = qc_linearCombination(fixed=fixed, denovo=denovo, matrix=FALSE)

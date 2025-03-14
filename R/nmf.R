@@ -2,6 +2,13 @@
 pyro_nmf = function(..., k_list, hyperparameters, reference_cat, cohort,
                     filter_dn, min_exposure, keep_sigs, type="") {
 
+  if (is.null(reference_cat) & min(k_list)==0) {
+    cli::cli_text("No reference catalogue in input for type {type} and minimum input number of signatures set to 0.")
+    k_list[k_list==0] = 1
+    k_list = unique(k_list)
+    cli::cli_text("Increasing the minimum number of signatures to 1: {k_list}.")
+  }
+
   alpha_conc = hyperparameters[["alpha_conc"]]
   hyperparameters[["alpha_conc"]] = lapply(rownames(reference_cat),
          function(sid) if (sid %in% names(alpha_conc)) alpha_conc[[sid]] else 1) %>%
