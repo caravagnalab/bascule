@@ -17,10 +17,16 @@ plot_signatures = function(x, types=get_types(x), context=T, cls=NULL,
       dplyr::mutate(type=tid)) %>%
     do.call(rbind, .) %>% dplyr::filter(sigs %in% unlist(signames))
 
-  if (is.null(cls)) cls = gen_palette(x, types=types)
+  if (is.null(cls)) {
+    cls = gen_palette(x, types=types)
+  } else if (!is.character(cls)) {
+    stop("cls must be character")
+  } else if ( !(length(cls)==length(unlist(signames))) ) {
+    stop("cls must be same length as the number of signatures.")
+  }
 
   lapply(types, function(t) plot_signatures_aux(signatures %>% dplyr::filter(type==t),
-                                                what=t, context=context)) %>%
+                                                what=t, context=context, cls=cls)) %>%
     purrr::discard(is.null) %>%
     patchwork::wrap_plots(ncol=length(.))
 }
