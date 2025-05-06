@@ -1,11 +1,11 @@
 pandoc: 3.1.11
-pkgdown: 2.1.1
+pkgdown: 2.1.2
 pkgdown_sha: ~
 articles:
   bascule: bascule.html
   articles/Fit_breast_data: Fit_breast_data.html
   articles/Inference: Inference.html
-last_built: 2025-03-14T12:01Z
+last_built: 2025-05-06T15:40Z
 urls:
   reference: https:://caravagnalab.github.io/bascule/reference
   article: https:://caravagnalab.github.io/bascule/articles
