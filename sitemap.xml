@@ -2,8 +2,8 @@
 <url><loc>https:://caravagnalab.github.io/bascule/404.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/LICENSE-text.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/LICENSE.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/articles/1.Inference.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/articles/Fit_breast_data.html</loc></url>
-<url><loc>https:://caravagnalab.github.io/bascule/articles/Inference.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/articles/bascule.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/articles/index.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/authors.html</loc></url>
@@ -27,6 +27,8 @@
 <url><loc>https:://caravagnalab.github.io/bascule/reference/get_fixed_signames.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/get_fixed_signatures.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/get_input.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/get_n_denovo.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/get_n_groups.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/get_signames.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/get_signatures.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/have_loaded_env.html</loc></url>
