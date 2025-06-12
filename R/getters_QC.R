@@ -1,10 +1,24 @@
 # Fit infos #####
+#' Get number of de novo signatures
+#'
+#' @param x bascule object
+#'
+#' @return list with an integer number of de novo signatures for each signature type
+#' @export
+
 get_n_denovo = function(x) {
   lapply(get_types(x), function(tid) {
     get_denovo_signames(x)[[tid]] %>% length()
   }) %>% setNames(get_types(x))
 }
 
+
+#' Get number of groups
+#'
+#' @param x bascule object
+#'
+#' @return integer number of groups
+#' @export
 
 get_n_groups = function(x) {
   if (!have_groups(x)) return(1)

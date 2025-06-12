@@ -26,6 +26,8 @@ reference:
   - get_fixed_signatures
   - get_denovo_signatures
   - get_exposure
+  - get_n_denovo
+  - get_n_groups
   - convert_dn_names
 
 - title: Plotting functions

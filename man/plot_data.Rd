@@ -10,7 +10,8 @@ plot_data(
   samples = get_samples(x),
   clusters = get_cluster_labels(x),
   reconstructed = TRUE,
-  color_by_sigs = FALSE
+  color_by_sigs = FALSE,
+  plot_by_sample = FALSE
 )
 }
 \arguments{
@@ -25,9 +26,11 @@ plot_data(
 \item{reconstructed}{Logical. If `TRUE`, the reconstructed counts, i.e., computed as alpha x beta, will be visualized.}
 
 \item{color_by_sigs}{Logical. If `TRUE`, each context will report the number of mutations split by signature.}
+
+\item{plot_by_sample}{Logical. If `TRUE`, the function will return a list of ggplot objects with the counts for each sample.}
 }
 \value{
-ggplot object.
+one or a list of ggplot objects.
 }
 \description{
 Function to visualize the input and reconstructed mutation counts.
