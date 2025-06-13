@@ -63,61 +63,29 @@ As a reference catalogue for breast cancer, we selected signatures SBS1, SBS2, S
 
 These signature collections are a subset of the [COSMIC_sbs_filt](https://caravagnalab.github.io/bascule/reference/COSMIC_sbs_filt.html) and [COSMIC_dbs](https://caravagnalab.github.io/bascule/reference/COSMIC_dbs.html) catalogues.
 
+based on prior biological knowledge we expect to see the SBS3 as one of the signatures included in both matrices, but in practice, the SBS3 signature is not present in the output of the model. Here we give higher weights to SBS3 using `hyperparameters` arguments (visit [here](https://caravagnalab.github.io/bascule/reference/fit.html) for more information), to keep this signature in final output.
+
 ```{r}
 reference_cat <- list(
   "SBS" = COSMIC_sbs_filt[c("SBS1", "SBS2", "SBS3", "SBS5", "SBS13", "SBS17b", "SBS18", "SBS31"), ], 
   "DBS" = COSMIC_dbs[c("DBS11", "DBS13", "DBS2"), ]
 )
+
+alpha_conc <- list("SBS3"=100)
 ```
 
 
 # Fit the Model
 
-based on prior biological knowledge we expect to see the SBS3 as one of the signatures included in both matrices, but in practice, the SBS3 signature is not present in the output of the model. Here we give higher weights to SBS3 using `hyperparameters` arguments (visit [here](https://caravagnalab.github.io/bascule/reference/fit.html) for more information), to keep this signature in final output.
-```{r}
-alpha_conc <- list("SBS3"=100)
-```
-
-We run the model by executing the `fit` function from bascule package which performs the non-negative matrix factorization to deconvolute the counts matrix to lower rank matrices.
-
-```{r eval=FALSE}
-x_pre_refinement = fit(
-  counts=counts,
-  k_list=0:25,
-  cluster=15,
-  reference_cat=reference_cat,
-  n_steps=3000, lr=0.005,
-  seed_list=c(19,255,18321,331),
-  hyperparameters=list("alpha_conc"=alpha_conc),
-  store_fits=TRUE,
-  py=py, 
-  CUDA=TRUE, 
-  autoguide=TRUE
-  )
-```
-
-`x_pre_refinement` is the output of the models, which is a bascule object, consisting of a list with three components: `input`, `nmf`, and `clustering`.
-
-* `input` contains all the data used to fit the model, 
-* `nmf` holds the results of the matrix factorization, and 
-* `clustering` stores the outcomes of the patient clustering phase.
+We run the model by executing the `fit` function from bascule package which performs the non-negative matrix factorization to deconvolute the counts matrix to lower rank matrices. [fit](https://caravagnalab.github.io/bascule/reference/fit.html). `x_pre_refinement` is the output of the models, which is a bascule object.
 
 The analysis identified 19 SBS (12 de novo) and 5 DBS (2 de novo) signatures.
 
-# De novo Signatures Refinement
-
-After performing NMF, we obtain a list of de novo signatures, but these may be mixtures of different existing signatures inferred by the model. To address this issue, we aim to eliminate any inferred de novo signatures that can be represented as a linear combination of other signatures. This is done using the `refine_denovo_signatures` function, applied to the bascule object generated from the `fit` function in the previous step
-
-```{r eval=FALSE}
-x_refined = refine_denovo_signatures(x_pre_refinement)
-```
+we aim to eliminate any inferred de novo signatures that can be represented as a linear combination of other signatures. This is done using the `refine_denovo_signatures` function, applied to the bascule object `x_pre_refinement`.
 
 After a refinement step, one de novo signature from SBS context was removed due to its explainability by other signatures. we identified 18 SBS (11 de novo) and 5 DBS (2 de novo) signatures after refinement.
 
-
-# Patients Re-clustering
-
-After applying the signature refinement step, we may obtain a new set of signatures, requiring us to repeat the patient clustering process. To do this, we use the `fit_clustering` function from the bascule package on the bascule object generated from the refinement step.
+we use the `fit_clustering` function from the bascule package on the bascule object generated from the refinement step.
 
 ```{r eval=FALSE}
 x_cls = fit_clustering(
