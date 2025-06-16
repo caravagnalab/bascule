@@ -22,8 +22,8 @@ library(dplyr)
 library(survival) # Surv, survfit
 library(survminer) # ggsurvplot
 library(forestmodel)
-#library(bascule)
-devtools::load_all("/Users/azadsadr/Documents/packages/bascule/")
+library(bascule)
+#devtools::load_all("/Users/azadsadr/Documents/packages/bascule/")
 ```
 
 

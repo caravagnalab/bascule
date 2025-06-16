@@ -77,57 +77,12 @@ alpha_conc <- list("SBS3"=100)
 
 # Fit the Model
 
-We run the model by executing the `fit` function from bascule package which performs the non-negative matrix factorization to deconvolute the counts matrix to lower rank matrices. [fit](https://caravagnalab.github.io/bascule/reference/fit.html). `x_pre_refinement` is the output of the models, which is a bascule object.
-
-The analysis identified 19 SBS (12 de novo) and 5 DBS (2 de novo) signatures.
-
-we aim to eliminate any inferred de novo signatures that can be represented as a linear combination of other signatures. This is done using the `refine_denovo_signatures` function, applied to the bascule object `x_pre_refinement`.
-
-After a refinement step, one de novo signature from SBS context was removed due to its explainability by other signatures. we identified 18 SBS (11 de novo) and 5 DBS (2 de novo) signatures after refinement.
+We run the model by executing the `fit` function from bascule package which performs the non-negative matrix factorization to deconvolute the counts matrix to lower rank matrices. [fit](https://caravagnalab.github.io/bascule/reference/fit.html). The analysis identified 19 SBS (12 de novo) and 5 DBS (2 de novo) signatures. we aim to eliminate any inferred de novo signatures that can be represented as a linear combination of other signatures. This is done using the `refine_denovo_signatures` function, applied to the bascule object. After a refinement step, one de novo signature from SBS context was removed due to its explainability by other signatures. we identified 18 SBS (11 de novo) and 5 DBS (2 de novo) signatures after refinement.
 
 we use the `fit_clustering` function from the bascule package on the bascule object generated from the refinement step.
+we proceeded with the merging step and the tool detected 14 clusters among the breast cancer samples. As we saw in re-clustering step, the tool detected 14 clusters among the breast cancer samples. We then applied an iterative merging function, resulting in 5 clusters, using a cutoff value of 0.8.
 
-```{r eval=FALSE}
-x_cls = fit_clustering(
-  x_refined,
-  cluster=15,
-  seed_list=c(19,255,18321,331),
-  hyperparameters=list("alpha_conc"=alpha_conc),
-  store_fits=TRUE,
-  py=py, 
-  CUDA=TRUE, 
-  autoguide=TRUE
-)
-```
-
-we proceeded with the merging step and the tool detected 14 clusters among the breast cancer samples.
-
-# Merging
-
-we use the `merge_clusters()` function to merge the similar clusters. This function will iteratively merge clusters that result similar in the centroid. The merging will stop as soon as the cosine similarity between all pairs of clusters is below cutoff value.
-
-```{r eval=FALSE}
-x_merged <- merge_clusters(x_cls)
-```
-
-As we saw in re-clustering step, the tool detected 14 clusters among the breast cancer samples. We then applied an iterative merging function, resulting in 5 clusters, using a cutoff value of 0.8.
-
-# Mapping
-
-Later, with help of `convert_dn_names` function we map the de novo signatures to known signatures from the COSMIC catalogue and the findings from Degasperi et al. If similarity between the de novo signatures and a signature from known catalogues (COSMIC, Degasperi et al.) is higher than threshold, we substitute the de novo signatures with corresponding known signatures, so we can likely take advantage of their known etiology to analyze our results.
-
-```{r eval=FALSE}
-x <- convert_dn_names(
-  x_merged, 
-  reference_cat = list(
-    SBS=COSMIC_sbs_filt, 
-    DBS=COSMIC_dbs, 
-    DEGASPERI_SBS=Degasperi_SBS, 
-    DEGASPERI_DBS=Degasperi_DBS
-  ), 
-  cutoff = 0.8)
-```
-
+Later, with help of `convert_dn_names` function we map the de novo signatures to known signatures from the COSMIC catalogue and the findings from Degasperi et al.
 within the SBS context, 6 de novo signatures corresponded to COSMIC signatures SBS7a, SBS17b, SBS26, SBS40a, SBS90, and SBS98. Additionally, one de novo signature aligned with the common signature SBS8, and two signatures matched rare signatures SBS44 and SBS97, both from the Degasperi et al. study. In the DBS context, we mapped two de novo signatures to COSMIC signatures DBS14 and DBS20.
 
 # Visualization
