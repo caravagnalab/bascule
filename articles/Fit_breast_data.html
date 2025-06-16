@@ -268,17 +268,15 @@ the <code>y</code> axis declare their respective density.</p>
 between de novo and COSMIC signatures based on cosine similarity
 values.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_similarity_reference.html">plot_similarity_reference</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-9-1.png" width="700"><img src="Fit_breast_data_files/figure-html/unnamed-chunk-9-2.png" width="700"></p>
-<p>The heatmap plot on the left inspects the similarities between the de
-novo and COSMIC signatures. The rows are de novo signatures, columns are
-COSMIC signatures and the values are cosine similarity between the
-corresponding signatures. On the right you can see the signatures plot
-comparison of the most similar pairs in the heatmap plot. Since in the
-mapping step all the de novo signatures were mapped to known signatures
-with some threshold value (0.8 as default value), here you can see only
-similarity values below the mentioned threshold in mapping step for de
-novo signatures.</p>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_similarity_reference.html">plot_similarity_reference</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
+<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
+<pre><code><span><span class="co">#&gt; list()</span></span>
+<span><span class="co">#&gt; attr(,"class")</span></span>
+<span><span class="co">#&gt; [1] "waiver"</span></span></code></pre>
+<p>The heatmap plot inspects the similarities between the de novo and
+COSMIC signatures. The rows are de novo signatures, columns are COSMIC
+signatures and the values are cosine similarity between the
+corresponding signatures.</p>
 </div>
 <div class="section level3">
 <h3 id="clusters-centroids">Clusters Centroids<a class="anchor" aria-label="anchor" href="#clusters-centroids"></a>
@@ -293,7 +291,7 @@ visualization, offering insight into the relationships and distances
 between different mutational signatures. By examining this plot, we can
 better understand the patterns and structure of the signature clustering
 results.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_centroids.html">plot_centroids</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
@@ -321,7 +319,7 @@ different mutational signatures contribute to the overall mutational
 profile across the dataset. For clearer visualization, we plot the
 exposure matrix for each cluster separately. The <code>clusters</code>
 argument is used to specify which cluster to plot.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x</span>, clusters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"G0"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
@@ -338,7 +336,7 @@ signatures are SBS2 and SBS13, along with DBS11, DBS13, and DBSD2
 APOBEC enzyme activity. APOBEC-driven mutational processes are
 frequently observed in HER2-positive breast cancers, suggesting a strong
 link between this cluster and HER2-driven tumorigenesis.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x</span>, clusters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"G1"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
@@ -362,7 +360,7 @@ patterns, including exposure to SBS1, SBS2, SBS3, SBS11, and SBS13,
 pointing to a mix of APOBEC activity, HRD, and ageing-related mutational
 processes. BASCULE can differentiate these three clusters based on DBS
 exposure.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x</span>, clusters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"G10"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
@@ -378,7 +376,7 @@ DBSD2 (mapped to DBS2 from COSMIC) and DBS11. These signatures are
 linked to the activity of the APOBEC enzyme family. The strong link
 between G10 and these signatures suggests that APOBEC activity may be a
 driving factor behind the mutational processes in this cluster.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x</span>, clusters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"G11"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
@@ -393,7 +391,7 @@ driving factor behind the mutational processes in this cluster.</p>
 (mapped to DBS14 from COSMIC), a signature reported as artifactual in
 COSMIC. However, the presence of DBS13 in G11, suggests that this
 cluster is also linked to homologous recombination deficiency (HRD).</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x</span>, clusters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"G13"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
