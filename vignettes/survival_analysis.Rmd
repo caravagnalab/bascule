@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 
 ### Load package
 
-```{r setup}
+```{r setup, message=FALSE, warning=FALSE}
 library(dplyr)
 library(survival) # Surv, survfit
 library(survminer) # ggsurvplot
@@ -52,6 +52,8 @@ Clinical metadata corresponding to the skin cancer cohort were imported using `d
 * OS_YEARS: Time to event (measured as the duration until death, if applicable)
 * CLUSTER: Cluster assignment as determined by the BASCULE algorithm
 * AGE: Age of the patient at diagnosis
+
+we defined a function called `sync_metadata` which gets bascule object and coresponding clinical mnetadata as input and orchestrate and merge those files and based on the patients IDs.
 
 ```{r message=FALSE, warning=FALSE}
 data("skin_clinical")
@@ -123,7 +125,7 @@ plot_exposures(x, clusters = c("G1", "G11"))
 
 
 
-```{r fig.height=10, fig.width=12, message=FALSE, warning=FALSE}
+```{r fig.height=6, fig.width=12, message=FALSE, warning=FALSE}
 #plot_signatures(x)
 plot_signatures(x, signames = get_denovo_signames(x))
 ```
@@ -133,7 +135,7 @@ plot_signatures(x, signames = get_denovo_signames(x))
 In a study of n=259 skin cancer samples, we identified ten mutational signatures within two clusters, including the known established signatures like SBS1 (clock-like), SBS5 (clock-like) and SBS7 family (UV-light). Kaplan-Meier survival analysis revealed distinct survival trends between the clusters (log-rank p = 0.033). Cluster G11, which was enriched for SBS7 signatures, exhibited better survival compared to G1.
 
 
-```{r fig.height=10, fig.width=12, message=FALSE, warning=FALSE}
+```{r fig.height=6, fig.width=12, message=FALSE, warning=FALSE}
 # create survival object
 fit <- survfit(Surv(time = df$OS_YEARS, event = df$OS_STATUS) ~ CLUSTER, data = df)
 
@@ -161,7 +163,7 @@ ggsurvplot(
 ### Cox proportional hazards analysis
 In multivariate Cox regression, with G1 as reference due to its lowest survival outcomes, cluster G11 showed a trend toward a protective effect (n = 190, hazard ratio = 0.63, 95% CI: 0.39-1.02, p = 0.059). This finding however was borderline significant, possibly because of the effect of age which significantly influenced the hazard: younger patients experienced a 44% reduction in risk relative to older individuals (n = 114, hazard ratio = 0.56, 95% CI: 0.40-0.80, p = 0.001), whereas gender did not significantly affect the outcome.
 
-```{r fig.height=10, fig.width=12, message=FALSE, warning=FALSE}
+```{r fig.height=6, fig.width=12, message=FALSE, warning=FALSE}
 
 format <- forest_model_format_options(
     colour = "black",
