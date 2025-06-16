@@ -36,6 +36,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/1.Inference.html">Inference with BASCULE</a></li>
     <li><a class="dropdown-item" href="../articles/Fit_breast_data.html">Fit on real data</a></li>
+    <li><a class="dropdown-item" href="../articles/survival_analysis.html">survival analysis: skin cancer</a></li>
   </ul>
 </li>
       </ul>
@@ -169,133 +170,49 @@ signatures DBS11, DBS13, and DBS20, for the DBS context.</p>
 <p>These signature collections are a subset of the <a href="https://caravagnalab.github.io/bascule/reference/COSMIC_sbs_filt.html" class="external-link">COSMIC_sbs_filt</a>
 and <a href="https://caravagnalab.github.io/bascule/reference/COSMIC_dbs.html" class="external-link">COSMIC_dbs</a>
 catalogues.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">reference_cat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="st">"SBS"</span> <span class="op">=</span> <span class="va">COSMIC_sbs_filt</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"SBS1"</span>, <span class="st">"SBS2"</span>, <span class="st">"SBS3"</span>, <span class="st">"SBS5"</span>, <span class="st">"SBS13"</span>, <span class="st">"SBS17b"</span>, <span class="st">"SBS18"</span>, <span class="st">"SBS31"</span><span class="op">)</span>, <span class="op">]</span>, </span>
-<span>  <span class="st">"DBS"</span> <span class="op">=</span> <span class="va">COSMIC_dbs</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"DBS11"</span>, <span class="st">"DBS13"</span>, <span class="st">"DBS2"</span><span class="op">)</span>, <span class="op">]</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="fit-the-model">Fit the Model<a class="anchor" aria-label="anchor" href="#fit-the-model"></a>
-</h2>
 <p>based on prior biological knowledge we expect to see the SBS3 as one
 of the signatures included in both matrices, but in practice, the SBS3
 signature is not present in the output of the model. Here we give higher
 weights to SBS3 using <code>hyperparameters</code> arguments (visit <a href="https://caravagnalab.github.io/bascule/reference/fit.html" class="external-link">here</a>
 for more information), to keep this signature in final output.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">alpha_conc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"SBS3"</span><span class="op">=</span><span class="fl">100</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">reference_cat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="st">"SBS"</span> <span class="op">=</span> <span class="va">COSMIC_sbs_filt</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"SBS1"</span>, <span class="st">"SBS2"</span>, <span class="st">"SBS3"</span>, <span class="st">"SBS5"</span>, <span class="st">"SBS13"</span>, <span class="st">"SBS17b"</span>, <span class="st">"SBS18"</span>, <span class="st">"SBS31"</span><span class="op">)</span>, <span class="op">]</span>, </span>
+<span>  <span class="st">"DBS"</span> <span class="op">=</span> <span class="va">COSMIC_dbs</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"DBS11"</span>, <span class="st">"DBS13"</span>, <span class="st">"DBS2"</span><span class="op">)</span>, <span class="op">]</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">alpha_conc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"SBS3"</span><span class="op">=</span><span class="fl">100</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="fit-the-model">Fit the Model<a class="anchor" aria-label="anchor" href="#fit-the-model"></a>
+</h2>
 <p>We run the model by executing the <code>fit</code> function from
 bascule package which performs the non-negative matrix factorization to
-deconvolute the counts matrix to lower rank matrices.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">x_pre_refinement</span> <span class="op">=</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span></span>
-<span>  counts<span class="op">=</span><span class="va">counts</span>,</span>
-<span>  k_list<span class="op">=</span><span class="fl">0</span><span class="op">:</span><span class="fl">25</span>,</span>
-<span>  cluster<span class="op">=</span><span class="fl">15</span>,</span>
-<span>  reference_cat<span class="op">=</span><span class="va">reference_cat</span>,</span>
-<span>  n_steps<span class="op">=</span><span class="fl">3000</span>, lr<span class="op">=</span><span class="fl">0.005</span>,</span>
-<span>  seed_list<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">19</span>,<span class="fl">255</span>,<span class="fl">18321</span>,<span class="fl">331</span><span class="op">)</span>,</span>
-<span>  hyperparameters<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"alpha_conc"</span><span class="op">=</span><span class="va">alpha_conc</span><span class="op">)</span>,</span>
-<span>  store_fits<span class="op">=</span><span class="cn">TRUE</span>,</span>
-<span>  py<span class="op">=</span><span class="va">py</span>, </span>
-<span>  CUDA<span class="op">=</span><span class="cn">TRUE</span>, </span>
-<span>  autoguide<span class="op">=</span><span class="cn">TRUE</span></span>
-<span>  <span class="op">)</span></span></code></pre></div>
-<p><code>x_pre_refinement</code> is the output of the models, which is a
-bascule object, consisting of a list with three components:
-<code>input</code>, <code>nmf</code>, and <code>clustering</code>.</p>
-<ul>
-<li>
-<code>input</code> contains all the data used to fit the model,</li>
-<li>
-<code>nmf</code> holds the results of the matrix factorization,
-and</li>
-<li>
-<code>clustering</code> stores the outcomes of the patient
-clustering phase.</li>
-</ul>
-<p>The analysis identified 19 SBS (12 de novo) and 5 DBS (2 de novo)
-signatures.</p>
-</div>
-<div class="section level2">
-<h2 id="de-novo-signatures-refinement">De novo Signatures Refinement<a class="anchor" aria-label="anchor" href="#de-novo-signatures-refinement"></a>
-</h2>
-<p>After performing NMF, we obtain a list of de novo signatures, but
-these may be mixtures of different existing signatures inferred by the
-model. To address this issue, we aim to eliminate any inferred de novo
-signatures that can be represented as a linear combination of other
-signatures. This is done using the <code>refine_denovo_signatures</code>
-function, applied to the bascule object generated from the
-<code>fit</code> function in the previous step</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">x_refined</span> <span class="op">=</span> <span class="fu"><a href="../reference/refine_denovo_signatures.html">refine_denovo_signatures</a></span><span class="op">(</span><span class="va">x_pre_refinement</span><span class="op">)</span></span></code></pre></div>
-<p>After a refinement step, one de novo signature from SBS context was
-removed due to its explainability by other signatures. we identified 18
-SBS (11 de novo) and 5 DBS (2 de novo) signatures after refinement.</p>
-</div>
-<div class="section level2">
-<h2 id="patients-re-clustering">Patients Re-clustering<a class="anchor" aria-label="anchor" href="#patients-re-clustering"></a>
-</h2>
-<p>After applying the signature refinement step, we may obtain a new set
-of signatures, requiring us to repeat the patient clustering process. To
-do this, we use the <code>fit_clustering</code> function from the
-bascule package on the bascule object generated from the refinement
-step.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">x_cls</span> <span class="op">=</span> <span class="fu"><a href="../reference/fit_clustering.html">fit_clustering</a></span><span class="op">(</span></span>
-<span>  <span class="va">x_refined</span>,</span>
-<span>  cluster<span class="op">=</span><span class="fl">15</span>,</span>
-<span>  seed_list<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">19</span>,<span class="fl">255</span>,<span class="fl">18321</span>,<span class="fl">331</span><span class="op">)</span>,</span>
-<span>  hyperparameters<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"alpha_conc"</span><span class="op">=</span><span class="va">alpha_conc</span><span class="op">)</span>,</span>
-<span>  store_fits<span class="op">=</span><span class="cn">TRUE</span>,</span>
-<span>  py<span class="op">=</span><span class="va">py</span>, </span>
-<span>  CUDA<span class="op">=</span><span class="cn">TRUE</span>, </span>
-<span>  autoguide<span class="op">=</span><span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p>we proceeded with the merging step and the tool detected 14 clusters
-among the breast cancer samples.</p>
-</div>
-<div class="section level2">
-<h2 id="merging">Merging<a class="anchor" aria-label="anchor" href="#merging"></a>
-</h2>
-<p>we use the <code><a href="../reference/merge_clusters.html">merge_clusters()</a></code> function to merge the
-similar clusters. This function will iteratively merge clusters that
-result similar in the centroid. The merging will stop as soon as the
-cosine similarity between all pairs of clusters is below cutoff
-value.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">x_merged</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/merge_clusters.html">merge_clusters</a></span><span class="op">(</span><span class="va">x_cls</span><span class="op">)</span></span></code></pre></div>
-<p>As we saw in re-clustering step, the tool detected 14 clusters among
-the breast cancer samples. We then applied an iterative merging
-function, resulting in 5 clusters, using a cutoff value of 0.8.</p>
-</div>
-<div class="section level2">
-<h2 id="mapping">Mapping<a class="anchor" aria-label="anchor" href="#mapping"></a>
-</h2>
+deconvolute the counts matrix to lower rank matrices. <a href="https://caravagnalab.github.io/bascule/reference/fit.html" class="external-link">fit</a>.
+The analysis identified 19 SBS (12 de novo) and 5 DBS (2 de novo)
+signatures. we aim to eliminate any inferred de novo signatures that can
+be represented as a linear combination of other signatures. This is done
+using the <code>refine_denovo_signatures</code> function, applied to the
+bascule object. After a refinement step, one de novo signature from SBS
+context was removed due to its explainability by other signatures. we
+identified 18 SBS (11 de novo) and 5 DBS (2 de novo) signatures after
+refinement.</p>
+<p>we use the <code>fit_clustering</code> function from the bascule
+package on the bascule object generated from the refinement step. we
+proceeded with the merging step and the tool detected 14 clusters among
+the breast cancer samples. As we saw in re-clustering step, the tool
+detected 14 clusters among the breast cancer samples. We then applied an
+iterative merging function, resulting in 5 clusters, using a cutoff
+value of 0.8.</p>
 <p>Later, with help of <code>convert_dn_names</code> function we map the
 de novo signatures to known signatures from the COSMIC catalogue and the
-findings from Degasperi et al. If similarity between the de novo
-signatures and a signature from known catalogues (COSMIC, Degasperi et
-al.) is higher than threshold, we substitute the de novo signatures with
-corresponding known signatures, so we can likely take advantage of their
-known etiology to analyze our results.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/convert_dn_names.html">convert_dn_names</a></span><span class="op">(</span></span>
-<span>  <span class="va">x_merged</span>, </span>
-<span>  reference_cat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>    SBS<span class="op">=</span><span class="va">COSMIC_sbs_filt</span>, </span>
-<span>    DBS<span class="op">=</span><span class="va">COSMIC_dbs</span>, </span>
-<span>    DEGASPERI_SBS<span class="op">=</span><span class="va">Degasperi_SBS</span>, </span>
-<span>    DEGASPERI_DBS<span class="op">=</span><span class="va">Degasperi_DBS</span></span>
-<span>  <span class="op">)</span>, </span>
-<span>  cutoff <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span></code></pre></div>
-<p>within the SBS context, 6 de novo signatures corresponded to COSMIC
-signatures SBS7a, SBS17b, SBS26, SBS40a, SBS90, and SBS98. Additionally,
-one de novo signature aligned with the common signature SBS8, and two
-signatures matched rare signatures SBS44 and SBS97, both from the
-Degasperi et al. study. In the DBS context, we mapped two de novo
-signatures to COSMIC signatures DBS14 and DBS20.</p>
+findings from Degasperi et al. within the SBS context, 6 de novo
+signatures corresponded to COSMIC signatures SBS7a, SBS17b, SBS26,
+SBS40a, SBS90, and SBS98. Additionally, one de novo signature aligned
+with the common signature SBS8, and two signatures matched rare
+signatures SBS44 and SBS97, both from the Degasperi et al. study. In the
+DBS context, we mapped two de novo signatures to COSMIC signatures DBS14
+and DBS20.</p>
 </div>
 <div class="section level2">
 <h2 id="visualization">Visualization<a class="anchor" aria-label="anchor" href="#visualization"></a>
@@ -313,10 +230,10 @@ plot, the <code>x</code> axis is related to k values and the
 <code>y</code> axis is related to scores (BIC and Likelihood). The model
 selects the k value with lowest BIC score in iterative inference
 process.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_scores.html">plot_scores</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Joining with `by = join_by(parname, value_fit, seed, type)`</span></span></code></pre></div>
-<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
+<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
 <p>Based on the BIC score, the model with 11 de novo signatures for SBS
 and 2 de novo signatures for DBS provides the best fit compared to all
 other models.</p>
@@ -331,15 +248,15 @@ the list of signatures to plot. The <code>get_denovo_signames</code>
 function is used to obtain the list of de novo signature names. Each
 plot consist of multiple signatures plot with their name on the right
 hand side.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_signatures.html">plot_signatures</a></span><span class="op">(</span><span class="va">x</span>, types <span class="op">=</span> <span class="st">"SBS"</span>, signames <span class="op">=</span> <span class="fu"><a href="../reference/get_denovo_signames.html">get_denovo_signames</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-13-1.png" width="700"></p>
+<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-7-1.png" width="700"></p>
 <p>The plot above shows 11 de novo signatures inferred by the tool in
 SBS context. The <code>x</code> axis shows the 96 possible SBS contexts
 and the <code>y</code> axis declare their respective density.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_signatures.html">plot_signatures</a></span><span class="op">(</span><span class="va">x</span>, types <span class="op">=</span> <span class="st">"DBS"</span>, signames <span class="op">=</span> <span class="fu"><a href="../reference/get_denovo_signames.html">get_denovo_signames</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-14-1.png" width="700"></p>
+<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
 <p>The plot above shows 2 de novo signatures inferred by the tool in DBS
 context. The <code>x</code> axis shows the 78 possible DBS contexts and
 the <code>y</code> axis declare their respective density.</p>
@@ -350,9 +267,9 @@ the <code>y</code> axis declare their respective density.</p>
 <p>Function <code>plot_similarity_reference</code> plots the similarity
 between de novo and COSMIC signatures based on cosine similarity
 values.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_similarity_reference.html">plot_similarity_reference</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-15-1.png" width="700"><img src="Fit_breast_data_files/figure-html/unnamed-chunk-15-2.png" width="700"></p>
+<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-9-1.png" width="700"><img src="Fit_breast_data_files/figure-html/unnamed-chunk-9-2.png" width="700"></p>
 <p>The heatmap plot on the left inspects the similarities between the de
 novo and COSMIC signatures. The rows are de novo signatures, columns are
 COSMIC signatures and the values are cosine similarity between the
@@ -376,13 +293,13 @@ visualization, offering insight into the relationships and distances
 between different mutational signatures. By examining this plot, we can
 better understand the patterns and structure of the signature clustering
 results.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_centroids.html">plot_centroids</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
 <span><span class="co">#&gt; Warning: No shared levels found between `names(values)` of the manual scale and the</span></span>
 <span><span class="co">#&gt; data's <span style="color: #00BB00;">colour</span> values.</span></span></code></pre></div>
-<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-16-1.png" width="700"></p>
+<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
 <p>You can inspect the centroids for each cluster in two SBS and DBS
 context. the <code>x</code> axis defines the clusters, the
 <code>y</code> axis defines the density of signatures and the colors
@@ -404,7 +321,7 @@ different mutational signatures contribute to the overall mutational
 profile across the dataset. For clearer visualization, we plot the
 exposure matrix for each cluster separately. The <code>clusters</code>
 argument is used to specify which cluster to plot.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x</span>, clusters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"G0"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
@@ -414,14 +331,14 @@ argument is used to specify which cluster to plot.</p>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
 <span><span class="co">#&gt; Warning: No shared levels found between `names(values)` of the manual scale and the</span></span>
 <span><span class="co">#&gt; data's <span style="color: #00BB00;">colour</span> values.</span></span></code></pre></div>
-<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-17-1.png" width="700"></p>
+<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-11-1.png" width="700"></p>
 <p>In the exposure plot for cluster G0 (n=272), the dominant mutational
 signatures are SBS2 and SBS13, along with DBS11, DBS13, and DBSD2
 (mapped to DBS2 from COSMIC). These signatures are associated with
 APOBEC enzyme activity. APOBEC-driven mutational processes are
 frequently observed in HER2-positive breast cancers, suggesting a strong
 link between this cluster and HER2-driven tumorigenesis.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x</span>, clusters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"G1"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
@@ -431,7 +348,7 @@ link between this cluster and HER2-driven tumorigenesis.</p>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
 <span><span class="co">#&gt; Warning: No shared levels found between `names(values)` of the manual scale and the</span></span>
 <span><span class="co">#&gt; data's <span style="color: #00BB00;">colour</span> values.</span></span></code></pre></div>
-<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-18-1.png" width="700"></p>
+<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
 <p>The cluster G1 (n=2058) exposure plot, which is the largest among
 all, shows a strong presence of SBS3, SBSD11 (mapped to SBS8 from
 Degasperi et al.), DBSD2 (mapped to DBS2 from COSMIC) and DBS13. SBS3
@@ -445,7 +362,7 @@ patterns, including exposure to SBS1, SBS2, SBS3, SBS11, and SBS13,
 pointing to a mix of APOBEC activity, HRD, and ageing-related mutational
 processes. BASCULE can differentiate these three clusters based on DBS
 exposure.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x</span>, clusters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"G10"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
@@ -455,13 +372,13 @@ exposure.</p>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
 <span><span class="co">#&gt; Warning: No shared levels found between `names(values)` of the manual scale and the</span></span>
 <span><span class="co">#&gt; data's <span style="color: #00BB00;">colour</span> values.</span></span></code></pre></div>
-<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-19-1.png" width="700"></p>
+<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-13-1.png" width="700"></p>
 <p>Cluster G10 is notably associated with the mutational signatures
 DBSD2 (mapped to DBS2 from COSMIC) and DBS11. These signatures are
 linked to the activity of the APOBEC enzyme family. The strong link
 between G10 and these signatures suggests that APOBEC activity may be a
 driving factor behind the mutational processes in this cluster.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x</span>, clusters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"G11"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
@@ -471,12 +388,12 @@ driving factor behind the mutational processes in this cluster.</p>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
 <span><span class="co">#&gt; Warning: No shared levels found between `names(values)` of the manual scale and the</span></span>
 <span><span class="co">#&gt; data's <span style="color: #00BB00;">colour</span> values.</span></span></code></pre></div>
-<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-20-1.png" width="700"></p>
+<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-14-1.png" width="700"></p>
 <p>The cluster G11 as the smallest cluster is primarily exposed to DBSD1
 (mapped to DBS14 from COSMIC), a signature reported as artifactual in
 COSMIC. However, the presence of DBS13 in G11, suggests that this
 cluster is also linked to homologous recombination deficiency (HRD).</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x</span>, clusters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"G13"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
@@ -486,7 +403,7 @@ cluster is also linked to homologous recombination deficiency (HRD).</p>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span>
 <span><span class="co">#&gt; Warning: No shared levels found between `names(values)` of the manual scale and the</span></span>
 <span><span class="co">#&gt; data's <span style="color: #00BB00;">colour</span> values.</span></span></code></pre></div>
-<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-21-1.png" width="700"></p>
+<p><img src="Fit_breast_data_files/figure-html/unnamed-chunk-15-1.png" width="700"></p>
 <p>Cluster G13 shows significant exposure to the mutational signatures
 DBS13 and DBS20. These particular signatures are associated with
 homologous recombination deficiency (HRD)-related processes. The
