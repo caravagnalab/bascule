@@ -123,10 +123,10 @@ The plot above shows 2 de novo signatures inferred by the tool in DBS context. T
 Function `plot_similarity_reference` plots the similarity between de novo and COSMIC signatures based on cosine similarity values.
 
 ```{r}
-plot_similarity_reference(x)
+plot_similarity_reference(x)[[1]]
 ```
 
-The heatmap plot on the left inspects the similarities between the de novo and COSMIC signatures. The rows are de novo signatures, columns are COSMIC signatures and the values are cosine similarity between the corresponding signatures. On the right you can see the signatures plot comparison of the most similar pairs in the heatmap plot. Since in the mapping step all the de novo signatures were mapped to known signatures with some threshold value (0.8 as default value), here you can see only similarity values below the mentioned threshold in mapping step for de novo signatures.
+The heatmap plot inspects the similarities between the de novo and COSMIC signatures. The rows are de novo signatures, columns are COSMIC signatures and the values are cosine similarity between the corresponding signatures.
 
 ## Clusters Centroids
 
