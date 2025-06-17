@@ -117,3 +117,29 @@
 #' @keywords datasets
 
 "breast_data"
+
+
+#' Skin cohort BASCULE fit
+#'
+#' BASCULE fit for skin cohort data used in the survival analysis.
+#'
+#' @docType data
+#'
+#' @usage data(skin_fit)
+#'
+#' @keywords datasets
+
+"skin_fit"
+
+
+#' Skin cohort metadata
+#'
+#' Clinical data for the skin cancer cohort used in the survival analysis.
+#'
+#' @docType data
+#'
+#' @usage data(skin_metadata)
+#'
+#' @keywords datasets
+
+"skin_metadata"

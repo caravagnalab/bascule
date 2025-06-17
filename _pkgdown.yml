@@ -61,6 +61,8 @@ reference:
   - Degasperi_DBS
   - synthetic_data
   - breast_data
+  - skin_metadata
+  - skin_fit
 
 - title: Configure conda environment
   desc:  Helper functions to create and check dependencies.
