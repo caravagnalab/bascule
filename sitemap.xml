@@ -3,10 +3,10 @@
 <url><loc>https:://caravagnalab.github.io/bascule/LICENSE-text.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/LICENSE.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/articles/1.Inference.html</loc></url>
-<url><loc>https:://caravagnalab.github.io/bascule/articles/Fit_breast_data.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/articles/2.Fit_breast_data.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/articles/3.Survival_Analysis.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/articles/bascule.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/articles/index.html</loc></url>
-<url><loc>https:://caravagnalab.github.io/bascule/articles/survival_analysis.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/authors.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/index.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/COSMIC_cn.html</loc></url>
@@ -49,6 +49,8 @@
 <url><loc>https:://caravagnalab.github.io/bascule/reference/plot_similarity_reference.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/print.bascule_obj.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/refine_denovo_signatures.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/skin_fit.html</loc></url>
+<url><loc>https:://caravagnalab.github.io/bascule/reference/skin_metadata.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/synthetic_data.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/which_conda_env.html</loc></url>
 </urlset>
