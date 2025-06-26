@@ -1,7 +1,7 @@
 Package: bascule
 Type: Package
 Title: bascule
-Version: 1.0.0
+Version: 1.0.1
 Author: Elena Buscaroli <ele.buscaroli@gmail.com>
 Maintainer: Elena Buscaroli <ele.buscaroli@gmail.com>
 Authors@R: c(
