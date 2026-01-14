@@ -5,11 +5,11 @@ BASCULE is a Bayesian model to fit multiple signature types from multiple patien
 
 #### Citation
 
-[![doi:10.1101/2024.09.16.613266](http://img.shields.io/badge/doi-10.1101/2024.09.16.613266-red.svg)](https://doi.org/10.1101/2024.09.16.613266)
+[![doi.org/10.1186/s13059-025-03835-9](http://img.shields.io/badge/doi-10.1101/2024.09.16.613266-red.svg)](doi.org/10.1186/s13059-025-03835-9)
 
 If you use `bascule`, please cite:
 
--   E. Buscaroli, A. Sadr, R. Bergamin, S. Milite, E. N. Villegas Garcia, A. Tasciotti, A. Ansuini, D. Ramazzotti, N. Calonaci, G. Caravagna. A Bayesian framework to infer and cluster mutational signatures leveraging prior biological knowledge. [bioRxiv preprint](https://www.biorxiv.org/content/10.1101/2024.09.16.613266v1), 2024.
+- Buscaroli, E., Sadr, A., Bergamin, R. et al. BASCULE: bayesian inference and clustering of mutational signatures leveraging biological priors. [_Genome Biol_]([https://link.springer.com/article/10.1186/s13059-025-03835-9]) (2025).
 
 #### Help and support
 
