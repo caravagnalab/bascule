@@ -83,7 +83,7 @@ plot_similarity_reference = function(x, reference=NULL, type="SBS", similarity_c
         dplyr::filter(sigs == names(cosine_matrix_dn)[i]) %>%
         dplyr::mutate(value = -1 * value)
 
-      sigs = dplyr::bind_rows(ref, dn) %>% reformat_contexts(what="SBS")
+      sigs = dplyr::bind_rows(ref, dn) %>% reformat_contexts(what=type)
 
       max_range = sigs$value %>% abs %>% max
       brange = seq(- max_range, max_range, max_range/5) %>% round(3)
