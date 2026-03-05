@@ -22,6 +22,7 @@
 #' @param seed_list List of seeds used for every input configuration.
 #'
 #' @return Bascule object.
+#' @importFrom magrittr %>%
 #' @export fit
 fit = function(counts, k_list,
                cluster=NULL,

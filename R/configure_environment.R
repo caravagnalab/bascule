@@ -1,15 +1,3 @@
-#' Configure the reticulate environment
-#'
-#' @description Function to configure the Python dependencies on R.
-#' If a Python environment is not available, the function will check if there is a version of
-#' \code{conda} or \code{miniconda}, otherwise it will install \code{miniconda}, on which
-#' install the Python package \code{pybascule}.
-#'
-#' @param env_name name of the \code{conda} environment to use, if available.
-#'
-#' @importFrom reticulate import conda_create conda_install install_miniconda miniconda_path conda_binary
-#' @importFrom magrittr "%>%"
-
 configure_environment = function(envname="bascule-env", use_default=FALSE) {
   # install miniconda if needed
   check_conda()
