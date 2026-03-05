@@ -71,12 +71,18 @@
 <p>For detailed explanation, please visit the <a href="https://caravagnalab.github.io/bascule/articles/bascule.html" class="external-link">package
 setup</a>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/knitr/man/opts_chunk.html" class="external-link">opts_chunk</a></span><span class="op">$</span><span class="fu">set</span><span class="op">(</span>warning<span class="op">=</span><span class="cn">FALSE</span>, message<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">reticulate</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/reticulate/reference/conda-tools.html" class="external-link">conda_create</a></span><span class="op">(</span>envname<span class="op">=</span><span class="st">"bascule"</span>,</span>
+<span>                         packages<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"r-bascule"</span><span class="op">)</span>,</span>
+<span>                         channel<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"conda-forge"</span>,<span class="st">"bioconda"</span><span class="op">)</span>,</span>
+<span>                         python_version<span class="op">=</span><span class="st">"3.10"</span><span class="op">)</span></span>
+<span><span class="fu">reticulate</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/reticulate/reference/use_python.html" class="external-link">use_condaenv</a></span><span class="op">(</span><span class="st">"bascule"</span><span class="op">)</span></span>
+<span><span class="fu">reticulate</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/reticulate/reference/conda-tools.html" class="external-link">conda_install</a></span><span class="op">(</span>envname<span class="op">=</span><span class="st">"bascule"</span>, packages<span class="op">=</span><span class="st">"pybascule"</span>, pip<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co"># py = reticulate::import("pybascule")</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/caravagnalab/bascule" class="external-link">bascule</a></span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Loading <span style="color: #00BB00;">bascule</span>. Support : <span style="color: #0000BB; font-style: italic;">&lt;https://caravagnalab.github.io/bascule/&gt;</span></span></span></code></pre></div>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/knitr/man/opts_chunk.html" class="external-link">opts_chunk</a></span><span class="op">$</span><span class="fu">set</span><span class="op">(</span>warning<span class="op">=</span><span class="cn">FALSE</span>, message<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/configure_environment.html">configure_environment</a></span><span class="op">(</span>envname<span class="op">=</span><span class="st">"bascule-env"</span>, use_default<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">py</span> <span class="op">=</span> <span class="fu">reticulate</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/reticulate/reference/import.html" class="external-link">import</a></span><span class="op">(</span><span class="st">"pybascule"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
@@ -230,7 +236,7 @@ selects the k value with lowest BIC score in iterative inference
 process.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_scores.html">plot_scores</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></code></pre></div>
-<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
+<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="768"></p>
 <p>Based on the BIC score, the model with 11 de novo signatures for SBS
 and 2 de novo signatures for DBS provides the best fit compared to all
 other models.</p>
@@ -247,13 +253,13 @@ plot consist of multiple signatures plot with their name on the right
 hand side.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_signatures.html">plot_signatures</a></span><span class="op">(</span><span class="va">x</span>, types<span class="op">=</span><span class="st">"SBS"</span>, signames<span class="op">=</span><span class="fu"><a href="../reference/get_denovo_signames.html">get_denovo_signames</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-7-1.png" width="700"></p>
+<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="" width="768"></p>
 <p>The plot above shows 11 de novo signatures inferred by the tool in
 SBS context. The <code>x</code> axis shows the 96 possible SBS contexts
 and the <code>y</code> axis declare their respective density.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_signatures.html">plot_signatures</a></span><span class="op">(</span><span class="va">x</span>, types<span class="op">=</span><span class="st">"DBS"</span>, signames<span class="op">=</span><span class="fu"><a href="../reference/get_denovo_signames.html">get_denovo_signames</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
+<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="768"></p>
 <p>The plot above shows 2 de novo signatures inferred by the tool in DBS
 context. The <code>x</code> axis shows the 78 possible DBS contexts and
 the <code>y</code> axis declare their respective density.</p>
@@ -265,11 +271,8 @@ the <code>y</code> axis declare their respective density.</p>
 between de novo and COSMIC signatures based on cosine similarity
 values.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_similarity_reference.html">plot_similarity_reference</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
-<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
-<pre><code><span><span class="co">#&gt; list()</span></span>
-<span><span class="co">#&gt; attr(,"class")</span></span>
-<span><span class="co">#&gt; [1] "waiver"</span></span></code></pre>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_similarity_reference.html">plot_similarity_reference</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></code></pre></div>
+<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="1440"></p>
 <p>The heatmap plot inspects the similarities between the de novo and
 COSMIC signatures. The rows are de novo signatures, columns are COSMIC
 signatures and the values are cosine similarity between the
@@ -288,9 +291,9 @@ visualization, offering insight into the relationships and distances
 between different mutational signatures. By examining this plot, we can
 better understand the patterns and structure of the signature clustering
 results.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_centroids.html">plot_centroids</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></code></pre></div>
-<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
+<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="768"></p>
 <p>You can inspect the centroids for each cluster in two SBS and DBS
 context. the <code>x</code> axis defines the clusters, the
 <code>y</code> axis defines the density of signatures and the colors
@@ -312,18 +315,18 @@ different mutational signatures contribute to the overall mutational
 profile across the dataset. For clearer visualization, we plot the
 exposure matrix for each cluster separately. The <code>clusters</code>
 argument is used to specify which cluster to plot.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x</span>, clusters<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"G0"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-11-1.png" width="700"></p>
+<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="768"></p>
 <p>In the exposure plot for cluster G0 (n=272), the dominant mutational
 signatures are SBS2 and SBS13, along with DBS11, DBS13, and DBSD2
 (mapped to DBS2 from COSMIC). These signatures are associated with
 APOBEC enzyme activity. APOBEC-driven mutational processes are
 frequently observed in HER2-positive breast cancers, suggesting a strong
 link between this cluster and HER2-driven tumorigenesis.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x</span>, clusters<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"G1"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
+<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="768"></p>
 <p>The cluster G1 (n=2058) exposure plot, which is the largest among
 all, shows a strong presence of SBS3, SBSD11 (mapped to SBS8 from
 Degasperi et al.), DBSD2 (mapped to DBS2 from COSMIC) and DBS13. SBS3
@@ -337,24 +340,24 @@ patterns, including exposure to SBS1, SBS2, SBS3, SBS11, and SBS13,
 pointing to a mix of APOBEC activity, HRD, and ageing-related mutational
 processes. BASCULE can differentiate these three clusters based on DBS
 exposure.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x</span>, clusters<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"G10"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-13-1.png" width="700"></p>
+<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="768"></p>
 <p>Cluster G10 is notably associated with the mutational signatures
 DBSD2 (mapped to DBS2 from COSMIC) and DBS11. These signatures are
 linked to the activity of the APOBEC enzyme family. The strong link
 between G10 and these signatures suggests that APOBEC activity may be a
 driving factor behind the mutational processes in this cluster.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x</span>, clusters<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"G11"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-14-1.png" width="700"></p>
+<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="768"></p>
 <p>The cluster G11 as the smallest cluster is primarily exposed to DBSD1
 (mapped to DBS14 from COSMIC), a signature reported as artifactual in
 COSMIC. However, the presence of DBS13 in G11, suggests that this
 cluster is also linked to homologous recombination deficiency (HRD).</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_exposures.html">plot_exposures</a></span><span class="op">(</span><span class="va">x</span>, clusters<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"G13"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-15-1.png" width="700"></p>
+<p><img src="2.Fit_breast_data_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="768"></p>
 <p>Cluster G13 shows significant exposure to the mutational signatures
 DBS13 and DBS20. These particular signatures are associated with
 homologous recombination deficiency (HRD)-related processes. The
@@ -374,7 +377,7 @@ and repair deficiencies.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

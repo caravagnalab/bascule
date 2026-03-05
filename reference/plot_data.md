@@ -1,0 +1,54 @@
+# Function to visualize the input and reconstructed mutation counts.
+
+Function to visualize the input and reconstructed mutation counts.
+
+## Usage
+
+``` r
+plot_data(
+  x,
+  types = get_types(x),
+  samples = get_samples(x),
+  clusters = get_cluster_labels(x),
+  reconstructed = TRUE,
+  color_by_sigs = FALSE,
+  plot_by_sample = FALSE
+)
+```
+
+## Arguments
+
+- x:
+
+  bascule object.
+
+- types:
+
+  List of variant types to visualize.
+
+- samples:
+
+  List of samples to visualize.
+
+- clusters:
+
+  List of clusters to visualize.
+
+- reconstructed:
+
+  Logical. If \`TRUE\`, the reconstructed counts, i.e., computed as
+  alpha x beta, will be visualized.
+
+- color_by_sigs:
+
+  Logical. If \`TRUE\`, each context will report the number of mutations
+  split by signature.
+
+- plot_by_sample:
+
+  Logical. If \`TRUE\`, the function will return a list of ggplot
+  objects with the counts for each sample.
+
+## Value
+
+one or a list of ggplot objects.

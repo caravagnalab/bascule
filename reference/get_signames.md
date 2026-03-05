@@ -1,0 +1,23 @@
+# Get signatures names
+
+Get signatures names
+
+## Usage
+
+``` r
+get_signames(x, types = get_types(x))
+```
+
+## Arguments
+
+- x:
+
+  bascule object.
+
+- types:
+
+  List of variant types to retrieve signames for.
+
+## Value
+
+list of signature names with names equal to \`types\`.
