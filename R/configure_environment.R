@@ -9,8 +9,6 @@
 #'
 #' @importFrom reticulate import conda_create conda_install install_miniconda miniconda_path conda_binary
 #' @importFrom magrittr "%>%"
-#'
-#' @export configure_environment
 
 configure_environment = function(envname="bascule-env", use_default=FALSE) {
   # install miniconda if needed

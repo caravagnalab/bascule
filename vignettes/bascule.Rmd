@@ -62,7 +62,7 @@ reticulate::conda_install(envname="bascule", packages="pybascule", pip=TRUE)
 
 ## Fitting a `bascule` object
 
-Before fitting a `bascule` object with the `fit()` function, make sure that the correct conda environment is active so that the `pybascule` module can be accessed:
+Before fitting a `bascule` object with the `fit()` or the `fit_clustering()` functions, make sure that the correct conda environment is active so that the `pybascule` module can be accessed:
 
 ```{r}
 reticulate::use_condaenv("bascule")
@@ -74,4 +74,6 @@ Functions that rely on `pybascule` include an additional argument, `py`, which a
 reticulate::use_condaenv("bascule")
 py = reticulate::import("pybascule")
 x = fit(..., py=py)
+# or
+x = fit_clustering(..., py=py)
 ```

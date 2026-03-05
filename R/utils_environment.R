@@ -5,7 +5,6 @@
 #' @return Boolean, \code{TRUE} if an environment is loaded, \code{FALSE} otherwise.
 #'
 #' @importFrom reticulate py_discover_config
-#' @export have_loaded_env
 
 have_loaded_env = function() {
   return(grepl("envs", reticulate::py_discover_config()$python))
@@ -25,7 +24,6 @@ have_loaded_env = function() {
 #' installed, \code{FALSE} otherwise.
 #'
 #' @importFrom reticulate py_list_packages conda_list py_discover_config
-#' @export have_python_deps
 
 have_python_deps = function(envname="", py_pkgs=c("pybascule")) {
   if (envname == "")
@@ -48,7 +46,6 @@ have_python_deps = function(envname="", py_pkgs=c("pybascule")) {
 #' @return a \code{character} corresponding to the name of the loaded environment.
 #'
 #' @importFrom reticulate conda_list py_discover_config
-#' @export which_conda_env
 
 which_conda_env = function() {
   if (have_loaded_env())
@@ -72,7 +69,6 @@ which_conda_env = function() {
 #' \code{Python} - \code{filter_dataset() and fit()}.
 #'
 #' @importFrom reticulate use_condaenv
-#' @export load_conda_env
 
 load_conda_env = function(envname="bascule-env") {
   Sys.unsetenv("RETICULATE_PYTHON")
