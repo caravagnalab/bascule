@@ -51,19 +51,20 @@ plot_similarity_reference = function(x, reference=NULL, type="SBS", similarity_c
 
   # The world is a better place now that I can pheatmap -> ggplot
   ggp = pheatmap::pheatmap(
-    mat = cosine_matrix,
-    cluster_rows = cluster_rows,
-    cluster_cols = cluster_cols,
-    color = color_gradient,
-    breaks = color_breaks,
-    border_color = "white",
-    cellwidth = 25,
-    cellheight = 15,
-    display_numbers = numbers
+    mat=cosine_matrix,
+    cluster_rows=cluster_rows,
+    cluster_cols=cluster_cols,
+    color=color_gradient,
+    breaks=color_breaks,
+    border_color="white",
+    cellwidth=25,
+    cellheight=15,
+    display_numbers=numbers,
+    silent=TRUE,
   ) %>% ggplotify::as.ggplot()
 
   # De novo comparisons
-  if(nrow(denovo_sigs) > 0) {
+  if (nrow(denovo_sigs) > 0) {
     denovo_signames = denovo_sigs$sigs %>% unique()
     cosine_matrix_dn = tibble::as_tibble(cosine_matrix)[, denovo_signames] %>%
       apply(2, which.max)
@@ -75,7 +76,9 @@ plot_similarity_reference = function(x, reference=NULL, type="SBS", similarity_c
 
     colpalette = gen_palette_aux(signames=list(unique(c(rownames(cosine_matrix), colnames(cosine_matrix)))) %>%
                                    setNames(type))
-    for(i in 1:length(cosine_matrix_dn)) {
+
+    max_dn_number = min(length(cosine_matrix_dn), 5)
+    for(i in 1:max_dn_number) {
       ref = reference_sigs %>%
         dplyr::filter(sigs == rownames(cosine_matrix)[cosine_matrix_dn[i]])
 
