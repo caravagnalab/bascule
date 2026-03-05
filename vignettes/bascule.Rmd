@@ -10,57 +10,68 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  eval = FALSE,
+  include = TRUE
 )
 ```
 
-### Installation of the package
+### Installing the package
 
-You can install bascule from GitHub using `devtools`.
-```{r install_pkg, eval=FALSE, include=TRUE}
+The `bascule` R package can be installed directly from GitHub using `devtools`:
+
+```{r install_pkg}
 devtools::install_github("caravagnalab/bascule")
 ```
 
-Load the package.
+Once installed, load the package in your R session:
+
 ```{r load_pkg, eval=FALSE, message=FALSE, warning=FALSE, include=TRUE}
 library(bascule) 
 ```
 
+### Installing Python dependencies
 
-### Python dependencies installation
-When the package is loaded, you might execute the `configure_environment()` function to automatically check whether:
+The `bascule` package relies on the Python module `pybascule`. The recommended approach is to install these Python dependencies inside a dedicated conda environment.
 
-- a version of Anaconda or Miniconda is available, otherwise a Miniconda installation will be started,
+This can be done from R using the `reticulate` package through the following steps.
 
-- if there is no `conda` environment loaded, the package will check if the `bascule-env` is present, otherwise it will be created,
+- if Miniconda is not already available on your system, you can install it using through [`reticulate`](https://rstudio.github.io/reticulate/reference/install_miniconda.html):
 
-- to use an existing `conda` environment, it can be loaded **before** loading the package, either through the `reticulate` function `reticulate::use_condaenv()` or by using the `bascule` function `load_conda_env()`:
-
-```{r load_conda_env, eval=FALSE}
-reticulate::use_condaenv("env-name", required=TRUE)
-load_conda_env(envname="env-name")
+```{r, eval=FALSE}
+install_miniconda(path = miniconda_path(), update = TRUE, force = FALSE)
 ```
 
-- eventually, if the required `Python` dependencies are not installed in the loaded environment, they will be installed.
+- create a new conda environment with Python version 3.10:
 
-
-### Functions to manually configure an environment
-The function `configure_environment()` can be used interactively to manually configure an existing environment, or to create one from scratch.
-
-```{r configure_env, eval=FALSE}
-configure_environment(env_name="bascule-env", use_default=F)
+```{r}
+reticulate::conda_create(envname="bascule", python_version="3.10")
 ```
 
-The function will first check if a Anaconda or Miniconda installation is available, otherwise it will prompt a Miniconda installation.
-The input name of the environment is either the name of an existing environment or the name of the environment to be created.
-The environment will be loaded or created, and the required `Python` dependencies will be installed. 
+- activate the new conda environment within the current R session:
 
+```{r}
+reticulate::use_condaenv("bascule")
+```
 
-### Check the loaded Python version and environment
+- install the `pybascule` Python module using pip inside the conda environment:
 
-The package provides also a set of helper functions to check if an environment is loaded.
+```{r}
+reticulate::conda_install(envname="bascule", packages="pybascule", pip=TRUE)
+```
 
-- `have_loaded_env()` to check if an environment is already loaded,
-- `which_conda_env()` to check which environment is loaded.
-- `have_python_deps()` to check if a `Python` packages list is installed in the specified environment.
-- `load_conda_env()` to load the specified environment.
+## Fitting a `bascule` object
+
+Before fitting a `bascule` object with the `fit()` function, make sure that the correct conda environment is active so that the `pybascule` module can be accessed:
+
+```{r}
+reticulate::use_condaenv("bascule")
+```
+
+Functions that rely on `pybascule` include an additional argument, `py`, which allows you to explicitly pass the imported Python module. This ensures that the correct version of `pybascule` is used.
+
+```{r, eval=FALSE}
+reticulate::use_condaenv("bascule")
+py = reticulate::import("pybascule")
+x = fit(..., py=py)
+```
