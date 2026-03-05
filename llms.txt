@@ -35,6 +35,12 @@ You can install the released version of `bascule` from
 devtools::install_github("caravagnalab/bascule")
 ```
 
+If you want to fit your data with `bascule`, you also need to install
+the required Python dependencies. Please follow the instructions in the
+[Get
+Started](https://caravagnalab.github.io/bascule/articles/bascule.html)
+article.
+
 ------------------------------------------------------------------------
 
 #### Copyright and contacts
