@@ -18,13 +18,9 @@ For detailed explanation, please visit the [package setup](https://caravagnalab.
 ```{r setup, eval=FALSE}
 knitr::opts_chunk$set(warning=FALSE, message=FALSE)
 
-reticulate::conda_create(envname="bascule",
-                         packages=c("r-bascule"),
-                         channel=c("conda-forge","bioconda"),
-                         python_version="3.10")
+reticulate::conda_create(envname="bascule", python_version="3.10")
 reticulate::use_condaenv("bascule")
 reticulate::conda_install(envname="bascule", packages="pybascule", pip=TRUE)
-# py = reticulate::import("pybascule")
 ```
 
 ```{r}
