@@ -18,7 +18,6 @@
 <url><loc>https:://caravagnalab.github.io/bascule/reference/Degasperi_SBS.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/bascule-package.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/breast_data.html</loc></url>
-<url><loc>https:://caravagnalab.github.io/bascule/reference/configure_environment.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/convert_dn_names.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/fit.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/fit_clustering.html</loc></url>
@@ -32,10 +31,7 @@
 <url><loc>https:://caravagnalab.github.io/bascule/reference/get_n_groups.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/get_signames.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/get_signatures.html</loc></url>
-<url><loc>https:://caravagnalab.github.io/bascule/reference/have_loaded_env.html</loc></url>
-<url><loc>https:://caravagnalab.github.io/bascule/reference/have_python_deps.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/index.html</loc></url>
-<url><loc>https:://caravagnalab.github.io/bascule/reference/load_conda_env.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/merge_clusters.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/plot.bascule_obj.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/plot_centroids.html</loc></url>
@@ -52,6 +48,5 @@
 <url><loc>https:://caravagnalab.github.io/bascule/reference/skin_fit.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/skin_metadata.html</loc></url>
 <url><loc>https:://caravagnalab.github.io/bascule/reference/synthetic_data.html</loc></url>
-<url><loc>https:://caravagnalab.github.io/bascule/reference/which_conda_env.html</loc></url>
 </urlset>
 

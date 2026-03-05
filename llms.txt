@@ -152,31 +152,6 @@ Description of datasets available in the package.
 - [`skin_fit`](https:%3A/caravagnalab.github.io/bascule/reference/skin_fit.md)
   : Skin cohort BASCULE fit
 
-## Configure conda environment
-
-Helper functions to create and check dependencies.
-
-- [`configure_environment()`](https:%3A/caravagnalab.github.io/bascule/reference/configure_environment.md)
-  : Configure the reticulate environment
-
-- [`have_loaded_env()`](https:%3A/caravagnalab.github.io/bascule/reference/have_loaded_env.md)
-  :
-
-  Check if there is a loaded `conda` environment.
-
-- [`have_python_deps()`](https:%3A/caravagnalab.github.io/bascule/reference/have_python_deps.md)
-  :
-
-  Check if `Python` packages are installed in the environment.
-
-- [`load_conda_env()`](https:%3A/caravagnalab.github.io/bascule/reference/load_conda_env.md)
-  :
-
-  Load the input `conda` environment.
-
-- [`which_conda_env()`](https:%3A/caravagnalab.github.io/bascule/reference/which_conda_env.md)
-  : Retrieve the name of the currently loaded environment.
-
 # Articles
 
 ### All vignettes
