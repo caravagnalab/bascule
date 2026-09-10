@@ -31,6 +31,7 @@ You can install the released version of `bascule` from
 [GitHub](https://github.com/) with:
 
 ``` r
+
 # install.packages("devtools")
 devtools::install_github("caravagnalab/bascule")
 ```

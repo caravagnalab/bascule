@@ -6,12 +6,14 @@ The `bascule` R package can be installed directly from GitHub using
 `devtools`:
 
 ``` r
+
 devtools::install_github("caravagnalab/bascule")
 ```
 
 Once installed, load the package in your R session:
 
 ``` r
+
 library(bascule) 
 ```
 
@@ -29,18 +31,21 @@ following steps.
   [`reticulate`](https://rstudio.github.io/reticulate/reference/install_miniconda.html):
 
 ``` r
+
 install_miniconda(path = miniconda_path(), update = TRUE, force = FALSE)
 ```
 
 - create a new conda environment with Python version 3.10:
 
 ``` r
+
 reticulate::conda_create(envname="bascule", python_version="3.10")
 ```
 
 - activate the new conda environment within the current R session:
 
 ``` r
+
 reticulate::use_condaenv("bascule")
 ```
 
@@ -48,6 +53,7 @@ reticulate::use_condaenv("bascule")
   environment:
 
 ``` r
+
 reticulate::conda_install(envname="bascule", packages="pybascule", pip=TRUE)
 ```
 
@@ -61,6 +67,7 @@ functions, make sure that the correct conda environment is active so
 that the `pybascule` module can be accessed:
 
 ``` r
+
 reticulate::use_condaenv("bascule")
 ```
 
@@ -69,6 +76,7 @@ which allows you to explicitly pass the imported Python module. This
 ensures that the correct version of `pybascule` is used.
 
 ``` r
+
 reticulate::use_condaenv("bascule")
 py = reticulate::import("pybascule")
 x = fit(..., py=py)
