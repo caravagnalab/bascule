@@ -1,5 +1,5 @@
 pyro_clustering = function(exposures, cluster, lr=0.005, n_steps=3000,
-                           optim_gamma=0.1, enumer="parallel", autoguide=TRUE,
+                           enumer="parallel", autoguide=TRUE,
                            hyperparameters=NULL, nonparametric=TRUE,
                            store_parameters=FALSE, store_fits=FALSE,
                            seed_list=c(10), CUDA=TRUE, py=NULL) {
@@ -15,7 +15,7 @@ pyro_clustering = function(exposures, cluster, lr=0.005, n_steps=3000,
   input_expos = reticulate::r_to_py(exposures %>% setNames(NULL))
 
   obj = py$fit(alpha=input_expos, cluster=cluster, n_steps=n_steps, lr=lr,
-               optim_gamma=optim_gamma, hyperparameters=hyperparameters,
+               optim_gamma=0, hyperparameters=hyperparameters,
                enumer=enumer, autoguide=autoguide, nonparametric=nonparametric,
                seed_list=seed_list, CUDA=CUDA, store_parameters=store_parameters,
                store_fits=store_fits)

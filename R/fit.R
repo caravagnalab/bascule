@@ -7,7 +7,6 @@
 #' @param keep_sigs List of reference signatures to keep even if found with low exposures.
 #' @param hyperparameters List of hyperparameters passed to the NMF and clustering models.
 #' @param lr Learning rate used for SVI.
-#' @param optim_gamma Deprecated
 #' @param n_steps Number of iterations for inference.
 #' @param py User-installed version of \code{pybascule} package
 #' @param enumer Enumeration used for clustering (either `parallel` or `sequential`).
@@ -16,7 +15,6 @@
 #' @param filter_dn Logical. If `TRUE`, all contexts below 0.01 in denovo signatures will be set to 0, provided the filtered signatures remain consistent with the inferred ones.
 #' @param min_exposure Reference signatures with an exposures lower than `min_exposure` will be dropped.
 #' @param CUDA Logical. If `TRUE` and a GPU is available, the models will run on GPU.
-#' @param compile Deprecated.
 #' @param store_parameters Logical. If `TRUE`, parameters at every step of inference will be stored in the object.
 #' @param store_fits Logical. If `TRUE`, all tested fits, i.e., for every value of `K`, will be stored in the object.
 #' @param seed_list List of seeds used for every input configuration.
@@ -32,7 +30,6 @@ fit = function(counts, k_list,
                hyperparameters = NULL,
 
                lr = 0.005,
-               optim_gamma = 0.1,
                n_steps = 3000,
                py = NULL,
 
@@ -43,7 +40,6 @@ fit = function(counts, k_list,
                filter_dn = FALSE,
                min_exposure = 0.2,
                CUDA = TRUE,
-               compile = FALSE,
 
                store_parameters = FALSE,
                store_fits = TRUE,
@@ -121,14 +117,12 @@ fit = function(counts, k_list,
 #' @param cluster Maximum number of clusters.
 #' @param hyperparameters List of hyperparameters passed to the NMF and clustering models.
 #' @param lr Learning rate for SVI optimizer.
-#' @param optim_gamma Deprecated.
 #' @param n_steps Number of steps for the inference.
 #' @param py User-installed version of \code{pybascule} package
 #' @param enumer Enumeration used for clustering (either `parallel` or `sequential`).
 #' @param nonparametric Deprecated. The model only works in nonparametric way.
 #' @param autoguide Logical. If `TRUE`, the clustering model will use the Pyro autoguide.
 #' @param CUDA Logical. If `TRUE` and a GPU is available, the models will run on GPU.
-#' @param compile Deprecated.
 #' @param store_parameters Logical. If `TRUE`, parameters at every step of inference will be stored in the object.
 #' @param store_fits Logical. If `TRUE`, all tested fits, i.e., for every value of `K`, will be stored in the object.
 #' @param seed_list List of seeds used for every input configuration.
@@ -140,7 +134,6 @@ fit_clustering = function(x,
                           hyperparameters = NULL,
 
                           lr = 0.005,
-                          optim_gamma = 0.1,
                           n_steps = 3000,
                           py = NULL,
 
@@ -149,13 +142,28 @@ fit_clustering = function(x,
                           autoguide = TRUE,
 
                           CUDA = TRUE,
-                          compile = FALSE,
 
                           store_parameters = FALSE,
                           store_fits = TRUE,
 
                           seed_list = c(10)) {
+
   exposures = get_exposure(x, matrix=TRUE)
+
+  get_overlap_exposures = function(exposures) {
+    all_samples = lapply(exposures, rownames)
+    intersect_samples = all_samples %>% Reduce(intersect, .)
+    for (t in names(exposures)) {
+      to_remove = setdiff(all_samples[[t]], intersect_samples)
+      if (length(to_remove) > 0)
+        cli::cli_alert_warning("Removing {length(to_remove)} sample(s) from {t}, not present in all other types.")
+      exposures[[t]] = exposures[[t]][intersect_samples, , drop=FALSE]
+    }
+    return(exposures)
+  }
+
+  exposures = get_overlap_exposures(exposures)
+
   x$clustering = pyro_clustering(exposures = exposures,
                                  cluster = cluster,
 
@@ -166,7 +174,6 @@ fit_clustering = function(x,
                                  hyperparameters = hyperparameters,
 
                                  lr = lr,
-                                 optim_gamma = optim_gamma,
                                  n_steps = n_steps,
 
                                  CUDA = CUDA,
