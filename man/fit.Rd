@@ -12,7 +12,6 @@ fit(
   keep_sigs = c("SBS1", "SBS5"),
   hyperparameters = NULL,
   lr = 0.005,
-  optim_gamma = 0.1,
   n_steps = 3000,
   py = NULL,
   enumer = "parallel",
@@ -21,7 +20,6 @@ fit(
   filter_dn = FALSE,
   min_exposure = 0.2,
   CUDA = TRUE,
-  compile = FALSE,
   store_parameters = FALSE,
   store_fits = TRUE,
   seed_list = c(10)
@@ -42,8 +40,6 @@ fit(
 
 \item{lr}{Learning rate used for SVI.}
 
-\item{optim_gamma}{Deprecated}
-
 \item{n_steps}{Number of iterations for inference.}
 
 \item{py}{User-installed version of \code{pybascule} package}
@@ -59,8 +55,6 @@ fit(
 \item{min_exposure}{Reference signatures with an exposures lower than `min_exposure` will be dropped.}
 
 \item{CUDA}{Logical. If `TRUE` and a GPU is available, the models will run on GPU.}
-
-\item{compile}{Deprecated.}
 
 \item{store_parameters}{Logical. If `TRUE`, parameters at every step of inference will be stored in the object.}
 

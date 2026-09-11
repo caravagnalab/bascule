@@ -68,7 +68,6 @@ fit = function(counts, k_list,
              hyperparameters = hyperparameters,
 
              lr = lr,
-             optim_gamma = optim_gamma,
              n_steps = n_steps,
 
              filter_dn = filter_dn,
@@ -96,7 +95,6 @@ fit = function(counts, k_list,
                        hyperparameters = hyperparameters,
 
                        lr = lr,
-                       optim_gamma = optim_gamma,
                        n_steps = n_steps,
 
                        CUDA = CUDA,

@@ -9,14 +9,12 @@ fit_clustering(
   cluster,
   hyperparameters = NULL,
   lr = 0.005,
-  optim_gamma = 0.1,
   n_steps = 3000,
   py = NULL,
   enumer = "parallel",
   nonparametric = TRUE,
   autoguide = TRUE,
   CUDA = TRUE,
-  compile = FALSE,
   store_parameters = FALSE,
   store_fits = TRUE,
   seed_list = c(10)
@@ -31,8 +29,6 @@ fit_clustering(
 
 \item{lr}{Learning rate for SVI optimizer.}
 
-\item{optim_gamma}{Deprecated.}
-
 \item{n_steps}{Number of steps for the inference.}
 
 \item{py}{User-installed version of \code{pybascule} package}
@@ -44,8 +40,6 @@ fit_clustering(
 \item{autoguide}{Logical. If `TRUE`, the clustering model will use the Pyro autoguide.}
 
 \item{CUDA}{Logical. If `TRUE` and a GPU is available, the models will run on GPU.}
-
-\item{compile}{Deprecated.}
 
 \item{store_parameters}{Logical. If `TRUE`, parameters at every step of inference will be stored in the object.}
 

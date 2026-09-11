@@ -1,7 +1,6 @@
 pyfit = function(counts,
                  k_list,
                  lr = 0.005,
-                 optim_gamma = 0.1,
                  n_steps = 2000,
                  stage = "",
                  py = NULL,
@@ -30,12 +29,12 @@ pyfit = function(counts,
 
   if (!is.null(clusters)) clusters = as.integer(clusters)
 
-  obj = py$fit(x = counts, k_list = k_list, lr = lr, optim_gamma = optim_gamma, n_steps = n_steps,
-               cluster = clusters, beta_fixed = reference_cat,
-               hyperparameters = hyperparameters, nonparametric = nonparametric,
-               store_parameters = store_parameters, stage = stage,
-               seed_list = seed_list, compile_model = compile,
-               CUDA = CUDA, store_fits = store_fits)
+  obj = py$fit(x=counts, k_list=k_list, lr=lr, optim_gamma=0, n_steps=n_steps,
+               cluster=clusters, beta_fixed=reference_cat,
+               hyperparameters=hyperparameters, nonparametric=nonparametric,
+               store_parameters=store_parameters, stage=stage,
+               seed_list=seed_list, compile_model=compile,
+               CUDA=CUDA, store_fits=store_fits)
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")
 
