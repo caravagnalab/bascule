@@ -9,7 +9,7 @@ fit(
   counts,
   k_list,
   cluster = NULL,
-  reference_cat = list(SBS = COSMIC_filt, DBS = COSMIC_dbs),
+  reference_cat = list(SBS = COSMIC_sbs_filt, DBS = COSMIC_dbs),
   keep_sigs = c("SBS1", "SBS5"),
   hyperparameters = NULL,
   lr = 0.005,
