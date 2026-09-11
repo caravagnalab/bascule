@@ -51,7 +51,6 @@
 <span>  keep_sigs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"SBS1"</span>, <span class="st">"SBS5"</span><span class="op">)</span>,</span>
 <span>  hyperparameters <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  lr <span class="op">=</span> <span class="fl">0.005</span>,</span>
-<span>  optim_gamma <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  n_steps <span class="op">=</span> <span class="fl">3000</span>,</span>
 <span>  py <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  enumer <span class="op">=</span> <span class="st">"parallel"</span>,</span>
@@ -60,7 +59,6 @@
 <span>  filter_dn <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  min_exposure <span class="op">=</span> <span class="fl">0.2</span>,</span>
 <span>  CUDA <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  compile <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  store_parameters <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  store_fits <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  seed_list <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span></span>
@@ -99,10 +97,6 @@
 <dd><p>Learning rate used for SVI.</p></dd>
 
 
-<dt id="arg-optim-gamma">optim_gamma<a class="anchor" aria-label="anchor" href="#arg-optim-gamma"></a></dt>
-<dd><p>Deprecated</p></dd>
-
-
 <dt id="arg-n-steps">n_steps<a class="anchor" aria-label="anchor" href="#arg-n-steps"></a></dt>
 <dd><p>Number of iterations for inference.</p></dd>
 
@@ -133,10 +127,6 @@
 
 <dt id="arg-cuda">CUDA<a class="anchor" aria-label="anchor" href="#arg-cuda"></a></dt>
 <dd><p>Logical. If `TRUE` and a GPU is available, the models will run on GPU.</p></dd>
-
-
-<dt id="arg-compile">compile<a class="anchor" aria-label="anchor" href="#arg-compile"></a></dt>
-<dd><p>Deprecated.</p></dd>
 
 
 <dt id="arg-store-parameters">store_parameters<a class="anchor" aria-label="anchor" href="#arg-store-parameters"></a></dt>

@@ -10,14 +10,12 @@ fit_clustering(
   cluster,
   hyperparameters = NULL,
   lr = 0.005,
-  optim_gamma = 0.1,
   n_steps = 3000,
   py = NULL,
   enumer = "parallel",
   nonparametric = TRUE,
   autoguide = TRUE,
   CUDA = TRUE,
-  compile = FALSE,
   store_parameters = FALSE,
   store_fits = TRUE,
   seed_list = c(10)
@@ -41,10 +39,6 @@ fit_clustering(
 - lr:
 
   Learning rate for SVI optimizer.
-
-- optim_gamma:
-
-  Deprecated.
 
 - n_steps:
 
@@ -72,10 +66,6 @@ fit_clustering(
 
   Logical. If \`TRUE\` and a GPU is available, the models will run on
   GPU.
-
-- compile:
-
-  Deprecated.
 
 - store_parameters:
 

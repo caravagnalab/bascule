@@ -13,7 +13,6 @@ fit(
   keep_sigs = c("SBS1", "SBS5"),
   hyperparameters = NULL,
   lr = 0.005,
-  optim_gamma = 0.1,
   n_steps = 3000,
   py = NULL,
   enumer = "parallel",
@@ -22,7 +21,6 @@ fit(
   filter_dn = FALSE,
   min_exposure = 0.2,
   CUDA = TRUE,
-  compile = FALSE,
   store_parameters = FALSE,
   store_fits = TRUE,
   seed_list = c(10)
@@ -61,10 +59,6 @@ fit(
 
   Learning rate used for SVI.
 
-- optim_gamma:
-
-  Deprecated
-
 - n_steps:
 
   Number of iterations for inference.
@@ -102,10 +96,6 @@ fit(
 
   Logical. If \`TRUE\` and a GPU is available, the models will run on
   GPU.
-
-- compile:
-
-  Deprecated.
 
 - store_parameters:
 
