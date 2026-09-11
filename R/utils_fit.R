@@ -9,7 +9,6 @@ pyfit = function(counts,
                  reference_cat = NULL,
                  hyperparameters = NULL,
                  CUDA = FALSE,
-                 compile = FALSE,
                  seed_list = c(10),
                  store_fits = TRUE,
                  store_parameters = FALSE,
@@ -33,7 +32,7 @@ pyfit = function(counts,
                cluster=clusters, beta_fixed=reference_cat,
                hyperparameters=hyperparameters, nonparametric=nonparametric,
                store_parameters=store_parameters, stage=stage,
-               seed_list=seed_list, compile_model=compile,
+               seed_list=seed_list, compile_model=FALSE,
                CUDA=CUDA, store_fits=store_fits)
 
   TIME = difftime(as.POSIXct(Sys.time(), format = "%H:%M:%S"), TIME, units = "mins")

@@ -24,7 +24,7 @@
 #' @export fit
 fit = function(counts, k_list,
                cluster=NULL,
-               reference_cat=list("SBS"=COSMIC_filt, "DBS"=COSMIC_dbs),
+               reference_cat=list("SBS"=COSMIC_sbs_filt, "DBS"=COSMIC_dbs),
                keep_sigs = c("SBS1","SBS5"),
 
                hyperparameters = NULL,
@@ -73,7 +73,6 @@ fit = function(counts, k_list,
              filter_dn = filter_dn,
              min_exposure = min_exposure,
              CUDA = CUDA,
-             compile = compile,
 
              store_parameters = store_parameters,
              store_fits = store_fits,
