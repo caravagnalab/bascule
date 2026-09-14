@@ -28,7 +28,7 @@ pyfit = function(counts,
 
   if (!is.null(clusters)) clusters = as.integer(clusters)
 
-  obj = py$fit(x=counts, k_list=k_list, lr=lr, optim_gamma=0, n_steps=n_steps,
+  obj = py$fit(x=counts, k_list=k_list, lr=lr, optim_gamma=0.1, n_steps=n_steps,
                cluster=clusters, beta_fixed=reference_cat,
                hyperparameters=hyperparameters, nonparametric=nonparametric,
                store_parameters=store_parameters, stage=stage,
